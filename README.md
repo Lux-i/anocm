@@ -1,2 +1,2 @@
 # anocm
-Anonymous memory only chat platform.
+Anonymous, memory only, chat platform.
