@@ -28,6 +28,7 @@ These issues put user privacy and anonymity at risk.
 ## Technical Environment:
 - **Server**: simple low-throughput server
 - **Backend**: Express (Node/JavaScript)
+- **Database**: RedisDB
 - **Frontend**: Pure JavaScript/Typescript (or libraries like react)
 - **Design**: scss/tailwind/bootstrap
 - **Project Management**: GitHub (Repo and Project)
