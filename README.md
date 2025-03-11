@@ -23,7 +23,7 @@ These issues put user privacy and anonymity at risk.
 2. **End-to-end encryption**: All messages are encrypted before they are sent. Users control their encryption keys, and ***anocm*** never has access to them.
 3. **No registration**: Users can join the service as an anonymous "guest" without the need to create an account, ensuring no identifiable trace is left behind.
 4. **Customizable message retention**: Users can specify the duration for which their messages are stored (if at all).
-5. Open-source: The project is open-source, ensuring transparency and trust.
+5. **Open-source**: The project is open-source, ensuring transparency and trust.
 
 ## Technical Environment:
 - **Server**: simple low-throughput server
