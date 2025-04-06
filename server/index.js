@@ -50,7 +50,7 @@ app.get("*", (req, res) => {
 //Use Only when using Greenlock / etc.
 //module.exports = app;
 
-server.listen(portArg || Port, () => {
+server.listen(portArg || Port || 8080, () => {
   console.log(
     `Started webserver. Listening on port ${portArg || Port || 8080}`
   );
