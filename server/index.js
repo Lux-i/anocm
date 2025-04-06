@@ -3,29 +3,44 @@ const app = express();
 const server = require("http").createServer(app);
 const WebSocket = require("ws");
 
-let Port;
+let configPort;
 try {
-  const { port } = require("./config.json");
-  Port = port;
+  const { Port } = require("./config.json");
+  configPort = Port;
 } catch (err) {
-  Port = null;
+  configPort = null;
 }
 
 const { request } = require("http");
 const portArg = process.argv[2];
 
+const UsedPort = portArg || configPort || 8080;
+
+//#region middleware
+//content security policy for websocket to work when developing
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    `default-src 'self'; connect-src 'self' ws://localhost:${UsedPort};`
+  );
+  next();
+});
+
+//json and special json-error-handling middleware
 app.use(express.json(), (err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     return res.status(400).json({ message: "Invalid JSON format." });
   }
   next();
 });
+
 app.use(
   express.static(__dirname + "/public", {
     //max age one week in ms
     maxAge: 7 * 24 * 60 * 60 * 1000,
   })
 );
+//#endregion
 app.engine("html", require("ejs").renderFile);
 app.set("views", __dirname + "/html");
 app.set("view engine", "ejs");
@@ -50,10 +65,8 @@ app.get("*", (req, res) => {
 //Use Only when using Greenlock / etc.
 //module.exports = app;
 
-server.listen(portArg || Port || 8080, () => {
-  console.log(
-    `Started webserver. Listening on port ${portArg || Port || 8080}`
-  );
+server.listen(UsedPort, () => {
+  console.log(`Started webserver. Listening on port ${UsedPort}`);
 });
 
 //#region WebSocket
