@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "bufferutil": "^4.0.9",
+    "ejs": "^3.1.10",
     "express": "^4.21.2",
     "utf-8-validate": "^6.0.5",
     "ws": "^8.18.1"
