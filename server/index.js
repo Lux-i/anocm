@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const server = require("http").createServer(app);
+const WebSocket = require("ws");
 
 const { Port } = require("./config.json");
 const { request } = require("http");
@@ -47,3 +48,33 @@ server.listen(portArg || Port, () => {
     `Started webserver. Listening on port ${portArg || Port || 8080}`
   );
 });
+
+//#region WebSocket
+
+const wss = new WebSocket.Server({ server: server });
+
+wss.on("connection", (ws, req) => {
+  console.log("Connected to WebSocket");
+  ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
+
+  ws.on("message", (data) => {
+    //test
+    const message = JSON.parse(data);
+    console.log(`Received message: ${message.text}`);
+
+    ws.send(JSON.stringify(`Received message: "${message.text}" successfully`));
+
+    //Broadcast to all connected
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(message.text));
+      }
+    });
+  });
+
+  ws.on("close", () => {
+    console.log("Disconnected");
+  });
+});
+
+//#endregion
