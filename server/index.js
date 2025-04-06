@@ -3,7 +3,14 @@ const app = express();
 const server = require("http").createServer(app);
 const WebSocket = require("ws");
 
-const { Port } = require("./config.json");
+let Port;
+try {
+  const { port } = require("./config.json");
+  Port = port;
+} catch (err) {
+  Port = null;
+}
+
 const { request } = require("http");
 const portArg = process.argv[2];
 
