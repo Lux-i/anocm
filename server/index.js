@@ -3,6 +3,10 @@ const app = express();
 const server = require("http").createServer(app);
 const WebSocket = require("ws");
 
+const redis = require("redis");
+const client = redis.createClient();
+
+
 let configPort;
 try {
   const { Port } = require("./config.json");
@@ -97,4 +101,10 @@ wss.on("connection", (ws, req) => {
   });
 });
 
+//#endregion
+
+
+//#region Redis
+client.on('error', err => console.log("Redis client error: ", err));
+client.connect();
 //#endregion
