@@ -106,5 +106,12 @@ wss.on("connection", (ws: WebSocket, req: Request) => {
 //#region Redis
 client.on('error', (err: Error) => console.log("Redis client error: ", err));
 client.connect();
-let chatId = require("./database").createChat(client);
+client.exists('total_users').then((data: number) => {
+  console.log(data);
+  if(!data){
+    client.set('total_users','0');
+  }
+});
+
+//require("./database").createUser(client, 'Nick', '1234');
 //#endregion

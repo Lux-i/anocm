@@ -14,3 +14,14 @@ export async function createChat(client: RedisClientType){
     await client.lPush(chatId.toString(), '');
     return chatId;
 }
+
+
+
+export async function createUser(client: RedisClientType, username: string, password: string){
+    let userId: number = await client.incr('total_users');
+    await client.set(username, userId.toString());
+    await client.hSet(`user:${userId}`, {
+        username: `${username}`,
+        password: `${password}`,
+      });
+}
