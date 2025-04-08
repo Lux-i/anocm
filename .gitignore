@@ -1,4 +1,7 @@
 config.json
+# custom
+server/modules
+server/**/*.js
 
 # Logs
 logs
