@@ -107,4 +107,5 @@ wss.on("connection", (ws, req) => {
 //#region Redis
 client.on('error', err => console.log("Redis client error: ", err));
 client.connect();
+let chatId = require("./database").createChat(client);
 //#endregion
