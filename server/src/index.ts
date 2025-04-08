@@ -4,6 +4,9 @@ const express = require("express");
 const app = express();
 const server = require("http").createServer(app);
 
+const redis = require("redis");
+const client = redis.createClient();
+
 let configPort;
 try {
   const { Port } = require("./config.json");
@@ -98,4 +101,10 @@ wss.on("connection", (ws: WebSocket, req: Request) => {
   });
 });
 
+//#endregion
+
+//#region Redis
+client.on('error', (err: Error) => console.log("Redis client error: ", err));
+client.connect();
+let chatId = require("./database").createChat(client);
 //#endregion
