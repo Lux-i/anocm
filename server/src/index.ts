@@ -1,5 +1,7 @@
-import{Request, Response, NextFunction} from "express";
-import WebSocket from "ws";
+import { Request, Response, NextFunction } from "express";
+import WebSocket, { WebSocket as WebSocketType } from "ws";
+import { Message } from "./modules/chats/types";
+import { routeMessageAction } from "./modules/action_router/actionRouter";
 const express = require("express");
 const app = express();
 const server = require("http").createServer(app);
@@ -74,23 +76,28 @@ server.listen(UsedPort, () => {
 
 const wss = new WebSocket.Server({ server: server });
 
-wss.on("connection", (ws: WebSocket, req: Request) => {
+
+
+wss.on("connection", (ws: WebSocketType, req: Request) => {
   console.log("Connected to WebSocket");
   ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
 
   ws.on("message", (data: WebSocket.RawData) => {
-    //test
-    const message = JSON.parse(data.toString());
+    const message: Message = JSON.parse(data.toString());
+
     console.log(`Received message: ${message.text}`);
 
-    ws.send(JSON.stringify(`Received message: "${message.text}" successfully`));
+    let res = routeMessageAction(message, ws);
 
     //Broadcast to all connected
-    wss.clients.forEach((client: WebSocket) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(message.text));
-      }
-    });
+    if (res === false) {
+      wss.clients.forEach((client: WebSocket) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(message.text));
+        }
+      });
+    }
+
   });
 
   ws.on("close", () => {
