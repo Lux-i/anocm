@@ -9,10 +9,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getRandomInt = getRandomInt;
 exports.createChat = createChat;
 exports.createUser = createUser;
-function getRandomInt(max) {
-    return Math.floor(Math.random() * max);
+exports.createAnoUser = createAnoUser;
+//Math.randon() => 0 - 1
+// * n => 0 - n
+// + m => m - n+m
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min) + min);
 }
 /**
  *
@@ -21,7 +26,7 @@ function getRandomInt(max) {
  */
 function createChat(client) {
     return __awaiter(this, void 0, void 0, function* () {
-        let chatId = getRandomInt(1000);
+        let chatId = getRandomInt(0, 1000);
         yield client.lPush(chatId.toString(), '');
         return chatId;
     });
@@ -29,10 +34,18 @@ function createChat(client) {
 function createUser(client, username, password) {
     return __awaiter(this, void 0, void 0, function* () {
         let userId = yield client.incr('total_users');
-        yield client.set(username, userId.toString());
         yield client.hSet(`user:${userId}`, {
             username: `${username}`,
             password: `${password}`,
         });
+        return userId;
+    });
+}
+function createAnoUser(client) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let userId = yield client.incr('total_users');
+        let clientId = getRandomInt(1000, 9000);
+        yield client.set(`user:${userId}`, clientId.toString());
+        return clientId;
     });
 }

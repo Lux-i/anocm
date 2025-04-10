@@ -113,5 +113,6 @@ client.exists('total_users').then((data: number) => {
   }
 });
 
-//require("./database").createUser(client, 'Nick', '1234');
+//require("./database").createUser(client, 'Michael', 'wawawawa');
+//require("./database").createAnoUser(client);
 //#endregion
