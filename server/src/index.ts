@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import WebSocket, { WebSocket as WebSocketType } from "ws";
 import { Message } from "./modules/chats/types";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
-
+import { Database } from "./database";
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -24,7 +24,7 @@ const UsedPort = portArg || configPort || 8080;
 //#region middleware
 app.use(
   cors({
-    origin: `http://localhost:${UsedPort}`,
+    origin: /^http:\/\/localhost(:[0-9]{1,4})?$/
   })
 );
 
@@ -74,6 +74,8 @@ app.get("*", (req: Request, res: Response) => {
   res.render(`${__dirname}/dist/index.html`);
 });
 
+
+
 //#endregion
 
 //Use Only when using Greenlock / etc.
@@ -119,15 +121,34 @@ const redis = require("redis");
 const client = redis.createClient();
 
 //#region Redis
-client.on('error', (err: Error) => console.log("Redis client error: ", err));
-client.connect();
-client.exists('total_users').then((data: number) => {
-  console.log(data);
-  if(!data){
-    client.set('total_users','0');
-  }
+
+interface DatabaseResponse {
+  success?: boolean;
+  error?: string;
+  id?: string;
+}
+
+const database = new Database();
+app.post("/database/newano", (req: Request, res: Response) => {
+  console.log("POST Request: new anonymous User");
+    database.createAnoUser().then((userId: number) => {
+      const response: DatabaseResponse = {
+        success: true,
+        id: userId.toString(),
+      } 
+      res.send(response);
+    });
 });
 
-//require("./database").createUser(client, 'Michael', 'wawawawa');
-//require("./database").createAnoUser(client);
+app.post("/database/newuser", (req: Request, res: Response) => {
+  console.log("POST Request: new User");
+    database.createUser(req.body.username, req.body.password).then((userId: number) => {
+      const response: DatabaseResponse = {
+        success: true,
+        id: userId.toString(),
+      } 
+      res.send(response);
+    });
+});
+
 //#endregion
