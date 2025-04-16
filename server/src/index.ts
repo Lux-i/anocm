@@ -24,7 +24,7 @@ const UsedPort = portArg || configPort || 8080;
 //#region middleware
 app.use(
   cors({
-    origin: `http://localhost:${UsedPort}`,
+    origin: `http://localhost`,
   })
 );
 
