@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import WebSocket, { WebSocket as WebSocketType } from "ws";
 import { Message } from "./modules/chats/types";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
-
+import { Database } from "./database";
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -74,6 +74,8 @@ app.get("*", (req: Request, res: Response) => {
   res.render(`${__dirname}/dist/index.html`);
 });
 
+
+
 //#endregion
 
 //Use Only when using Greenlock / etc.
@@ -119,15 +121,22 @@ const redis = require("redis");
 const client = redis.createClient();
 
 //#region Redis
-client.on('error', (err: Error) => console.log("Redis client error: ", err));
-client.connect();
-client.exists('total_users').then((data: number) => {
-  console.log(data);
-  if(!data){
-    client.set('total_users','0');
-  }
+
+enum requestType{
+  NEWCHAT,
+  NEWUSER,
+  NEWANO,
+}
+
+interface DatabaseResponse {
+  success?: boolean;
+  error?: string;
+  id?: string;
+}
+
+const database = new Database();
+app.post("/database", (req: Request, res: Response) => {
+  console.log("POST Request: ", req.body);
 });
 
-//require("./database").createUser(client, 'Michael', 'wawawawa');
-//require("./database").createAnoUser(client);
 //#endregion
