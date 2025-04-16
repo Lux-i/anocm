@@ -2,7 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import WebSocket, { WebSocket as WebSocketType } from "ws";
 import { Message } from "./modules/chats/types";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
+
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const server = require("http").createServer(app);
 
@@ -20,6 +22,12 @@ const portArg = process.argv[2];
 const UsedPort = portArg || configPort || 8080;
 
 //#region middleware
+app.use(
+  cors({
+    origin: `http://localhost:${UsedPort}`,
+  })
+);
+
 //content security policy for websocket to work when developing
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader(
@@ -30,12 +38,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 //json and special json-error-handling middleware
-app.use(express.json(), (err: Error, req: Request, res: Response, next: NextFunction) => {
-  if (err instanceof SyntaxError && "body" in err) {
-    return res.status(400).json({ message: "Invalid JSON format." });
+app.use(
+  express.json(),
+  (err: Error, req: Request, res: Response, next: NextFunction) => {
+    if (err instanceof SyntaxError && "body" in err) {
+      return res.status(400).json({ message: "Invalid JSON format." });
+    }
+    next();
   }
-  next();
-});
+);
 
 app.use(
   express.static(__dirname + "/public", {
@@ -76,8 +87,6 @@ server.listen(UsedPort, () => {
 
 const wss = new WebSocket.Server({ server: server });
 
-
-
 wss.on("connection", (ws: WebSocketType, req: Request) => {
   console.log("Connected to WebSocket");
   ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
@@ -97,7 +106,6 @@ wss.on("connection", (ws: WebSocketType, req: Request) => {
         }
       });
     }
-
   });
 
   ws.on("close", () => {
