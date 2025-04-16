@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import WebSocket, { WebSocket as WebSocketType } from "ws";
 import { Message } from "./modules/chats/types";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
-import { Database } from "./database";
+import { Database } from "./modules/database";
 const express = require("express");
 const cors = require("cors");
 const app = express();
