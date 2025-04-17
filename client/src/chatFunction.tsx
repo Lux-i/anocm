@@ -3,6 +3,9 @@ interface DatabaseRequest {
     password?: string;
 }
 
+/**
+   * Makes POST request to create an anonymous User. Response has the clientId for the user created.
+   */
 async function createAno(){
 
     const response = await fetch("http://localhost:8080/database/newano", {
@@ -14,10 +17,17 @@ async function createAno(){
     const data = await response.json();
     if(data.success){
         console.log(data);
-        document.getElementById("please")!.innerText = `New User added: ${data.id}`;
+        document.getElementById("anoResult")!.innerText = `New User added: ${data.id}`;
+    }else{
+        document.getElementById("anoResult")!.innerText = `There was an error: ${data.error}`;
     }
 }
 
+/**
+   * Makes POST request to create an User. 
+   * @param username
+   * @param password
+   */
 async function createUser(){
 
     const userData: DatabaseRequest = {
@@ -35,17 +45,17 @@ async function createUser(){
     const data = await response.json();
     if(data.success){
         console.log(data);
-        document.getElementById("wawo")!.innerText = `New User added: ${data.id}`;
+        document.getElementById("userResult")!.innerText = `New User added: ${data.id}`;
     }
 }
 
 function DatabaseTest() {
     return (
     <>
-        <div><button onClick={createAno}>Create Anonymous User</button></div>
-        <div id="please"></div>
-        <div><button onClick={createUser}>Create User</button></div>
-        <div id="wawo"></div>
+        <div className="mt-5"><button onClick={createAno}>Create Anonymous User</button></div>
+        <div id="anoResult"></div>
+        <div className="mt-5"><button onClick={createUser}>Create User</button></div>
+        <div id="userResult"></div>
     </>
 )
 }export default DatabaseTest

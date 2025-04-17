@@ -1,4 +1,10 @@
 import { RedisClientType } from "redis";
+import { randomUUID } from "crypto";
+
+interface User {
+    userId: string,
+    username?: string,
+}
 
 export class Database{
     redis;
@@ -22,16 +28,22 @@ export class Database{
     }
     
     /**
-     * 
-     * @param {import("redis").RedisClientType} client 
-     * @returns 
+     * Creates Chat with the Users in the User Array
+     * @param {User} user
+     * @returns chatId
      */
-    async createChat(): Promise<number>{
-        let chatId = this.getRandomInt(0, 1000);
+    async createChat(user: User[]): Promise<number>{
+        let chatId = this.getRandomInt(0, 10000);
         await this.client.lPush(chatId.toString(), '');
         return chatId;
     }
 
+    /**
+     * Creates User hashmap for an user with username and password
+     * @param {string} username
+     * @param {string} password
+     * @returns userId
+     */
     async createUser(username: string, password: string): Promise<number>{
         let userId: number = await this.client.incr('total_users');
         await this.client.hSet(`user:${userId}`, {
@@ -41,9 +53,13 @@ export class Database{
           return userId;
     }
 
-    async createAnoUser(): Promise<number> {
+    /**
+     * Creates anonymous User key-value string that has the clientId
+     * @returns clientId
+     */
+    async createAnoUser(): Promise<string> {
         let userId: number = await this.client.incr('total_users');
-        let clientId: number = this.getRandomInt(1000, 9000);
+        let clientId: string = randomUUID();
         await this.client.set(`user:${userId}`, clientId.toString());
         return clientId;
     }

@@ -123,32 +123,51 @@ const client = redis.createClient();
 //#region Redis
 
 interface DatabaseResponse {
-  success?: boolean;
+  success: boolean;
   error?: string;
   id?: string;
+  userData?: string;
 }
 
 const database = new Database();
 app.post("/database/newano", (req: Request, res: Response) => {
   console.log("POST Request: new anonymous User");
-    database.createAnoUser().then((userId: number) => {
+    try{
+      database.createAnoUser().then((clientId: string) => {
       const response: DatabaseResponse = {
         success: true,
-        id: userId.toString(),
+        id: clientId.toString(),
       } 
       res.send(response);
     });
+  }catch(err: any){
+    const response: DatabaseResponse = {
+      success: false,
+      error: err,
+    } 
+    res.send(response);
+    console.error("Error sending response: ", err);
+  }
 });
 
 app.post("/database/newuser", (req: Request, res: Response) => {
   console.log("POST Request: new User");
-    database.createUser(req.body.username, req.body.password).then((userId: number) => {
+    try{database.createUser(req.body.username, req.body.password).then((userId: number) => {
       const response: DatabaseResponse = {
         success: true,
         id: userId.toString(),
+        userData: req.body.username,
       } 
       res.send(response);
     });
+  }catch(err: any){
+    const response: DatabaseResponse = {
+      success: false,
+      error: err,
+    } 
+    res.send(response);
+    console.error("Error sending response: ", err);
+  }
 });
 
 //#endregion
