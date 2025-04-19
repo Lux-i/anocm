@@ -1,5 +1,5 @@
 import { RedisClientType } from "redis";
-import { randomUUID } from "crypto";
+import { randomUUID, UUID } from "crypto";
 
 interface User {
     userId: string,
@@ -32,9 +32,9 @@ export class Database{
      * @param {User} user
      * @returns chatId
      */
-    async createChat(user: User[]): Promise<number>{
-        let chatId = this.getRandomInt(0, 10000);
-        await this.client.lPush(chatId.toString(), '');
+    async createChat(user: User[]): Promise<UUID>{
+        let chatId = randomUUID();
+        //await this.client.hSet();
         return chatId;
     }
 
@@ -44,7 +44,28 @@ export class Database{
      * @param {string} password
      * @returns userId
      */
-    async createUser(username: string, password: string): Promise<number>{
+    async createUser(username: string, password: string): Promise<number | false>{
+
+        let cursor = 0;
+
+        do{
+            const scanResult = await this.client.scan(cursor, {
+                MATCH: 'user:*',
+                COUNT: 100,
+            });
+
+            const nextCursor = Number(scanResult.cursor);
+            const keys = scanResult.keys;
+
+            for(const key of keys){
+                const searchResult = await this.client.hGet(key, 'username');
+                if(searchResult == username){
+                    return false;
+                }
+            }
+
+        } while (cursor !== 0);
+
         let userId: number = await this.client.incr('total_users');
         await this.client.hSet(`user:${userId}`, {
             username: `${username}`,

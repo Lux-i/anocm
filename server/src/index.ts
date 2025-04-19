@@ -152,13 +152,22 @@ app.post("/database/newano", (req: Request, res: Response) => {
 
 app.post("/database/newuser", (req: Request, res: Response) => {
   console.log("POST Request: new User");
-    try{database.createUser(req.body.username, req.body.password).then((userId: number) => {
-      const response: DatabaseResponse = {
-        success: true,
-        id: userId.toString(),
-        userData: req.body.username,
-      } 
-      res.send(response);
+    try{database.createUser(req.body.username, req.body.password).then((userId: number | false) => {
+      if(userId == false){
+        const response: DatabaseResponse = {
+          success: false,
+          error: "User already exists"
+        } 
+        res.send(response);
+
+      }else{
+        const response: DatabaseResponse = {
+          success: true,
+          id: userId.toString(),
+          userData: req.body.username,
+        } 
+        res.send(response);
+      }
     });
   }catch(err: any){
     const response: DatabaseResponse = {
