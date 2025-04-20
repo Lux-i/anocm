@@ -38,7 +38,9 @@ export class Database{
             let chatId = randomUUID();
             for(const user of users){
                 if(!(await this.client.exists(`user:${user.userId}`))){
-                    return `User ${user.userId} not found`;
+                    if(!(await this.client.exists(`anon_user:${user.userId}`))){
+                        return `User ${user.userId} not found`;
+                    } 
                 }   
             }
             for(const user of users){
@@ -71,7 +73,7 @@ export class Database{
                 COUNT: 100,
             });
 
-            const nextCursor = Number(scanResult.cursor);
+            cursor = Number(scanResult.cursor); 
             const keys = scanResult.keys;
 
             for(const key of keys){
@@ -98,7 +100,7 @@ export class Database{
     async createAnoUser(): Promise<string> {
         let userId: number = await this.client.incr('total_users');
         let clientId: string = randomUUID();
-        await this.client.set(`user:${userId}`, clientId.toString());
+        await this.client.set(`anon_user:${userId}`, clientId.toString());
         return clientId;
     }
 }
