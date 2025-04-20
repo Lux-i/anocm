@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction} from "express";
 import WebSocket, { WebSocket as WebSocketType } from "ws";
 import { Message } from "./modules/chats/types";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
@@ -119,6 +119,8 @@ wss.on("connection", (ws: WebSocketType, req: Request) => {
 
 const redis = require("redis");
 const client = redis.createClient();
+import { UUID } from "crypto";
+
 
 //#region Redis
 
@@ -133,10 +135,10 @@ const database = new Database();
 app.post("/database/newano", (req: Request, res: Response) => {
   console.log("POST Request: new anonymous User");
     try{
-      database.createAnoUser().then((clientId: string) => {
+      database.createAnoUser().then((clientId: DatabaseResponse) => {
       const response: DatabaseResponse = {
         success: true,
-        id: clientId.toString(),
+        id: clientId.id,
       } 
       res.send(response);
     });
@@ -152,20 +154,12 @@ app.post("/database/newano", (req: Request, res: Response) => {
 
 app.post("/database/newuser", (req: Request, res: Response) => {
   console.log("POST Request: new User");
-    try{database.createUser(req.body.username, req.body.password).then((userId: number | false) => {
-      if(userId == false){
-        const response: DatabaseResponse = {
-          success: false,
-          error: "User already exists"
-        } 
+    try{
+      database.createUser(req.body.username, req.body.password).then((response: DatabaseResponse) => {
+      if(response.success == false){
         res.send(response);
 
       }else{
-        const response: DatabaseResponse = {
-          success: true,
-          id: userId.toString(),
-          userData: req.body.username,
-        } 
         res.send(response);
       }
     });
@@ -176,6 +170,29 @@ app.post("/database/newuser", (req: Request, res: Response) => {
     } 
     res.send(response);
     console.error("Error sending response: ", err);
+  }
+});
+
+
+app.post("/database/newchat", (req: Request, res: Response) => {
+  console.log("POST Request: new Chat");
+  try{
+    console.log(req.body);
+    database.createChat(req.body).then((response: DatabaseResponse) => {
+    if(response.success == true){
+      res.send(response);
+
+    }else{
+      res.send(response);
+    }
+  });
+  }catch(err: any){
+    const response: DatabaseResponse = {
+      success: false,
+      error: err,
+    } 
+    res.send(response);
+    console.error("Error creating new Chat: ", err);
   }
 });
 

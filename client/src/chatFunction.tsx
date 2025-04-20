@@ -1,4 +1,5 @@
 interface DatabaseRequest {
+    userId? : string;
     username?: string;
     password?: string;
 }
@@ -44,9 +45,31 @@ async function createUser(){
     const data = await response.json();
     if(data.success){
         console.log(data);
-        document.getElementById("userResult")!.innerText = `New User added: ${data.id} \n Username: ${data.userData}`;
+        document.getElementById("userResult")!.innerText = `New User created: ${data.id} \n Username ${data.userData}`;
     }else{
         document.getElementById("userResult")!.innerText = `There was an error: ${data.error}`;
+    }
+}
+
+
+async function createChat(){
+
+    const userList: DatabaseRequest[] = [{userId: "1"},{userId: "6"}];
+
+    const response = await fetch("http://localhost:8080/database/newchat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userList),
+    });
+    const data = await response.json();
+    if(data.success){
+        console.log(data);
+        document.getElementById("chatResult")!.innerText = `New Chat created: ${data.id}`;
+    }else{
+        console.log(data);
+        document.getElementById("chatResult")!.innerText = `There was an error: ${data.error}`;
     }
 }
 
@@ -59,6 +82,8 @@ function DatabaseTest() {
         <div id="anoResult"></div>
         <div className="mt-5"><button onClick={createUser}>Create User</button></div>
         <div id="userResult"></div>
+        <div className="mt-5"><button onClick={createChat}>Create Chat</button></div>
+        <div id="chatResult"></div>
     </div>
     </>
 )

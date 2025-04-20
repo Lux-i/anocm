@@ -6,6 +6,7 @@ interface User {
     username?: string,
 }
 
+
 export class Database{
     redis;
     client: RedisClientType;
@@ -32,10 +33,26 @@ export class Database{
      * @param {User} user
      * @returns chatId
      */
-    async createChat(user: User[]): Promise<UUID>{
-        let chatId = randomUUID();
-        //await this.client.hSet();
-        return chatId;
+    async createChat(users: User[]): Promise<UUID | string>{
+        if(users.length >= 2){
+            let chatId = randomUUID();
+            for(const user of users){
+                if(!(await this.client.exists(`user:${user.userId}`))){
+                    return `User ${user.userId} not found`;
+                }   
+            }
+            for(const user of users){
+                await this.client.lPush(`chat:${chatId}:users`, `${user.userId}`);
+            }
+            
+            await this.client.hSet(`chat:${chatId}:settings`, {
+                'admin': `${users.at(0)?.userId}`,
+            });
+            
+            return chatId;
+        }else{
+            return "Not enough Users";
+        }
     }
 
     /**
