@@ -4,6 +4,11 @@ interface DatabaseRequest {
     password?: string;
 }
 
+const newUser = document.getElementById("newUser");
+if(newUser){
+    newUser.addEventListener("submit", (event)=> createUser(event));
+}
+
 /**
    * Makes POST request to create an anonymous User. Response has the clientId for the user created.
    */
@@ -28,10 +33,11 @@ async function createAno(){
    * @param username
    * @param password
    */
-async function createUser(){
+async function createUser(event: any){
+    event.preventDefault();
 
     const userData: DatabaseRequest = {
-        username: "Michael",
+        username: await (document.getElementById("query") as HTMLInputElement).value.trim(),
         password: "1234",    
     }
 
@@ -80,7 +86,13 @@ function DatabaseTest() {
         <h2 className="text-3xl">Database</h2>
         <div className="mt-5"><button onClick={createAno}>Create Anonymous User</button></div>
         <div id="anoResult"></div>
-        <div className="mt-5"><button onClick={createUser}>Create User</button></div>
+        <div className="mt-5">
+        <form id="newUser">
+            <input className="bg-white border-black border-2 mb-4 text-black" id="query" />
+            <br></br>
+            <button type="submit"> Create new user</button>
+        </form>
+        </div>
         <div id="userResult"></div>
         <div className="mt-5"><button onClick={createChat}>Create Chat</button></div>
         <div id="chatResult"></div>
