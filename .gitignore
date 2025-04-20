@@ -3,6 +3,8 @@ config.json
 server/modules
 server/**/*.js
 
+.env
+
 # Logs
 logs
 *.log

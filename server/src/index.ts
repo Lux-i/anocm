@@ -117,12 +117,8 @@ wss.on("connection", (ws: WebSocketType, req: Request) => {
 
 //#endregion
 
-const redis = require("redis");
-const client = redis.createClient();
-import { UUID } from "crypto";
-
-
 //#region Redis
+import { UUID } from "crypto";
 
 interface DatabaseResponse {
   success: boolean;
