@@ -1,6 +1,7 @@
 import { RedisClientType } from "redis";
 import { randomUUID, UUID } from "crypto";
 import { Chat, User } from "./databaseTypes";
+import user from "../../routers/user";
 
 
 export class Database{
@@ -69,7 +70,7 @@ export class Database{
      * @param {string} password
      * @returns userId
      */
-    async createUser(username: string, password: string): Promise<number | false>{
+    async createUser(username: string, password: string): Promise<UUID | false>{
 
         if((typeof username != undefined) && (typeof password != undefined)){
         let cursor = 0;
@@ -92,7 +93,7 @@ export class Database{
 
         } while (cursor !== 0);
 
-        let userId: number = await this.client.incr('total_users');
+        let userId: UUID = randomUUID();
         await this.client.hSet(`user:${userId}`, {
             username: `${username}`,
             password: `${password}`,
@@ -107,9 +108,11 @@ export class Database{
      * @returns clientId
      */
     async createAnoUser(): Promise<string> {
-        let userId: number = await this.client.incr('total_users');
+        let userId: string = randomUUID();
         let clientId: string = randomUUID();
-        await this.client.set(`anon_user:${userId}`, clientId.toString());
+        await this.client.hSet(`user:${userId}`, {
+            UUID: `${userId}`,
+        });
         return clientId;
     }
 
@@ -128,7 +131,7 @@ export class Database{
         }
     }
 
-    async addUsertoChat(chatId: string, userId: string): Promise<boolean>{
+    async addUsertoChat(chatId: string, userId: UUID): Promise<boolean>{
         if(((await this.client.exists(`user:${userId}`)) || (await this.client.exists(`anon_user:${userId}`))) && !(await this.client.HEXISTS(`chat:${chatId}:users`, `${chatId}`))){
             if(await this.client.hSet(`chat:${chatId}:users`, `${userId}`, "member")){
                 return true;
@@ -139,7 +142,7 @@ export class Database{
         return false;
     }
 
-    async deleteUserFromChat(chatId: string, userId: string): Promise<boolean>{
+    async deleteUserFromChat(chatId: string, userId: UUID): Promise<boolean>{
         if(((await this.client.exists(`user:${userId}`)) || (await this.client.exists(`anon_user:${userId}`))) && await this.client.HEXISTS(`chat:${chatId}:users`, `${chatId}`)){
             if(await this.client.hDel(`chat:${chatId}:users`, `${userId}`)){
                 return true;
@@ -149,6 +152,7 @@ export class Database{
         }
         return false;
     }
+
 }
 
 
