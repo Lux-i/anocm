@@ -49,7 +49,7 @@ export default (database: Database) => {
       if (!chatId) {
         return res.status(400).json({
           success: false,
-          error: "Missing chatid in query.",
+          error: "Missing ChatId in query.",
         });
       }
 
@@ -68,4 +68,33 @@ export default (database: Database) => {
       res.send(response);
     }
   });
+
+  router.post("/adduser", async (req: Request, res: Response) => {
+    console.log("POST Request: add User to Chat");
+    try {
+      database.addUsertoChat(req.body.chatId, req.body.userId).then((response: boolean) => {
+        if (response == true) {
+          const response: DatabaseResponse = {
+            success: true,
+          };
+          res.send(response);
+        } else {
+          const response: DatabaseResponse = {
+            success: false,
+            error: `Error adding User`,
+          };
+          res.send(response);
+        }
+      });
+    } catch (err: any) {
+      const response: DatabaseResponse = {
+        success: false,
+        error: err,
+      };
+      res.send(response);
+      console.error("Error adding User: ", err);
+    }
+  });
+
+  return router;
 };

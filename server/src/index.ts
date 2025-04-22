@@ -62,9 +62,11 @@ app.set("views", __dirname + "/html");
 app.set("view engine", "ejs");
 
 //#region API Endpoints
+const userRouter = require("./routers/user").default;
+const chatRouter = require("./routers/chat").default;
 
-app.use("/api/v1/user", require("./routers/user")(database));
-app.use("/api/v1/chat", require("./routers/chat")(database));
+app.use("/api/v1/user", userRouter(database));
+app.use("/api/v1/chat", chatRouter(database));
 
 //#endregion
 
