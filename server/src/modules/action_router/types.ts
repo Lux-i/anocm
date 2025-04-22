@@ -1,7 +1,7 @@
 export enum Action {
-    None = 0,
-    BroadcastToChat,
-    AddClientToChatNoConfirm,
-    RemoveClientFromChatNoConfirm,
-    MessageResponse
+    None = "",
+    BroadcastToChat = "BroadcastToChat",
+    AddClientToChatNoConfirm = "AddClientToChatNoConfirm",
+    RemoveClientFromChatNoConfirm = "RemoveClientFromChatNoConfirm",
+    MessageResponse = "MessageResponse"
 }

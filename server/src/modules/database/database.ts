@@ -4,7 +4,7 @@ import { Chat, User } from "./databaseTypes";
 import user from "../../routers/user";
 
 
-export class Database{
+export class Database {
     redis;
     client: RedisClientType;
 
@@ -22,8 +22,8 @@ export class Database{
         this.client.on('error', (err: Error) => console.log("Redis client error: ", err));
         this.client.connect();
         this.client.exists('total_users').then((data: number) => {
-            if(!data){
-                this.client.set('total_users','0');
+            if (!data) {
+                this.client.set('total_users', '0');
             }
             console.log(data);
         });
@@ -32,34 +32,34 @@ export class Database{
     getRandomInt(min: number, max: number): number {
         return Math.floor(Math.random() * (max - min) + min);
     }
-    
+
     /**
      * Creates Chat with the Users in the User Array
      * @param {User} user
      * @returns chatId
      */
-    async createChat(users: User[]): Promise<UUID | false>{
-        if(users.length >= 2){
+    async createChat(users: User[]): Promise<UUID | false> {
+        if (users.length >= 2) {
             let chatId = randomUUID();
-            for(const user of users){
-                if(!(await this.client.exists(`user:${user.userId}`))){
-                    if(!(await this.client.exists(`anon_user:${user.userId}`))){
+            for (const user of users) {
+                if (!(await this.client.exists(`user:${user.userId}`))) {
+                    if (!(await this.client.exists(`anon_user:${user.userId}`))) {
                         return false;
-                    } 
-                }   
+                    }
+                }
             }
-            for(const user of users){
+            for (const user of users) {
                 await this.client.hSet(`chat:${chatId}:users`, `${user.userId}`, `member`);
             }
 
             await this.client.hSet(`chat:${chatId}:users`, `${users.at(0)?.userId}`, "admin");
-            
+
             await this.client.hSet(`chat:${chatId}:settings`, {
                 'admin': `${users.at(0)?.userId}`,
             });
-            
+
             return chatId;
-        }else{
+        } else {
             return false;
         }
     }
@@ -70,35 +70,35 @@ export class Database{
      * @param {string} password
      * @returns userId
      */
-    async createUser(username: string, password: string): Promise<UUID | false>{
+    async createUser(username: string, password: string): Promise<UUID | false> {
 
-        if(((typeof username != undefined) && (typeof password != undefined)) && ((username != "") && (password != ""))){
-        let cursor = 0;
+        if (((typeof username != undefined) && (typeof password != undefined)) && ((username != "") && (password != ""))) {
+            let cursor = 0;
 
-        do{
-            const scanResult = await this.client.scan(cursor, {
-                MATCH: 'user:*',
-                COUNT: 100,
-            });
+            do {
+                const scanResult = await this.client.scan(cursor, {
+                    MATCH: 'user:*',
+                    COUNT: 100,
+                });
 
-            cursor = Number(scanResult.cursor); 
-            const keys = scanResult.keys;
+                cursor = Number(scanResult.cursor);
+                const keys = scanResult.keys;
 
-            for(const key of keys){
-                const searchResult = await this.client.hGet(key, 'username');
-                if(searchResult == username){
-                    return false;
+                for (const key of keys) {
+                    const searchResult = await this.client.hGet(key, 'username');
+                    if (searchResult == username) {
+                        return false;
+                    }
                 }
-            }
 
-        } while (cursor !== 0);
+            } while (cursor !== 0);
 
-        let userId: UUID = randomUUID();
-        await this.client.hSet(`user:${userId}`, {
-            username: `${username}`,
-            password: `${password}`,
-          });
-          return userId;
+            let userId: UUID = randomUUID();
+            await this.client.hSet(`user:${userId}`, {
+                username: `${username}`,
+                password: `${password}`,
+            });
+            return userId;
         }
         return false;
     }
@@ -116,38 +116,38 @@ export class Database{
         return clientId;
     }
 
-    async getChat(chatIdInput: string): Promise<Chat | false>{
-        try{
+    async getChat(chatIdInput: string): Promise<Chat | false> {
+        try {
             const chat: Chat = {
                 chatId: chatIdInput,
                 chatUserList: await this.client.hGetAll(`chat:${chatIdInput}:users`),
                 chatSettings: await this.client.hGetAll(`chat:${chatIdInput}:settings`),
-                chatMessages: await this.client.zRange(`chat:${chatIdInput}:messages`, 0, -1),
+                chatMessages: await this.client.xRange(`chat:${chatIdInput}:messages`, "-", "+"),
             }
-    
+
             return chat;
-        }catch{
+        } catch {
             return false;
         }
     }
 
-    async addUsertoChat(chatId: string, userId: UUID): Promise<boolean>{
-        if((await this.client.exists(`user:${userId}`))  && !(await this.client.HEXISTS(`chat:${chatId}:users`, `${userId}`))){
-            if(await this.client.hSet(`chat:${chatId}:users`, `${userId}`, "member")){
+    async addUsertoChat(chatId: string, userId: UUID): Promise<boolean> {
+        if ((await this.client.exists(`user:${userId}`)) && !(await this.client.HEXISTS(`chat:${chatId}:users`, `${userId}`))) {
+            if (await this.client.hSet(`chat:${chatId}:users`, `${userId}`, "member")) {
                 return true;
             }
-        }  else{
+        } else {
             return false;
         }
         return false;
     }
 
-    async deleteUserFromChat(chatId: string, userId: UUID): Promise<boolean>{
-        if((await this.client.exists(`user:${userId}`)) && await this.client.HEXISTS(`chat:${chatId}:users`, `${chatId}`)){
-            if(await this.client.hDel(`chat:${chatId}:users`, `${userId}`)){
+    async deleteUserFromChat(chatId: string, userId: UUID): Promise<boolean> {
+        if ((await this.client.exists(`user:${userId}`)) && (await this.client.HEXISTS(`chat:${chatId}:users`, `${userId}`))) {
+            if (await this.client.hDel(`chat:${chatId}:users`, `${userId}`)) {
                 return true;
             }
-        }  else{
+        } else {
             return false;
         }
         return false;

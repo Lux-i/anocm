@@ -1,6 +1,6 @@
 import { Message } from "../message/types";
 import { Action } from "./types"
-import { broadcastToChat } from "../message/message";
+import { addToChatNoConfirm, broadcastToChat, removeFromChatNoConfirm } from "../message/message";
 
 import { Database } from "../database/database";
 import UserManager from "../userManager/userManager";
@@ -16,6 +16,12 @@ export function routeMessageAction(message: Message, database: Database, handler
     switch (message.action) {
         case Action.BroadcastToChat:
             broadcastToChat(message, database, handler);
+            break;
+        case Action.AddClientToChatNoConfirm:
+            addToChatNoConfirm(message, database, handler);
+            break;
+        case Action.RemoveClientFromChatNoConfirm:
+            removeFromChatNoConfirm(message, database, handler);
             break;
         case Action.None:
         case Action.MessageResponse:

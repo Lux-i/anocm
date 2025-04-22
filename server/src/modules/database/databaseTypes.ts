@@ -9,5 +9,5 @@ export interface Chat {
     chatId: string;
     chatUserList: Record<UUID, string>;
     chatSettings: any;
-    chatMessages?: string[];
+    chatMessages?: { id: string; message: { [x: string]: string; }; }[];
 }
