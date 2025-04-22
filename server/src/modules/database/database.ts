@@ -71,6 +71,7 @@ export class Database{
      */
     async createUser(username: string, password: string): Promise<number | false>{
 
+        if((typeof username != undefined) && (typeof password != undefined)){
         let cursor = 0;
 
         do{
@@ -97,6 +98,8 @@ export class Database{
             password: `${password}`,
           });
           return userId;
+        }
+        return false;
     }
 
     /**
@@ -126,7 +129,7 @@ export class Database{
     }
 
     async addUsertoChat(chatId: string, userId: string): Promise<boolean>{
-        if((await this.client.exists(`user:${userId}`)) || (await this.client.exists(`anon_user:${userId}`))){
+        if(((await this.client.exists(`user:${userId}`)) || (await this.client.exists(`anon_user:${userId}`))) && !(await this.client.HEXISTS(`chat:${chatId}:users`, `${chatId}`))){
             if(await this.client.hSet(`chat:${chatId}:users`, `${userId}`, "member")){
                 return true;
             }

@@ -1,5 +1,6 @@
 interface DatabaseRequest {
     userId? : string;
+    chatId? : string;
     username?: string;
     password?: string;
 }
@@ -8,7 +9,7 @@ interface DatabaseRequest {
    * Makes POST request to create an anonymous User. Response has the clientId for the user created.
    */
 async function createAno(){
-    const response = await fetch("http://localhost:8080/database/newano", {
+    const response = await fetch("http://localhost:8080/api/v1/user/newano", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -36,7 +37,7 @@ async function createUser(event: any){
         password: await (document.getElementById("queryPassword") as HTMLInputElement).value.trim(),    
     }
 
-    const response = await fetch("http://localhost:8080/database/newuser", {
+    const response = await fetch("http://localhost:8080/api/v1/user/newuser", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -60,7 +61,7 @@ async function createChat(){
     const userList: DatabaseRequest[] = userIdForm.map(id => ({ userId: id }));
 
 
-    const response = await fetch("http://localhost:8080/database/newchat", {
+    const response = await fetch("http://localhost:8080/api/v1/chat/newchat", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -81,14 +82,14 @@ async function getChat(event: any){
     event.preventDefault();
 
     const params: string[] = [];
-    const chatId: string = "61a015ae-d8a3-4f5a-a8b5-6df1bcbaf11f";
+    const chatId: string = (document.getElementById("queryChatId") as HTMLInputElement).value;
     if (chatId) {
       params.push(`chatid=${chatId}`);
     }
 
     const queryString = params.length > 0 ? "?" + params.join("&") : "";
 
-    const url = `http://localhost:8080/database/getchat${queryString}`;
+    const url = `http://localhost:8080/api/v1/chat/getchat${queryString}`;
 
 
     const response = await fetch(url);
@@ -103,29 +104,61 @@ async function getChat(event: any){
     }
 }
 
+async function addUserToChat(event: any){
+    event.preventDefault();
+
+    const addUser: DatabaseRequest = {
+        userId: await (document.getElementById("addUserId") as HTMLInputElement).value.trim(),
+        chatId: await (document.getElementById("addChatId") as HTMLInputElement).value.trim(),    
+    }
+
+    const response = await fetch("http://localhost:8080/api/v1/chat/adduser", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+          },
+        body: JSON.stringify(addUser),
+    });
+    const data = await response.json();
+    if(data.success){
+        console.log(data);
+        document.getElementById("addUserResult")!.innerText = `New User added`;
+    }else{
+        document.getElementById("addUserResult")!.innerText = `There was an error: ${data.error}`;
+    }
+}
+
 function DatabaseTest() {
     return (
     <>  
     <div className="w-full h-auto p-7 mt-5 bg-red-500">
         <h2 className="text-3xl">Database</h2>
-        <div className="mt-5"><button onClick={createAno}>Create Anonymous User</button></div>
-        <div id="anoResult"></div>
         <div className="mt-5">
-            <label htmlFor="queryUsername">Username:</label>  <br></br>
-            <input className="bg-white border-black border-2 mb-4 text-black" id="queryUsername" />
-            <br></br>
-            <label htmlFor="queryPassword">Password:</label> <br></br>
-            <input className="bg-white border-black border-2 mb-4 text-black" id="queryPassword" type="password"/>
-            <br></br>
-            <button onClick={createUser}> Create new user</button>
+            <div className="mt-5"><button onClick={createAno}>Create Anonymous User</button></div>
+            <div id="anoResult"></div>
+                <label htmlFor="queryUsername">Username:</label>  <br></br>
+                <input className=" w-1/2 bg-white border-black border-2 mb-4 text-black" id="queryUsername" />
+                <br></br>
+                <label htmlFor="queryPassword">Password: </label> <br></br>
+                <input className=" w-1/2 bg-white border-black border-2 mb-4 text-black" id="queryPassword" type="password"/>
+                <br></br>
+                <button onClick={createUser}> Create new user</button>
+            <div id="userResult"></div>
+            <label htmlFor="chatUserList">User:</label>  <br></br>
+            <input className=" w-1/2 bg-white border-black border-2 mb-4 text-black" id="chatUserList" />
+            <div className="mt-5"><button onClick={createChat}>Create Chat</button></div>
+            <div id="chatResult"></div>
+            <label htmlFor="queryChatId">ChatId:</label> <br></br>
+            <input className=" w-1/2 bg-white border-black border-2 mb-4 text-black" id="queryChatId"/>
+            <div className="mt-5"><button onClick={getChat}>Get Chat</button></div>
+            <div id="getChat"></div>
+            <label htmlFor="queryChatId">UserId:</label> <br></br>
+            <input className=" w-1/2 bg-white border-black border-2 mb-4 text-black" id="addUserId"/>
+            <label htmlFor="queryChatId">ChatId:</label> <br></br>
+            <input className=" w-1/2 bg-white border-black border-2 mb-4 text-black" id="addChatId"/>
+            <div className="mt-5"><button onClick={addUserToChat}>Add User</button></div>
+            <div id="addUserResult"></div>
         </div>
-        <div id="userResult"></div>
-        <label htmlFor="chatUserList">User:</label>  <br></br>
-        <input className="bg-white border-black border-2 mb-4 text-black" id="chatUserList" />
-        <div className="mt-5"><button onClick={createChat}>Create Chat</button></div>
-        <div id="chatResult"></div>
-        <div className="mt-5"><button onClick={getChat}>Get Chat</button></div>
-        <div id="getChat"></div>
     </div>
     </>
 )

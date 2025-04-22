@@ -61,4 +61,5 @@ export default (database: Database) => {
       console.error("Error sending response: ", err);
     }
   });
+  return router
 };
