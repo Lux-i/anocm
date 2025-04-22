@@ -221,6 +221,9 @@ wss.on("connection", (ws: WebSocketType, req: Request) => {
   ws.on("message", (data: WebSocket.RawData) => {
     const message: Message = JSON.parse(data.toString());
 
+    // for testing purposes this should link the ws
+    userManager.setUser(message.senderID, ws);
+
     console.log(`Received message: ${message.content}`);
 
     let res = routeMessageAction(message, database, userManager);
