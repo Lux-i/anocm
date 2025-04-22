@@ -1,3 +1,10 @@
+config.json
+# custom
+server/modules
+server/**/*.js
+
+.env
+
 # Logs
 logs
 *.log

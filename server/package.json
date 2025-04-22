@@ -1,5 +1,18 @@
 {
   "dependencies": {
-    "express": "^4.21.2"
+    "@types/express": "^5.0.1",
+    "bufferutil": "^4.0.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "redis": "^4.7.0",
+    "utf-8-validate": "^6.0.5",
+    "uuid": "^11.1.0",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/ws": "^8.18.1"
   }
 }
