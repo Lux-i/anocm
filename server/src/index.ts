@@ -2,12 +2,13 @@ import { Request, Response, NextFunction } from "express";
 import WebSocket, { WebSocket as WebSocketType } from "ws";
 import { Message } from "./modules/chats/types";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
-import { Database} from "./modules/database/database";
-import { Chat } from "./modules/database/databaseTypes";
+import { Database } from "./modules/database/database";
 const express = require("express");
 const cors = require("cors");
 const app = express();
 const server = require("http").createServer(app);
+
+const database = new Database();
 
 let configPort;
 try {
@@ -25,7 +26,7 @@ const UsedPort = portArg || configPort || 8080;
 //#region middleware
 app.use(
   cors({
-    origin: /^http:\/\/localhost(:[0-9]{1,4})?$/
+    origin: /^http:\/\/localhost(:[0-9]{1,4})?$/,
   })
 );
 
@@ -62,141 +63,16 @@ app.set("view engine", "ejs");
 
 //#region API Endpoints
 
-/*
-app.use("/auth", require("./routers/auth")); // Auth router
-app.use("/action", require("./routers/action")); // Action router
-*/
+app.use("api/v1/user", require("./routers/user")(database));
+app.use("api/v1/chat", require("./routers/chat")(database));
 
 //#endregion
-//#region Redis
-import { UUID } from "crypto";
 
-
-interface DatabaseResponse {
-  success: boolean;
-  error?: string;
-  id?: string;
-  userData?: any;
-}
-
-const database = new Database();
-app.post("/database/newano", async (req: Request, res: Response) => {
-  console.log("POST Request: new anonymous User");
-    try{
-      database.createAnoUser().then((clientId: string) => {
-      const response: DatabaseResponse = {
-        success: true,
-        id: clientId.toString(),
-      } 
-      res.send(response);
-    });
-  }catch(err: any){
-    const response: DatabaseResponse = {
-      success: false,
-      error: err,
-    } 
-    res.send(response);
-    console.error("Error sending response: ", err);
-  }
-});
-
-app.post("/database/newuser", async (req: Request, res: Response) => {
-  console.log("POST Request: new User");
-    try{
-      database.createUser(req.body.username, req.body.password).then((userId: number | false) => {
-      if(userId == false){
-        const response: DatabaseResponse = {
-          success: false,
-          error: "User already exists"
-        } 
-        res.send(response);
-
-      }else{
-        const response: DatabaseResponse = {
-          success: true,
-          id: userId.toString(),
-          userData: req.body.username,
-        } 
-        res.send(response);
-      }
-    });
-  }catch(err: any){
-    const response: DatabaseResponse = {
-      success: false,
-      error: err,
-    } 
-    res.send(response);
-    console.error("Error sending response: ", err);
-  }
-});
-
-
-app.post("/database/newchat", async (req: Request, res: Response) => {
-  console.log("POST Request: new Chat");
-  try{
-    database.createChat(req.body).then((chatId: UUID | false) => {
-    if(chatId != false){
-      const response: DatabaseResponse = {
-        success: true,
-        id: chatId.toString(),
-        
-      } 
-      res.send(response);
-
-    }else{
-      const response: DatabaseResponse = {
-        success: false,
-        error: `Error creating Chat`
-      } 
-      res.send(response);
-    }
-  });
-  }catch(err: any){
-    const response: DatabaseResponse = {
-      success: false,
-      error: err,
-    } 
-    res.send(response);
-    console.error("Error creating new Chat: ", err);
-  }
-});
-
-
-app.get("/database/getchat", async (req: Request, res: Response) => {
-  try{
-    const chatId = req.query.chatid as string;
-
-    if (!chatId) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing chatid in query.",
-      });
-    }
-
-    database.getChat(chatId!).then((chat: Chat | false) => {
-      const response: DatabaseResponse = {
-        success: true,
-        userData: chat,
-      }
-      res.send(response);
-    });
-  }catch(err: any ){
-    const response: DatabaseResponse = {
-      success: false,
-      error: err,
-    } 
-    res.send(response);
-  }
-
-});
-//#endregion
 //#region Browser Endpoints
 
-app.get("*", (req: Request, res: Response) => {
+app.get("*", async (req: Request, res: Response) => {
   res.render(`${__dirname}/dist/index.html`);
 });
-
-
 
 //#endregion
 
@@ -211,11 +87,11 @@ server.listen(UsedPort, () => {
 
 const wss = new WebSocket.Server({ server: server });
 
-wss.on("connection", (ws: WebSocketType, req: Request) => {
+wss.on("connection", async (ws: WebSocketType, req: Request) => {
   console.log("Connected to WebSocket");
   ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
 
-  ws.on("message", (data: WebSocket.RawData) => {
+  ws.on("message", async (data: WebSocket.RawData) => {
     const message: Message = JSON.parse(data.toString());
 
     console.log(`Received message: ${message.text}`);
@@ -232,10 +108,9 @@ wss.on("connection", (ws: WebSocketType, req: Request) => {
     }
   });
 
-  ws.on("close", () => {
+  ws.on("close", async () => {
     console.log("Disconnected");
   });
 });
 
 //#endregion
-
