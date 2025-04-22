@@ -3,6 +3,7 @@ import WebSocket, { WebSocket as WebSocketType } from "ws";
 import { Message } from "./modules/message/types";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
 import { Database } from "./modules/database/database";
+import UserManager from "./modules/userManager/userManager";
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -86,6 +87,7 @@ server.listen(UsedPort, () => {
 //#region WebSocket
 
 const wss = new WebSocket.Server({ server: server });
+const userManager = new UserManager();
 
 wss.on("connection", async (ws: WebSocketType, req: Request) => {
   console.log("Connected to WebSocket");
