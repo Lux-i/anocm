@@ -153,9 +153,9 @@ function DatabaseTest() {
             <div className="mt-5"><button onClick={getChat}>Get Chat</button></div>
             <div id="getChat"></div>
             <label htmlFor="queryChatId">UserId:</label> <br></br>
-            <input className=" w-1/2 bg-white border-black border-2 mb-4 text-black" id="addUserId"/>
+            <input className=" w-1/2 bg-white border-black border-2 mb-4 text-black" id="addUserId"/><br></br>
             <label htmlFor="queryChatId">ChatId:</label> <br></br>
-            <input className=" w-1/2 bg-white border-black border-2 mb-4 text-black" id="addChatId"/>
+            <input className=" w-1/2 bg-white border-black border-2 mb-4 text-black" id="addChatId"/><br></br>
             <div className="mt-5"><button onClick={addUserToChat}>Add User</button></div>
             <div id="addUserResult"></div>
         </div>

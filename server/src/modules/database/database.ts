@@ -72,7 +72,7 @@ export class Database{
      */
     async createUser(username: string, password: string): Promise<UUID | false>{
 
-        if((typeof username != undefined) && (typeof password != undefined)){
+        if(((typeof username != undefined) && (typeof password != undefined)) && ((username != "") && (password != ""))){
         let cursor = 0;
 
         do{
@@ -132,7 +132,7 @@ export class Database{
     }
 
     async addUsertoChat(chatId: string, userId: UUID): Promise<boolean>{
-        if(((await this.client.exists(`user:${userId}`)) || (await this.client.exists(`anon_user:${userId}`))) && !(await this.client.HEXISTS(`chat:${chatId}:users`, `${chatId}`))){
+        if((await this.client.exists(`user:${userId}`))  && !(await this.client.HEXISTS(`chat:${chatId}:users`, `${chatId}`))){
             if(await this.client.hSet(`chat:${chatId}:users`, `${userId}`, "member")){
                 return true;
             }
@@ -143,7 +143,7 @@ export class Database{
     }
 
     async deleteUserFromChat(chatId: string, userId: UUID): Promise<boolean>{
-        if(((await this.client.exists(`user:${userId}`)) || (await this.client.exists(`anon_user:${userId}`))) && await this.client.HEXISTS(`chat:${chatId}:users`, `${chatId}`)){
+        if((await this.client.exists(`user:${userId}`)) && await this.client.HEXISTS(`chat:${chatId}:users`, `${chatId}`)){
             if(await this.client.hDel(`chat:${chatId}:users`, `${userId}`)){
                 return true;
             }
