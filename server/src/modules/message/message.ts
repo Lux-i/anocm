@@ -8,11 +8,10 @@ import { validate } from "uuid"
 export async function broadcastToChat(message: Message, database: Database, handler: UserManager) {
     const res = await database.getChat(message.chatID);
 
-    if (res === false) {
-
+    if (res === false || !(message.senderID in res.chatUserList)) {
         const msg: Message = {
             action: Action.MessageResponse,
-            content: `Message could not be broadcasted to chat with id "${message.chatID}"`,
+            content: `Message could not be broadcasted to chat with id '${message.chatID}'`,
             timestamp: Date.now(),
             senderID: message.senderID,
             chatID: message.senderID
@@ -22,17 +21,26 @@ export async function broadcastToChat(message: Message, database: Database, hand
         return;
     }
 
-    res.chatUserList.forEach(user => {
-        if (validate(user)) {
-            handler.sendMessage(user as UUID, message);
+    Object.keys(res.chatUserList).forEach(id => {
+        if (isUUID(id)) {
+            const uuid: UUID = id;
+            handler.sendMessage(uuid, message);
         }
-    });
+    })
 }
 
-function addToChatNoConfirm() {
+function isUUID(value: string): value is UUID {
+    return validate(value);
+}
+
+//#region Debug
+
+function addToChatNoConfirm(userId: UUID, chatId: UUID, database: Database) {
 
 }
 
 function removeFromChatNoConfirm() {
 
 }
+
+//#endregion

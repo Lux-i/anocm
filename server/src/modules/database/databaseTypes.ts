@@ -1,4 +1,4 @@
-import {UUID} from "crypto";
+import { UUID } from "crypto";
 
 export interface User {
     userId: string,
@@ -7,7 +7,7 @@ export interface User {
 
 export interface Chat {
     chatId: string;
-    chatUserList: any;
+    chatUserList: Record<UUID, string>;
     chatSettings: any;
     chatMessages?: string[];
 }

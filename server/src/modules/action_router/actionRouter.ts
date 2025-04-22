@@ -2,9 +2,15 @@ import { Message } from "../message/types";
 import { Action } from "./types"
 import { broadcastToChat } from "../message/message";
 
-import { WebSocket } from "ws"
 import { Database } from "../database/database";
 import UserManager from "../userManager/userManager";
+
+/**
+ * 
+ * @param message message object
+ * @param database database to send messages / response
+ * @param handler singleton ws manager
+ */
 
 export function routeMessageAction(message: Message, database: Database, handler: UserManager) {
     switch (message.action) {
