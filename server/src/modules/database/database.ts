@@ -131,7 +131,7 @@ export class Database {
         }
     }
 
-    async addUsertoChat(chatId: string, userId: UUID): Promise<boolean> {
+    async addUsertoChat(chatId: UUID, userId: UUID): Promise<boolean> {
         if ((await this.client.exists(`user:${userId}`)) && !(await this.client.HEXISTS(`chat:${chatId}:users`, `${userId}`))) {
             if (await this.client.hSet(`chat:${chatId}:users`, `${userId}`, "member")) {
                 return true;
@@ -142,7 +142,7 @@ export class Database {
         return false;
     }
 
-    async deleteUserFromChat(chatId: string, userId: UUID): Promise<boolean> {
+    async deleteUserFromChat(chatId: UUID, userId: UUID): Promise<boolean> {
         if ((await this.client.exists(`user:${userId}`)) && (await this.client.HEXISTS(`chat:${chatId}:users`, `${userId}`))) {
             if (await this.client.hDel(`chat:${chatId}:users`, `${userId}`)) {
                 return true;
