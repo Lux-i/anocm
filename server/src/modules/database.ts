@@ -13,7 +13,15 @@ export class Database{
 
     constructor() {
         this.redis = require("redis");
-        this.client = this.redis.createClient();
+        this.client = this.redis.createClient({
+            username: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            socket: {
+                host: 'redis-18414.c293.eu-central-1-1.ec2.redns.redis-cloud.com',
+                port: 18414
+            }
+        });
+
         this.client.on('error', (err: Error) => console.log("Redis client error: ", err));
         this.client.connect();
         this.client.exists('total_users').then((data: number) => {
@@ -33,13 +41,13 @@ export class Database{
      * @param {User} user
      * @returns chatId
      */
-    async createChat(users: User[]): Promise<UUID | string>{
+    async createChat(users: User[]): Promise<UUID | false>{
         if(users.length >= 2){
             let chatId = randomUUID();
             for(const user of users){
                 if(!(await this.client.exists(`user:${user.userId}`))){
                     if(!(await this.client.exists(`anon_user:${user.userId}`))){
-                        return `User ${user.userId} not found`;
+                        return false;
                     } 
                 }   
             }
@@ -53,7 +61,7 @@ export class Database{
             
             return chatId;
         }else{
-            return "Not enough Users";
+            return false;
         }
     }
 

@@ -183,8 +183,8 @@ app.post("/database/newchat", (req: Request, res: Response) => {
   console.log("POST Request: new Chat");
   try{
     console.log(req.body);
-    database.createChat(req.body).then((chatId: UUID | String) => {
-    if(!(chatId instanceof String)){
+    database.createChat(req.body).then((chatId: UUID | false) => {
+    if(chatId != false){
       const response: DatabaseResponse = {
         success: true,
         id: chatId.toString(),
@@ -194,8 +194,8 @@ app.post("/database/newchat", (req: Request, res: Response) => {
 
     }else{
       const response: DatabaseResponse = {
-        success: true,
-        error: `Error creating Chat: ${chatId}`
+        success: false,
+        error: `Error creating Chat`
       } 
       res.send(response);
     }

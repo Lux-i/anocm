@@ -4,11 +4,6 @@ interface DatabaseRequest {
     password?: string;
 }
 
-const newUser = document.getElementById("newUser");
-if(newUser){
-    newUser.addEventListener("submit", (event)=> createUser(event));
-}
-
 /**
    * Makes POST request to create an anonymous User. Response has the clientId for the user created.
    */
@@ -37,8 +32,8 @@ async function createUser(event: any){
     event.preventDefault();
 
     const userData: DatabaseRequest = {
-        username: await (document.getElementById("query") as HTMLInputElement).value.trim(),
-        password: "1234",    
+        username: await (document.getElementById("queryUsername") as HTMLInputElement).value.trim(),
+        password: await (document.getElementById("queryPassword") as HTMLInputElement).value.trim(),    
     }
 
     const response = await fetch("http://localhost:8080/database/newuser", {
@@ -60,7 +55,10 @@ async function createUser(event: any){
 
 async function createChat(){
 
-    const userList: DatabaseRequest[] = [{userId: "1"},{userId: "6"}];
+    const input = (document.getElementById("chatUserList") as HTMLInputElement).value;
+    const userIdForm = input.split(',').map(id => id.trim()).filter(id => id !== '');
+    const userList: DatabaseRequest[] = userIdForm.map(id => ({ userId: id }));
+
 
     const response = await fetch("http://localhost:8080/database/newchat", {
         method: "POST",
@@ -72,7 +70,7 @@ async function createChat(){
     const data = await response.json();
     if(data.success){
         console.log(data);
-        document.getElementById("chatResult")!.innerText = `New Chat created: ${data.id}`;
+        document.getElementById("chatResult")!.innerText = `New Chat created: ${data.id} \n Users: ${userIdForm.join(', ')}`;
     }else{
         console.log(data);
         document.getElementById("chatResult")!.innerText = `There was an error: ${data.error}`;
@@ -87,13 +85,17 @@ function DatabaseTest() {
         <div className="mt-5"><button onClick={createAno}>Create Anonymous User</button></div>
         <div id="anoResult"></div>
         <div className="mt-5">
-        <form id="newUser">
-            <input className="bg-white border-black border-2 mb-4 text-black" id="query" />
+            <label htmlFor="queryUsername">Username:</label>  <br></br>
+            <input className="bg-white border-black border-2 mb-4 text-black" id="queryUsername" />
             <br></br>
-            <button type="submit"> Create new user</button>
-        </form>
+            <label htmlFor="queryPassword">Password:</label> <br></br>
+            <input className="bg-white border-black border-2 mb-4 text-black" id="queryPassword" type="password"/>
+            <br></br>
+            <button onClick={createUser}> Create new user</button>
         </div>
         <div id="userResult"></div>
+        <label htmlFor="chatUserList">User:</label>  <br></br>
+        <input className="bg-white border-black border-2 mb-4 text-black" id="chatUserList" />
         <div className="mt-5"><button onClick={createChat}>Create Chat</button></div>
         <div id="chatResult"></div>
     </div>
