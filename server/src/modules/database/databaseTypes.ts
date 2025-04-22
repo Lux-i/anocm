@@ -7,7 +7,7 @@ export interface User {
 
 export interface Chat {
     chatId: string;
-    chatUserList: String[];
+    chatUserList: any;
     chatSettings: any;
     chatMessages?: string[];
 }
