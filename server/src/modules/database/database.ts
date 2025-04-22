@@ -64,6 +64,21 @@ export class Database{
         }
     }
 
+    async sendMessageToChat(chatId: string, userId: string, message: string): Promise<boolean>{
+        try{
+            await this.client.xAdd(
+                `chat:${chatId}:messages`,
+                '*',
+                {
+                    [`${userId}`]: message,
+                },
+            );
+            return true;
+        }catch{
+            return false;
+        }
+    }
+
     /**
      * Creates User hashmap for an user with username and password
      * @param {string} username
@@ -143,7 +158,7 @@ export class Database{
     }
 
     async deleteUserFromChat(chatId: string, userId: UUID): Promise<boolean>{
-        if((await this.client.exists(`user:${userId}`)) && await this.client.HEXISTS(`chat:${chatId}:users`, `${chatId}`)){
+        if((await this.client.exists(`user:${userId}`)) && await this.client.HEXISTS(`chat:${chatId}:users`, `${userId}`)){
             if(await this.client.hDel(`chat:${chatId}:users`, `${userId}`)){
                 return true;
             }
