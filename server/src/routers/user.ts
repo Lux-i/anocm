@@ -36,11 +36,11 @@ export default (database: Database) => {
     try {
       database
         .createUser(req.body.username, req.body.password)
-        .then((userId: number | false) => {
+        .then((userId: string | false) => {
           if (userId == false) {
             const response: DatabaseResponse = {
               success: false,
-              error: "User already exists",
+              error: "Error creating User",
             };
             res.send(response);
           } else {
