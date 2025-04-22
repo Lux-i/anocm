@@ -48,8 +48,10 @@ export class Database{
                 }   
             }
             for(const user of users){
-                await this.client.lPush(`chat:${chatId}:users`, `${user.userId}`);
+                await this.client.hSet(`chat:${chatId}:users`, `${user.userId}`, `member`);
             }
+
+            await this.client.hSet(`chat:${chatId}:users`, `${users.at(0)?.userId}`, "admin");
             
             await this.client.hSet(`chat:${chatId}:settings`, {
                 'admin': `${users.at(0)?.userId}`,
@@ -112,7 +114,7 @@ export class Database{
         try{
             const chat: Chat = {
                 chatId: chatIdInput,
-                chatUserList: await this.client.lRange(`chat:${chatIdInput}:users`, 0, -1),
+                chatUserList: await this.client.hGetAll(`chat:${chatIdInput}:users`),
                 chatSettings: await this.client.hGetAll(`chat:${chatIdInput}:settings`),
                 chatMessages: await this.client.zRange(`chat:${chatIdInput}:messages`, 0, -1),
             }
@@ -121,6 +123,28 @@ export class Database{
         }catch{
             return false;
         }
+    }
+
+    async addUsertoChat(chatId: string, userId: string): Promise<boolean>{
+        if((await this.client.exists(`user:${userId}`)) || (await this.client.exists(`anon_user:${userId}`))){
+            if(await this.client.hSet(`chat:${chatId}:users`, `${userId}`, "member")){
+                return true;
+            }
+        }  else{
+            return false;
+        }
+        return false;
+    }
+
+    async deleteUserFromChat(chatId: string, userId: string): Promise<boolean>{
+        if(((await this.client.exists(`user:${userId}`)) || (await this.client.exists(`anon_user:${userId}`))) && await this.client.HEXISTS(`chat:${chatId}:users`, `${chatId}`)){
+            if(await this.client.hDel(`chat:${chatId}:users`, `${userId}`)){
+                return true;
+            }
+        }  else{
+            return false;
+        }
+        return false;
     }
 }
 
