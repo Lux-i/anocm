@@ -3,8 +3,6 @@ import { Database } from "../modules/database/database";
 const express = require("express");
 const router = express.Router();
 
-import { UUID } from "crypto";
-
 interface DatabaseResponse {
   success: boolean;
   error?: string;
@@ -13,7 +11,7 @@ interface DatabaseResponse {
 }
 
 export default (database: Database) => {
-  router.post("/database/newano", async (req: Request, res: Response) => {
+  router.post("/newano", async (req: Request, res: Response) => {
     console.log("POST Request: new anonymous User");
     try {
       database.createAnoUser().then((clientId: string) => {
@@ -33,7 +31,7 @@ export default (database: Database) => {
     }
   });
 
-  router.post("/database/newuser", async (req: Request, res: Response) => {
+  router.post("/newuser", async (req: Request, res: Response) => {
     console.log("POST Request: new User");
     try {
       database

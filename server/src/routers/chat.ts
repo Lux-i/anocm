@@ -14,7 +14,7 @@ interface DatabaseResponse {
 }
 
 export default (database: Database) => {
-  router.post("/database/newchat", async (req: Request, res: Response) => {
+  router.post("/newchat", async (req: Request, res: Response) => {
     console.log("POST Request: new Chat");
     try {
       database.createChat(req.body).then((chatId: UUID | false) => {
@@ -42,7 +42,7 @@ export default (database: Database) => {
     }
   });
 
-  router.get("/database/getchat", async (req: Request, res: Response) => {
+  router.get("/getchat", async (req: Request, res: Response) => {
     try {
       const chatId = req.query.chatid as string;
 

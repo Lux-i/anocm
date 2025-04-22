@@ -63,8 +63,8 @@ app.set("view engine", "ejs");
 
 //#region API Endpoints
 
-app.use("api/v1/user", require("./routers/user")(database));
-app.use("api/v1/chat", require("./routers/chat")(database));
+app.use("/api/v1/user", require("./routers/user")(database));
+app.use("/api/v1/chat", require("./routers/chat")(database));
 
 //#endregion
 
