@@ -77,6 +77,32 @@ async function createChat(){
     }
 }
 
+async function getChat(event: any){
+    event.preventDefault();
+
+    const params: string[] = [];
+    const chatId: string = "61a015ae-d8a3-4f5a-a8b5-6df1bcbaf11f";
+    if (chatId) {
+      params.push(`chatid=${chatId}`);
+    }
+
+    const queryString = params.length > 0 ? "?" + params.join("&") : "";
+
+    const url = `http://localhost:8080/database/getchat${queryString}`;
+
+
+    const response = await fetch(url);
+
+
+    const data = await response.json();
+    if(data.success){
+        console.log(data);
+        document.getElementById("getChat")!.innerText = `Chat: ${JSON.stringify(data.userData)}`;
+    }else{
+        document.getElementById("getChat")!.innerText = `There was an error: ${data.error}`;
+    }
+}
+
 function DatabaseTest() {
     return (
     <>  
@@ -98,6 +124,8 @@ function DatabaseTest() {
         <input className="bg-white border-black border-2 mb-4 text-black" id="chatUserList" />
         <div className="mt-5"><button onClick={createChat}>Create Chat</button></div>
         <div id="chatResult"></div>
+        <div className="mt-5"><button onClick={getChat}>Get Chat</button></div>
+        <div id="getChat"></div>
     </div>
     </>
 )

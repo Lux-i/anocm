@@ -1,10 +1,6 @@
 import { RedisClientType } from "redis";
 import { randomUUID, UUID } from "crypto";
-
-interface User {
-    userId: string,
-    username?: string,
-}
+import { Chat, User } from "./databaseTypes";
 
 
 export class Database{
@@ -111,9 +107,21 @@ export class Database{
         await this.client.set(`anon_user:${userId}`, clientId.toString());
         return clientId;
     }
+
+    async getChat(chatIdInput: string): Promise<Chat | false>{
+        try{
+            const chat: Chat = {
+                chatId: chatIdInput,
+                chatUserList: await this.client.lRange(`chat:${chatIdInput}:users`, 0, -1),
+                chatSettings: await this.client.hGetAll(`chat:${chatIdInput}:settings`),
+                chatMessages: await this.client.zRange(`chat:${chatIdInput}:messages`, 0, -1),
+            }
+    
+            return chat;
+        }catch{
+            return false;
+        }
+    }
 }
-
-
-
 
 
