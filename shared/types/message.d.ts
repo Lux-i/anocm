@@ -1,5 +1,4 @@
 import { UUID } from "crypto";
-import { Action } from "../action_router/types";
 
 export type Message = {
     action: Action,
@@ -13,4 +12,12 @@ export type ResponseContent = {
     sucess: boolean,
     message: String,
     json?: Object
+}
+
+export enum Action {
+    None = "",
+    BroadcastToChat = "BroadcastToChat",
+    AddClientToChatNoConfirm = "AddClientToChatNoConfirm",
+    RemoveClientFromChatNoConfirm = "RemoveClientFromChatNoConfirm",
+    MessageResponse = "MessageResponse"
 }

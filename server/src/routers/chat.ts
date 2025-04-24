@@ -1,17 +1,14 @@
 import { Request, Response } from "express";
 import { Database } from "../modules/database/database";
-import { Chat } from "../modules/database/databaseTypes";
+import { Chat } from "@anocm/shared/types/database";
+import { DatabaseResponse } from "@anocm/shared/types/database";
+
 const express = require("express");
 const router = express.Router();
 
 import { UUID } from "crypto";
 
-interface DatabaseResponse {
-  success: boolean;
-  error?: string;
-  id?: string;
-  userData?: any;
-}
+
 
 export default (database: Database) => {
   router.post("/newchat", async (req: Request, res: Response) => {

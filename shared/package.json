@@ -1,0 +1,12 @@
+{
+    "name": "@anocm/shared",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "dependencies": {
+        "crypto": "^1.0.1"
+    },
+    "devDependencies": {
+        "@types/node": "^22.14.1"
+    }
+}

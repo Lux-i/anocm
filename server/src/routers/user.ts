@@ -1,14 +1,9 @@
 import { Request, Response } from "express";
 import { Database } from "../modules/database/database";
+import { DatabaseResponse } from "@anocm/shared/types/database";
+
 const express = require("express");
 const router = express.Router();
-
-interface DatabaseResponse {
-  success: boolean;
-  error?: string;
-  id?: string;
-  userData?: any;
-}
 
 export default (database: Database) => {
   router.post("/newano", async (req: Request, res: Response) => {
