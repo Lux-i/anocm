@@ -1,7 +1,6 @@
 import { RedisClientType } from "redis";
 import { randomUUID, UUID } from "crypto";
-import { Chat, User } from "./databaseTypes";
-import user from "../../routers/user";
+import { Chat, User } from "@anocm/shared/types/database";
 
 
 export class Database {

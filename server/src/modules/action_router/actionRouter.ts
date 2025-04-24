@@ -1,5 +1,4 @@
-import { Message } from "../message/types";
-import { Action } from "./types"
+import { Message, Action } from "@anocm/shared/types/message";
 import { addToChatNoConfirm, broadcastToChat, removeFromChatNoConfirm } from "../message/message";
 
 import { Database } from "../database/database";

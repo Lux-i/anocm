@@ -11,3 +11,10 @@ export interface Chat {
     chatSettings: any;
     chatMessages?: { id: string; message: { [x: string]: string; }; }[];
 }
+
+export interface DatabaseResponse {
+    success: boolean;
+    error?: string;
+    id?: string;
+    userData?: any;
+}

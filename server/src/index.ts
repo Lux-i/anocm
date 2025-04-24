@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import WebSocket, { WebSocket as WebSocketType } from "ws";
-import { Message } from "./modules/message/types";
+import { Message } from "@anocm/shared/types/message";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
 import { Database } from "./modules/database/database";
 import UserManager from "./modules/userManager/userManager";
