@@ -1,16 +1,14 @@
 {
     "compilerOptions": {
-        "composite": true,
+        "outDir": "dist",
+        "rootDir": "src",
         "declaration": true,
         "declarationMap": true,
-        "emitDeclarationOnly": true,
-        "outDir": "dist",
-        "rootDir": "types",
         "module": "NodeNext",
-        "target": "ES2024",
+        "target": "es2022",
         "moduleResolution": "nodenext"
     },
     "include": [
-        "types/**/*"
+        "src/**/*"
     ]
 }

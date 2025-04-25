@@ -1,7 +1,7 @@
 //utility class to interact with a websocket connection based on a UUID
 
 import { UUID } from "crypto";
-import { Message } from "@anocm/shared/types/message";
+import { Message } from "@anocm/shared/dist";
 import { WebSocket } from "ws";
 
 export default class UserManager {

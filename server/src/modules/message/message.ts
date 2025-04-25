@@ -1,7 +1,7 @@
 import { UUID } from "crypto";
 import { Database } from "../database/database";
 import UserManager from "../userManager/userManager";
-import { Action, Message, ResponseContent } from "@anocm/shared/types/message";
+import { Action, Message, ResponseContent } from "@anocm/shared/dist";
 import { validate } from "uuid"
 
 export async function broadcastToChat(message: Message, database: Database, handler: UserManager) {
