@@ -4,6 +4,9 @@ import { Message } from "@anocm/shared/dist";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
 import { Database } from "./modules/database/database";
 import UserManager from "./modules/userManager/userManager";
+import dotenv from 'dotenv';
+dotenv.config();
+
 const express = require("express");
 const cors = require("cors");
 const app = express();
