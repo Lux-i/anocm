@@ -8,7 +8,7 @@ interface TestMessage extends Message {
   system?: boolean;
 }
 
-const WebSocketTest: React.FC = () => {
+const WebSocketTest = () => {
   const API_BASE = 'http://localhost:8080/api/v1';
 
   //auth states
