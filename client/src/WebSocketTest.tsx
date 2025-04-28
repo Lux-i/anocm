@@ -1,302 +1,560 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Action } from '@anocm/shared/dist';
+import { User, Chat, DatabaseResponse } from '@anocm/shared/dist';
+import type { Message } from '@anocm/shared/dist';
 
-enum Action {
-  None = 0,
-  Message = 1,
-  DebugJoinChat = 2,
-  DebugBroadcast = 3,
+// Erweiterter Message-Typ für Systemnachrichten
+interface TestMessage extends Message {
+  system?: boolean;
 }
 
-type Message = {
-  action: Action;
-  text: string;
-  chatId: string;
-  fromSelf?: boolean;
-};
+const WebSocketTest: React.FC = () => {
+  const API_BASE = 'http://localhost:8080/api/v1';
 
-type StatusMessage = {
-  trayId: string;
-  status: number;
-  message: string;
-};
+  //auth states
+  const [userId, setUserId] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
 
-type MessageReq = {
-  action: Action;
-  text: string;
-  chatId: string;
-  trayId: string;
-};
+  //chat states
+  const [activeChatId, setActiveChatId] = useState<string>('');
+  const [chatUsers, setChatUsers] = useState<User[]>([]);
+  const [newUserId, setNewUserId] = useState<string>('');
+  const [loadedChat, setLoadedChat] = useState<Chat | null>(null);
 
-const WebSocketTest = () => {
-  const [message, setMessage] = useState('');
-  const [chatId, setChatId] = useState('');
-  const [receivedMessages, setReceivedMessages] = useState<Message[]>([]);
-  const [statusMessages, setStatusMessages] = useState<StatusMessage[]>([]);
-  const [connected, setConnected] = useState(false);
-  const [groupKey, setGroupKey] = useState<CryptoKey | null>(null);
-  const [actionType, setActionType] = useState<'message' | 'broadcast'>('message');
-  const [hasJoined, setHasJoined] = useState(false);
+  //messages states
+  const [messageContent, setMessageContent] = useState<string>('');
+  const [messages, setMessages] = useState<TestMessage[]>([]);
 
+  //status und error states
+  const [status, setStatus] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const wsRef = useRef<WebSocket | null>(null);
+  //websocket states
+  const ws = useRef<WebSocket | null>(null);
+  const [connected, setConnected] = useState<boolean>(false);
 
+  //auto-scroll
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  //wenn userId gesetzt mit websocket verbinden
   useEffect(() => {
-    const deriveGroupKeyFromChatId = async (chatId: string): Promise<CryptoKey> => {
-      const enc = new TextEncoder().encode(chatId);
-      const hash = await crypto.subtle.digest("SHA-256", enc);
-      return crypto.subtle.importKey(
-        "raw",
-        hash,
-        { name: "AES-GCM" },
-        true,
-        ["encrypt", "decrypt"]
-      );
-    };
+    if (userId && !connected) connectWebSocket();
+    return () => { ws.current?.close(); };
+  }, [userId]);
 
-    const setupKey = async () => {
-      const key = await deriveGroupKeyFromChatId(chatId);
-      setGroupKey(key);
-    };
-
-    setupKey();
-  }, [chatId]);
-
+  //auto scroll bei neuen nachrichten
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080');
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-    ws.onopen = () => {
-      console.log('WebSocket verbunden');
+  
+//websocket funktionen
+  const connectWebSocket = () => {
+    console.log(`[WS] Connecting as ${userId}`);
+    if (!userId) return setError('Bitte zuerst einen Benutzer erstellen');
+    ws.current = new WebSocket(`ws://localhost:8080`);
+    ws.current.onopen = () => {
+      console.log('[WS] Connected');
       setConnected(true);
+      setStatus('WebSocket verbunden');
     };
-
-    ws.onclose = () => {
-      console.log('WebSocket getrennt');
-      setConnected(false);
-    };
-
-    ws.onmessage = async (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('Empfangene Daten:', data);
-
-
-        //Begrüßungsnachricht vom server
-        if ('msg' in data) {
-          const message: Message = {
-            action: Action.None,
-            text: data.msg,
-            chatId: 'server',
-          };
-          setReceivedMessages(prev => [...prev, message]);
-
-          //Status Nachricht
-        } else if ('trayId' in data && 'status' in data && 'message' in data) {
-          setStatusMessages(prev => [...prev, data as StatusMessage]);
-
-          const statusMsg: Message = {
-            action: Action.None,
-            text: `Status: ${data.message}`,
-            chatId: 'system'
-          };
-          setReceivedMessages(prev => [...prev, statusMsg]);
-
-          // normale Nachricht
-        } else if ('action' in data && 'text' in data && 'chatId' in data && groupKey && data.action === Action.Message) {
-          const decryptedText = await decryptMessage(data.text, groupKey);
-          setReceivedMessages(prev => [...prev, {
-            ...data,
-            text: decryptedText
-          }]);
-        }
-
-        else if (data.action === Action.DebugBroadcast){
-            setReceivedMessages(prev => [...prev,{
-                ...data,
-                text: data.text
-            }]);
-
-        }
-
-      } catch (error) {
-        try {
-          const text = event.data.toString();
-          const match = text.match(/(.*) to chat \"(.*)\"/);
-
-          if (match && match.length === 3) {
-            const [_, messageText, receivedChatId] = match;
-
-            const message: Message = {
-              action: Action.Message,
-              text: messageText,
-              chatId: receivedChatId
-            };
-
-            setReceivedMessages(prev => [...prev, message]);
-          } else {
-            const message: Message = {
-              action: Action.Message,
-              text: text,
-              chatId: 'broadcast'
-            };
-            setReceivedMessages(prev => [...prev, message]);
-          }
-        } catch (parseError) {
-          console.error('Fehler beim Verarbeiten der Nachricht:', parseError);
-        }
+    ws.current.onmessage = ev => {
+      const msg: Message = JSON.parse(ev.data);
+      console.log(`[WS] Msg ${msg.action} in chat ${msg.chatID}`);
+      if (msg.action === Action.BroadcastToChat) {
+        setMessages(prev => [...prev, msg]);
+      } else if (msg.action === Action.MessageResponse) {
+        const txt = JSON.parse(msg.content)?.message || msg.content;
+        setStatus(`Server: ${txt}`);
       }
     };
+    ws.current.onclose = () => {
+      console.log('[WS] Disconnected');
+      setConnected(false);
+      setStatus('WebSocket getrennt');
+    };
+    ws.current.onerror = err => {
+      console.error('[WS] Error', err);
+      setError('WebSocket-Fehler');
+    };
+  };
 
-    wsRef.current = ws;
-    return () => ws.close();
-  }, []);
+  const sendMessage = () => {
+    if (!connected || !messageContent.trim()) return;
+    console.log(`[WS] Send to ${activeChatId}: "${messageContent}"`);
+    const msg: TestMessage = {
+      action: Action.BroadcastToChat,
+      content: messageContent,
+      senderID: userId,
+      chatID: activeChatId,
+      timestamp: Date.now(),
+    };
+    ws.current!.send(JSON.stringify(msg));
+    setMessages(prev => [...prev, msg]);
+    setMessageContent('');
+    setStatus('Nachricht gesendet');
+  };
 
-  const sendMessage = async () => {
-    if (!wsRef.current || !connected || !groupKey || actionType === 'message' && !hasJoined) {
-      alert('Noch keinem Chat beigetreten');
+  const removeUserFromChat = () => {
+    if (!connected || !newUserId) return setError('IDs angeben');
+    console.log(`[WS] Remove ${newUserId} from ${activeChatId}`);
+    const payload = {
+      action: Action.RemoveClientFromChatNoConfirm,
+      content: newUserId,
+      senderID: userId,
+      chatID: activeChatId,
+      timestamp: Date.now(),
+    };
+    ws.current!.send(JSON.stringify(payload));
+    setMessages(prev => [
+      ...prev,
+      {
+        system: true,
+        action: Action.BroadcastToChat,
+        content: `User ${newUserId} entfernt`,
+        senderID: 'system',
+        chatID: activeChatId,
+        timestamp: Date.now(),
+      }
+    ]);
+    setStatus(`User entfernt: ${newUserId}`);
+    setNewUserId('');
+  };
+
+  //api funktionen
+  const createAnonymousUser = async () => {
+    console.log('[API] POST /user/newano');
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/user/newano`, { method: 'POST' });
+      const data: DatabaseResponse = await res.json();
+      if (data.success && data.id) {
+        console.log(`[API] Anonymous user ${data.id}`);
+        setUserId(data.id);
+        setStatus(`Anon-User erstellt: ${data.id}`);
+        
+        //nicht automatisch zur chat liste hinzufügen
+        //extra hinzufügen lassen manuell
+      } else throw new Error(data.error);
+    } catch (err) {
+      console.error('[API] newano failed', err);
+      setError('Fehler beim Anlegen des anonymen Users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createUser = async () => {
+    if (!username || !password) return setError('Name & Passwort angeben');
+    console.log('[API] POST /user/newuser');
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/user/newuser`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data: DatabaseResponse = await res.json();
+      if (data.success && data.id) {
+        console.log(`[API] User ${data.id}`);
+        setUserId(data.id);
+        setStatus(`User erstellt: ${username}`);
+        
+        //nicht automatisch zur chat liste hinzufügen
+        //extra hinzufügen lassen manuell
+      } else throw new Error(data.error);
+    } catch (err) {
+      console.error('[API] newuser failed', err);
+      setError('Fehler bei User-Erstellung');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //aktuelle chat user
+  const renderChatUsersList = () => {
+    if (chatUsers.length === 0) {
+      return <div className="text-gray-500 italic">Keine Benutzer hinzugefügt</div>;
+    }
+    
+    return (
+      <div className="mt-2 space-y-2">
+        <div className="font-semibold">Chat-Teilnehmer zum Erstellen:</div>
+        <ul className="list-disc list-inside">
+          {chatUsers.map((user, index) => (
+            <li key={index} className="font-mono">
+              {user.username || user.userId}
+              <button 
+                onClick={() => setChatUsers(chatUsers.filter((_, i) => i !== index))}
+                className="ml-2 text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-1 py-0.5 rounded"
+              >
+                Entfernen
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
+  //user zur chat erstellung hinzufügen
+  const addUserToChatCreation = () => {
+    if (!newUserId.trim()) {
+      setError('Bitte eine User-ID eingeben');
       return;
     }
-
-    const encryptedText = await encryptMessage(message, groupKey);
-
-    const messageReq: MessageReq = {
-      action: actionType === 'broadcast' ? Action.DebugBroadcast : Action.Message,
-      text: encryptedText,
-      chatId,
-      trayId: `tray-${Date.now()}`
-    };
-
-    console.log('Sende Nachricht:', messageReq);
-    wsRef.current.send(JSON.stringify(messageReq));
-
-    setReceivedMessages(prev => [...prev, {
-      action: Action.Message,
-      text: message,
-      chatId,
-      fromSelf: true
-    }]);
-
-    setMessage('');
+    
+    //schauen ob user bereits in liste
+    if (chatUsers.some(user => user.userId === newUserId)) {
+      setError('Dieser User ist bereits in der Liste');
+      return;
+    }
+    
+    setChatUsers(prev => [...prev, { userId: newUserId }]);
+    setNewUserId('');
+    setError('');
+    setStatus(`User ${newUserId} zur Chat-Erstellung hinzugefügt`);
   };
 
-  const joinChat = () => {
-    if (!wsRef.current || !connected) return;
-
-    const joinChatMsg : MessageReq = {
-      action: Action.DebugJoinChat,
-      text: "Join Chat", chatId,
-      trayId: `tray-${Date.now()}`
+  //aktuellen benutzer zur chat erstellung hinzufügen
+  const addCurrentUserToChatCreation = () => {
+    if (!userId) {
+      setError('Kein Benutzer angemeldet');
+      return;
+    }
+    
+    //schauen ob user bereits in liste
+    if (chatUsers.some(user => user.userId === userId)) {
+      setError('Sie sind bereits in der Liste');
+      return;
+    }
+    
+    const newUser: User = {
+      userId: userId,
+      username: username || undefined
     };
+    
+    setChatUsers(prev => [...prev, newUser]);
+    setStatus('Sie wurden zur Chat-Erstellung hinzugefügt');
+  };
 
-    console.log('Sende Join-Chat:', joinChatMsg);
-    wsRef.current.send(JSON.stringify(joinChatMsg));
-    setHasJoined(true);
-
-    const statusElement = document.getElementById("join-status");
-    if (statusElement) {
-      statusElement.textContent = `Beigetreten zu Chat: ${chatId}`;
+  const createChat = async () => {
+    if (chatUsers.length < 2) return setError('Mind. 2 User nötig');
+    console.log('[API] POST /chat/newchat');
+    setLoading(true);
+    setError('');
+    try {
+      
+      console.log('Erstelle Chat mit Benutzern:', chatUsers);
+      console.log('JSON für Server:', JSON.stringify(chatUsers));
+      
+      //nur erste und zweite user id senden
+    
+      const usersToSend = [
+        { userId: chatUsers[0].userId },
+        { userId: chatUsers[1].userId }
+      ];
+      
+      console.log('Geänderte User-Liste für Server:', usersToSend);
+      console.log('Geändertes JSON für Server:', JSON.stringify(usersToSend));
+      
+      const res = await fetch(`${API_BASE}/chat/newchat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(usersToSend),
+      });
+      
+      const data: DatabaseResponse = await res.json();
+      console.log('Server-Antwort:', data);
+      
+      if (data.success && data.id) {
+        console.log(`[API] Chat ${data.id}`);
+        setActiveChatId(data.id);
+        setMessages(prev => [
+          ...prev,
+          {
+            system: true,
+            action: Action.BroadcastToChat,
+            content: `Chat ${data.id} erstellt`,
+            senderID: 'system',
+            chatID: data.id,
+            timestamp: Date.now(),
+          }
+        ]);
+        setStatus(`Chat erstellt: ${data.id}`);
+      } else {
+        throw new Error(data.error || 'Unbekannter Fehler bei Chat-Erstellung');
+      }
+    } catch (err) {
+      console.error('[API] newchat failed', err);
+      setError(`Fehler beim Erstellen des Chats: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  async function encryptMessage(plainText: string, key: CryptoKey): Promise<string> {
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encoded = new TextEncoder().encode(plainText);
-    const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encoded);
-    const combined = new Uint8Array([...iv, ...new Uint8Array(encrypted)]);
-    return btoa(String.fromCharCode(...combined));
-  }
+  const getChat = async () => {
+    if (!activeChatId) return setError('Chat-ID angeben');
+    console.log('[API] GET /chat/getchat');
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/chat/getchat?chatid=${activeChatId}`);
+      const data: DatabaseResponse = await res.json();
+      if (data.success && data.userData) {
+        console.log(`[API] Loaded chat ${activeChatId}`);
+        setLoadedChat(data.userData as Chat);
+        setMessages(prev => [
+          ...prev,
+          {
+            system: true,
+            action: Action.BroadcastToChat,
+            content: `Chat ${activeChatId} geladen`,
+            senderID: 'system',
+            chatID: activeChatId,
+            timestamp: Date.now(),
+          }
+        ]);
+        setStatus(`Chat geladen: ${activeChatId}`);
+      } else throw new Error(data.error);
+    } catch (err) {
+      console.error('[API] getchat failed', err);
+      setError('Fehler beim Chat-Laden');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  async function decryptMessage(encoded: string, key: CryptoKey): Promise<string> {
-    const data = Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
-    const iv = data.slice(0, 12);
-    const ciphertext = data.slice(12);
-    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
-    return new TextDecoder().decode(decrypted);
-  }
+  const addUserToChat = async () => {
+    if (!activeChatId || !newUserId) return setError('IDs angeben');
+    console.log('[API] POST /chat/adduser');
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/chat/adduser`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatId: activeChatId, userId: newUserId }),
+      });
+      const data: DatabaseResponse = await res.json();
+      if (data.success) {
+        console.log(`[API] Added ${newUserId}`);
+        await getChat();
+        setMessages(prev => [
+          ...prev,
+          {
+            system: true,
+            action: Action.BroadcastToChat,
+            content: `User ${newUserId} hinzugefügt`,
+            senderID: 'system',
+            chatID: activeChatId,
+            timestamp: Date.now(),
+          }
+        ]);
+      } else throw new Error(data.error);
+    } catch (err) {
+      console.error('[API] adduser failed', err);
+      setError('Fehler beim Hinzufügen des Users');
+    } finally {
+      setLoading(false);
+      setNewUserId('');
+    }
+  };
+
+  const formatTime = (ts: number) => new Date(ts).toLocaleTimeString();
 
   return (
-    <div className="p-6 max-w-2xl mx-auto bg-white text-black font-sans space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">WebSocket Test</h2>
-        <span className={`text-sm ${connected ? 'text-green-500' : 'text-red-500'}`}>{connected ? 'Verbunden' : 'Getrennt'}</span>
+    <div className="min-h-screen bg-gray-100 text-gray-900 p-6 space-y-6">
+      <h1 className="text-4xl font-bold text-center text-blue-600">
+        WebSocket-Backend-Tester
+      </h1>
+
+      {/* status und error */}
+      <div className="space-y-2">
+        {status && (
+          <div className="bg-green-100 text-green-800 p-3 rounded shadow">{status}</div>
+        )}
+        {error && (
+          <div className="bg-red-100 text-red-800 p-3 rounded shadow">{error}</div>
+        )}
       </div>
 
-      <div id="join-status" className="text-xs text-gray-600 mt-2">
-        Nicht beigetreten
-      </div>
-
-
-    <div className="flex items-center gap-2">
-      <input
-        className="w-full p-2 border rounded text-sm"
-        placeholder="Chat ID"
-        value={chatId}
-        onChange={(e) => setChatId(e.target.value)}
-      />
-      <button
-        onClick={joinChat}
-        disabled={!connected}
-        className="px-3 py-1 rounded-full text-xs border bg-white hover:bg-gray-100"
-      >
-        Beitreten
-      </button>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <input
-          className="flex-1 p-2 border rounded text-sm"
-          placeholder="Nachricht eingeben..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-        />
-        <select
-          className="text-sm border h-full rounded px-2 py-1"
-          value={actionType}
-          onChange={(e) => setActionType(e.target.value as 'message' | 'broadcast')}
-        >
-          <option value="message">Normale Nachricht</option>
-          <option value="broadcast">Broadcast</option>
-        </select>
-        <button
-          onClick={sendMessage}
-          disabled={!connected}
-          className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
-            connected ? 'bg-black text-white hover:bg-gray-800' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          Senden
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        <div>
-          <h3 className="text-sm font-semibold mb-1">Empfangene Nachrichten</h3>
-          <ul className="space-y-1 text-sm">
-            {receivedMessages.map((msg, i) => (
-              <li
-                key={i}
-                className={`p-2 rounded border ${
-                  msg.fromSelf ? 'text-right bg-gray-100' : 'text-left bg-white'
-                }`}
-              >
-                <div className="text-xs text-gray-400">{msg.chatId}</div>
-                <div>{msg.text}</div>
-              </li>
-            ))}
-          </ul>
+      {/* benutzer */}
+      <div className="bg-white p-5 rounded-lg shadow-md space-y-3">
+        <h2 className="text-2xl font-semibold text-gray-700">Benutzer</h2>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={createAnonymousUser}
+            disabled={loading}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Anonym
+          </button>
+          <input
+            placeholder="User"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+          />
+          <input
+            type="password"
+            placeholder="Passwort"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+          />
+          <button
+            onClick={createUser}
+            disabled={loading}
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Registrieren
+          </button>
         </div>
+        {userId && (
+          <div className="text-gray-600">
+            Angemeldet als <span className="font-mono text-blue-600">{userId}</span>
+          </div>
+        )}
+      </div>
 
-        <div>
-          <h3 className="text-sm font-semibold mb-1">Statusnachrichten</h3>
-          <ul className="space-y-1 text-sm">
-            {statusMessages.map((status, i) => (
-              <li key={i} className="p-2 border rounded text-xs bg-gray-50">
-                <div><strong>TrayId:</strong> {status.trayId}</div>
-                <div><strong>Status:</strong> {status.status}</div>
-                <div><strong>Nachricht:</strong> {status.message}</div>
-              </li>
-            ))}
-          </ul>
+      {/* chat */}
+      <div className="bg-white p-5 rounded-lg shadow-md space-y-3">
+        <h2 className="text-2xl font-semibold text-gray-700">Chat</h2>
+        
+        {/* chat erstellung */}
+        <div className="border-b border-gray-200 pb-4">
+          <h3 className="text-lg font-medium text-gray-700 mb-2">Chat erstellen</h3>
+          <div className="flex flex-wrap gap-3 mb-2">
+            <input
+              placeholder="User-ID hinzufügen"
+              value={newUserId}
+              onChange={e => setNewUserId(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+            />
+            <button
+              onClick={addUserToChatCreation}
+              className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded"
+            >
+              Hinzufügen
+            </button>
+          </div>
+          
+          {renderChatUsersList()}
+          
+          <button
+            onClick={createChat}
+            disabled={loading || chatUsers.length < 2}
+            className={`mt-3 px-4 py-2 rounded ${
+              chatUsers.length < 2 
+                ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+          >
+            Chat erstellen ({chatUsers.length}/2)
+          </button>
+        </div>
+        
+        {/* chat verwaltung*/}
+        <div className="pt-2">
+          <h3 className="text-lg font-medium text-gray-700 mb-2">Chat verwalten</h3>
+          <div className="flex flex-wrap gap-3">
+            <input
+              placeholder="Chat-ID"
+              value={activeChatId}
+              onChange={e => setActiveChatId(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+            />
+            <button
+              onClick={getChat}
+              disabled={loading}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Laden
+            </button>
+          </div>
+          
+          <div className="flex flex-wrap gap-3 mt-3">
+            <input
+              placeholder="User-ID"
+              value={newUserId}
+              onChange={e => setNewUserId(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+            />
+            <button
+              onClick={addUserToChat}
+              disabled={loading || !activeChatId}
+              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+            >
+              Hinzufügen
+            </button>
+            <button
+              onClick={removeUserFromChat}
+              disabled={!connected || !activeChatId || !newUserId}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+            >
+              Entfernen
+            </button>
+          </div>
+        </div>
+        
+        <div className="text-gray-600 mt-3">
+          <div className="font-semibold">Aktuelle Teilnehmer:</div>
+          {loadedChat
+            ? Object.keys(loadedChat.chatUserList).map(u => (
+                <span key={u} className="font-mono mx-1 bg-gray-100 px-2 py-1 rounded">
+                  {u}
+                  {u === userId && <span className="text-xs text-blue-600"> (Sie)</span>}
+                </span>
+              ))
+            : 'Kein Chat geladen'}
+        </div>
+      </div>
+
+      {/* nachrichten */}
+      <div className="bg-white p-5 rounded-lg shadow-md flex flex-col space-y-3">
+        <h2 className="text-2xl font-semibold text-gray-700">Nachrichten</h2>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            placeholder="Nachrichteninhalt"
+            value={messageContent}
+            onChange={e => setMessageContent(e.target.value)}
+            disabled={!connected || !activeChatId}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+          />
+          <button
+            onClick={sendMessage}
+            disabled={!connected || !activeChatId || !messageContent.trim()}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Senden
+          </button>
+        </div>
+        <div className="h-64 overflow-y-auto bg-gray-50 p-3 rounded flex flex-col space-y-2">
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`max-w-[70%] p-2 rounded-lg shadow ${
+                msg.system
+                  ? 'bg-gray-200 italic self-center'
+                  : msg.senderID === userId
+                  ? 'bg-blue-100 self-end text-right'
+                  : 'bg-white self-start'
+              }`}
+            >
+              <div className="text-sm">{msg.content}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {formatTime(msg.timestamp)}
+                {msg.system ? '' : ` | ${msg.senderID === userId ? 'Sie' : msg.senderID}`}
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
         </div>
       </div>
     </div>
