@@ -186,11 +186,11 @@ const WebSocketTest: React.FC = () => {
         <div className="font-semibold">Chat-Teilnehmer zum Erstellen:</div>
         <ul className="list-disc list-inside">
           {chatUsers.map((user, index) => (
-            <li key={index} className="font-mono">
+            <li key={index}>
               {user.username || user.userId}
               <button 
                 onClick={() => setChatUsers(chatUsers.filter((_, i) => i !== index))}
-                className="ml-2 text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-1 py-0.5 rounded"
+                className="ml-4 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded"
               >
                 Entfernen
               </button>
@@ -369,10 +369,7 @@ const WebSocketTest: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 p-6 space-y-6">
-      <h1 className="text-4xl font-bold text-center text-blue-600">
-        WebSocket-Backend-Tester
-      </h1>
-
+      
       {/* status und error */}
       <div className="space-y-2">
         {status && (
@@ -562,3 +559,4 @@ const WebSocketTest: React.FC = () => {
 };
 
 export default WebSocketTest;
+
