@@ -59,10 +59,45 @@ export class Database {
             });
 
             return chatId;
-        } else {
+        }else{
             return false;
         }
     }
+
+    async sendMessageToChat(chatId: string, senderId: string, message: string): Promise<boolean>{
+        try{
+            const timestamp = Date.now();
+            const messageObj = {
+                from: senderId,
+                message: message,
+            };
+            await this.client.hSet(`chat:${chatId}:messages`, timestamp.toString(), JSON.stringify(messageObj));
+            return true;
+        }catch{
+            return false;
+        }
+    }
+
+    async getChatMessages(chatId: string): Promise <DatabaseTypes.messageStructure | false>{
+
+        if((await this.client.EXISTS(`chat:${chatId}:messages`))){
+        try{            
+            const response = await this.client.hGetAll(`chat:${chatId}:messages`);
+            //console.log(response);
+            const convertedResponse : DatabaseTypes.messageStructure = {};
+
+            for(let [key, msg] of Object.entries(response)){
+                const parsedMessage : DatabaseTypes.ChatMessage = JSON.parse(msg);
+                const parsedKey: EpochTimeStamp = Number(key);
+                convertedResponse[parsedKey] = parsedMessage;
+            }
+            return convertedResponse;
+        }catch{
+            return false;
+        }
+        }
+        return false;
+      }
 
     /**
      * Creates User hashmap for an user with username and password

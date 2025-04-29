@@ -23,6 +23,7 @@ export namespace DatabaseTypes {
   export interface ChatMessage {
     from: UUID;
     message: string;
-    timestamp: EpochTimeStamp;
   }
+
+  export type messageStructure = {[key: EpochTimeStamp] : DatabaseTypes.ChatMessage};
 }

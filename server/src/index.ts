@@ -12,6 +12,8 @@ import { Message } from "@anocm/shared/dist";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
 import { Database } from "./modules/database/database";
 import { UserManager } from "./modules/userManager/userManager";
+import { log } from "console";
+import chat from "./routers/chat";
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -124,5 +126,6 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
     console.log("Disconnected");
   });
 });
+
 
 //#endregion
