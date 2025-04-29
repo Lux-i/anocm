@@ -3,7 +3,7 @@ import WebSocket, { WebSocket as WebSocketType } from "ws";
 import { Message } from "@anocm/shared/dist";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
 import { Database } from "./modules/database/database";
-import UserManager from "./modules/userManager/userManager";
+import { UserManager } from "./modules/userManager/userManager";
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -88,7 +88,6 @@ server.listen(UsedPort, () => {
 //#region WebSocket
 
 const wss = new WebSocket.Server({ server: server });
-const userManager = new UserManager();
 
 wss.on("connection", async (ws: WebSocketType, req: Request) => {
   console.log("Connected to WebSocket");
@@ -98,11 +97,11 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
     const message: Message = JSON.parse(data.toString());
 
     //TODO: for testing purposes this should link the ws
-    userManager.setUser(message.senderID, ws);
+    UserManager.setUser(message.senderID, ws);
 
     console.log(`Received message: ${message.content}`);
 
-    let res = routeMessageAction(message, database, userManager);
+    let res = routeMessageAction(message, database);
 
     //Broadcast to all connected
     if (res === false) {
