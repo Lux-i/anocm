@@ -1,6 +1,6 @@
 import { RedisClientType } from "redis";
 import { randomUUID, UUID } from "crypto";
-import { Chat, User } from "@anocm/shared/dist";
+import { DatabaseTypes } from "@anocm/shared/dist";
 
 
 export class Database {
@@ -38,7 +38,7 @@ export class Database {
      * @param {User} user
      * @returns chatId
      */
-    async createChat(users: User[]): Promise<UUID | false> {
+    async createChat(users: DatabaseTypes.User[]): Promise<UUID | false> {
         if (users.length >= 2) {
             let chatId = randomUUID();
             for (const user of users) {
@@ -116,13 +116,13 @@ export class Database {
         return clientId;
     }
 
-    async getChat(chatIdInput: string): Promise<Chat | false> {
+    async getChat(chatIdInput: string): Promise<DatabaseTypes.Chat | false> {
         try {
-            const chat: Chat = {
+            const chat: DatabaseTypes.Chat = {
                 chatId: chatIdInput,
                 chatUserList: await this.client.hGetAll(`chat:${chatIdInput}:users`),
                 chatSettings: await this.client.hGetAll(`chat:${chatIdInput}:settings`),
-                chatMessages: await this.client.xRange(`chat:${chatIdInput}:messages`, "-", "+"),
+                chatMessages: await this.client.hGetAll(`chat:${chatIdInput}:messages`),
             }
 
             return chat;

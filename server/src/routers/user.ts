@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Database } from "../modules/database/database";
-import { DatabaseResponse } from "@anocm/shared/dist";
+import { DatabaseTypes } from "@anocm/shared/dist";
 
 const express = require("express");
 const router = express.Router();
@@ -10,14 +10,14 @@ export default (database: Database) => {
     console.log("POST Request: new anonymous User");
     try {
       database.createAnoUser().then((clientId: string) => {
-        const response: DatabaseResponse = {
+        const response: DatabaseTypes.DatabaseResponse = {
           success: true,
           id: clientId.toString(),
         };
         res.send(response);
       });
     } catch (err: any) {
-      const response: DatabaseResponse = {
+      const response: DatabaseTypes.DatabaseResponse = {
         success: false,
         error: err,
       };
@@ -33,13 +33,13 @@ export default (database: Database) => {
         .createUser(req.body.username, req.body.password)
         .then((userId: string | false) => {
           if (userId == false) {
-            const response: DatabaseResponse = {
+            const response: DatabaseTypes.DatabaseResponse = {
               success: false,
               error: "Error creating User",
             };
             res.send(response);
           } else {
-            const response: DatabaseResponse = {
+            const response: DatabaseTypes.DatabaseResponse = {
               success: true,
               id: userId.toString(),
               userData: req.body.username,
@@ -48,7 +48,7 @@ export default (database: Database) => {
           }
         });
     } catch (err: any) {
-      const response: DatabaseResponse = {
+      const response: DatabaseTypes.DatabaseResponse = {
         success: false,
         error: err,
       };

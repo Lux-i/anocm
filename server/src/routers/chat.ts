@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Database } from "../modules/database/database";
-import { Chat, DatabaseResponse } from "@anocm/shared/dist";
+import {DatabaseTypes} from "@anocm/shared/dist";
 
 const express = require("express");
 const router = express.Router();
@@ -13,13 +13,13 @@ export default (database: Database) => {
     try {
       database.createChat(req.body).then((chatId: UUID | false) => {
         if (chatId != false) {
-          const response: DatabaseResponse = {
+          const response: DatabaseTypes.DatabaseResponse = {
             success: true,
             id: chatId.toString(),
           };
           res.send(response);
         } else {
-          const response: DatabaseResponse = {
+          const response: DatabaseTypes.DatabaseResponse = {
             success: false,
             error: `Error creating Chat`,
           };
@@ -27,7 +27,7 @@ export default (database: Database) => {
         }
       });
     } catch (err: any) {
-      const response: DatabaseResponse = {
+      const response: DatabaseTypes.DatabaseResponse = {
         success: false,
         error: err,
       };
@@ -47,15 +47,15 @@ export default (database: Database) => {
         });
       }
 
-      database.getChat(chatId!).then((chat: Chat | false) => {
-        const response: DatabaseResponse = {
+      database.getChat(chatId!).then((chat: DatabaseTypes.Chat | false) => {
+        const response: DatabaseTypes.DatabaseResponse = {
           success: true,
           userData: chat,
         };
         res.send(response);
       });
     } catch (err: any) {
-      const response: DatabaseResponse = {
+      const response: DatabaseTypes.DatabaseResponse = {
         success: false,
         error: err,
       };
@@ -70,12 +70,12 @@ export default (database: Database) => {
         .addUsertoChat(req.body.chatId, req.body.userId)
         .then((response: boolean) => {
           if (response == true) {
-            const response: DatabaseResponse = {
+            const response: DatabaseTypes.DatabaseResponse = {
               success: true,
             };
             res.send(response);
           } else {
-            const response: DatabaseResponse = {
+            const response: DatabaseTypes.DatabaseResponse = {
               success: false,
               error: `Error adding User`,
             };
@@ -83,7 +83,7 @@ export default (database: Database) => {
           }
         });
     } catch (err: any) {
-      const response: DatabaseResponse = {
+      const response: DatabaseTypes.DatabaseResponse = {
         success: false,
         error: err,
       };
