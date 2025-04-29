@@ -19,7 +19,6 @@ try {
   configPort = null;
 }
 
-const { request } = require("http");
 const portArg = process.argv[2];
 
 const UsedPort = portArg || configPort || 8080;
