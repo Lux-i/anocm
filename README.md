@@ -32,8 +32,8 @@ Current messaging applications face several privacy issues, including:
 - **Server**: simple low-throughput server
 - **Backend**: Express (Node/JavaScript)
 - **Database**: RedisDB
-- **Frontend**: Pure JavaScript/Typescript (or libraries like react)
-- **Design**: scss/tailwind/bootstrap
+- **Frontend**: React (vite/react)
+- **Design**: Tailwind
 - **Project Management**: GitHub (Repo and Project)
 
 [^1]: _This project is part of our **university** curriculum. (ITP-project application)_
