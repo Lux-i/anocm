@@ -1,7 +1,7 @@
 //Use env file automatically
-const result = require('dotenv').config();
+const result = require("dotenv").config();
 
-if(result.error){
+if (result.error) {
   console.error("Env file not working :3");
   process.exit(1);
 }
@@ -126,5 +126,3 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
 });
 
 //#endregion
-
-

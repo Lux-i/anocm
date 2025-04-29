@@ -1,23 +1,23 @@
-import { UUID } from 'crypto';
+import { UUID } from "crypto";
 
 export type Message = {
-    action: Action,
-    content: string,
-    senderID: UUID,
-    chatID: UUID,
-    timestamp: EpochTimeStamp
-}
+  action: Action;
+  content: string;
+  senderID: UUID;
+  chatID: UUID;
+  timestamp: EpochTimeStamp;
+};
 
 export type ResponseContent = {
-    sucess: boolean,
-    message: String,
-    json?: Object
-}
+  sucess: boolean;
+  message: String;
+  json?: Object;
+};
 
 export enum Action {
-    None = "",
-    BroadcastToChat = "BroadcastToChat",
-    AddClientToChatNoConfirm = "AddClientToChatNoConfirm",
-    RemoveClientFromChatNoConfirm = "RemoveClientFromChatNoConfirm",
-    MessageResponse = "MessageResponse"
+  None = "",
+  BroadcastToChat = "BroadcastToChat",
+  AddClientToChatNoConfirm = "AddClientToChatNoConfirm",
+  RemoveClientFromChatNoConfirm = "RemoveClientFromChatNoConfirm",
+  MessageResponse = "MessageResponse",
 }
