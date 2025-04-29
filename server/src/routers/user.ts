@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Database } from "../modules/database/database";
-import { DatabaseResponse } from "@anocm/shared/types/database";
+import { DatabaseResponse } from "@anocm/shared/dist";
 
 const express = require("express");
 const router = express.Router();
@@ -56,5 +56,5 @@ export default (database: Database) => {
       console.error("Error sending response: ", err);
     }
   });
-  return router
+  return router;
 };

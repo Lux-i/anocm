@@ -1,14 +1,11 @@
 import { Request, Response } from "express";
 import { Database } from "../modules/database/database";
-import { Chat } from "@anocm/shared/types/database";
-import { DatabaseResponse } from "@anocm/shared/types/database";
+import { Chat, DatabaseResponse } from "@anocm/shared/dist";
 
 const express = require("express");
 const router = express.Router();
 
 import { UUID } from "crypto";
-
-
 
 export default (database: Database) => {
   router.post("/newchat", async (req: Request, res: Response) => {
@@ -69,20 +66,22 @@ export default (database: Database) => {
   router.post("/adduser", async (req: Request, res: Response) => {
     console.log("POST Request: add User to Chat");
     try {
-      database.addUsertoChat(req.body.chatId, req.body.userId).then((response: boolean) => {
-        if (response == true) {
-          const response: DatabaseResponse = {
-            success: true,
-          };
-          res.send(response);
-        } else {
-          const response: DatabaseResponse = {
-            success: false,
-            error: `Error adding User`,
-          };
-          res.send(response);
-        }
-      });
+      database
+        .addUsertoChat(req.body.chatId, req.body.userId)
+        .then((response: boolean) => {
+          if (response == true) {
+            const response: DatabaseResponse = {
+              success: true,
+            };
+            res.send(response);
+          } else {
+            const response: DatabaseResponse = {
+              success: false,
+              error: `Error adding User`,
+            };
+            res.send(response);
+          }
+        });
     } catch (err: any) {
       const response: DatabaseResponse = {
         success: false,
