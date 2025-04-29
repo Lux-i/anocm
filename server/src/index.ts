@@ -1,9 +1,17 @@
+//Use env file automatically
+const result = require('dotenv').config();
+
+if(result.error){
+  console.error("Env file not working :3");
+  process.exit(1);
+}
+
 import { Request, Response, NextFunction } from "express";
 import WebSocket, { WebSocket as WebSocketType } from "ws";
 import { Message } from "@anocm/shared/dist";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
 import { Database } from "./modules/database/database";
-import UserManager from "./modules/userManager/userManager";
+import { UserManager } from "./modules/userManager/userManager";
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -11,7 +19,6 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const server = require("http").createServer(app);
-
 const database = new Database();
 
 let configPort;
@@ -22,7 +29,6 @@ try {
   configPort = null;
 }
 
-const { request } = require("http");
 const portArg = process.argv[2];
 
 const UsedPort = portArg || configPort || 8080;
@@ -92,7 +98,6 @@ server.listen(UsedPort, () => {
 //#region WebSocket
 
 const wss = new WebSocket.Server({ server: server });
-const userManager = new UserManager();
 
 wss.on("connection", async (ws: WebSocketType, req: Request) => {
   console.log("Connected to WebSocket");
@@ -102,11 +107,11 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
     const message: Message = JSON.parse(data.toString());
 
     //TODO: for testing purposes this should link the ws
-    userManager.setUser(message.senderID, ws);
+    UserManager.setUser(message.senderID, ws);
 
     console.log(`Received message: ${message.content}`);
 
-    let res = routeMessageAction(message, database, userManager);
+    let res = routeMessageAction(message, database);
 
     //Broadcast to all connected
     if (res === false) {
@@ -124,3 +129,5 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
 });
 
 //#endregion
+
+

@@ -1,14 +1,11 @@
 import { Request, Response } from "express";
 import { Database } from "../modules/database/database";
-import { Chat } from "@anocm/shared/types/database";
-import { DatabaseResponse } from "@anocm/shared/types/database";
+import {DatabaseTypes} from "@anocm/shared/dist";
 
 const express = require("express");
 const router = express.Router();
 
 import { UUID } from "crypto";
-
-
 
 export default (database: Database) => {
   router.post("/newchat", async (req: Request, res: Response) => {
@@ -16,13 +13,13 @@ export default (database: Database) => {
     try {
       database.createChat(req.body).then((chatId: UUID | false) => {
         if (chatId != false) {
-          const response: DatabaseResponse = {
+          const response: DatabaseTypes.DatabaseResponse = {
             success: true,
             id: chatId.toString(),
           };
           res.send(response);
         } else {
-          const response: DatabaseResponse = {
+          const response: DatabaseTypes.DatabaseResponse = {
             success: false,
             error: `Error creating Chat`,
           };
@@ -30,7 +27,7 @@ export default (database: Database) => {
         }
       });
     } catch (err: any) {
-      const response: DatabaseResponse = {
+      const response: DatabaseTypes.DatabaseResponse = {
         success: false,
         error: err,
       };
@@ -50,15 +47,15 @@ export default (database: Database) => {
         });
       }
 
-      database.getChat(chatId!).then((chat: Chat | false) => {
-        const response: DatabaseResponse = {
+      database.getChat(chatId!).then((chat: DatabaseTypes.Chat | false) => {
+        const response: DatabaseTypes.DatabaseResponse = {
           success: true,
           userData: chat,
         };
         res.send(response);
       });
     } catch (err: any) {
-      const response: DatabaseResponse = {
+      const response: DatabaseTypes.DatabaseResponse = {
         success: false,
         error: err,
       };
@@ -69,22 +66,24 @@ export default (database: Database) => {
   router.post("/adduser", async (req: Request, res: Response) => {
     console.log("POST Request: add User to Chat");
     try {
-      database.addUsertoChat(req.body.chatId, req.body.userId).then((response: boolean) => {
-        if (response == true) {
-          const response: DatabaseResponse = {
-            success: true,
-          };
-          res.send(response);
-        } else {
-          const response: DatabaseResponse = {
-            success: false,
-            error: `Error adding User`,
-          };
-          res.send(response);
-        }
-      });
+      database
+        .addUsertoChat(req.body.chatId, req.body.userId)
+        .then((response: boolean) => {
+          if (response == true) {
+            const response: DatabaseTypes.DatabaseResponse = {
+              success: true,
+            };
+            res.send(response);
+          } else {
+            const response: DatabaseTypes.DatabaseResponse = {
+              success: false,
+              error: `Error adding User`,
+            };
+            res.send(response);
+          }
+        });
     } catch (err: any) {
-      const response: DatabaseResponse = {
+      const response: DatabaseTypes.DatabaseResponse = {
         success: false,
         error: err,
       };
