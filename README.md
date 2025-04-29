@@ -21,7 +21,7 @@ Current messaging applications face several privacy issues, including:
 
 **_anocm_** aims to solve these problems with the following key features:
 
-1. **Non-persistent message storage**: Messages are only stored in memory and will not persist afte the conversation ends.
+1. **Non-persistent message storage**: Messages are only stored in memory and will not persist after the conversation ends.
 2. **End-to-end encryption**: All messages are encrypted before they are sent. Users control their encryption keys, and **_anocm_** never has access to them.
 3. **No registration**: Users can join the service as an anonymous "guest" without the need to create an account, ensuring no identifiable trace is left behind.
 4. **Customizable message retention**: Users can specify the duration for which their messages are stored (if at all).
