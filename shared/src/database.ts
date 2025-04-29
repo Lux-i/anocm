@@ -1,5 +1,6 @@
 import { UUID } from "crypto";
 
+export namespace Database{
 export interface User {
     userId: string,
     username?: string,
@@ -18,3 +19,9 @@ export interface DatabaseResponse {
     id?: string;
     userData?: any;
 }
+
+export interface ChatMessage {
+    from: UUID;
+    message: string;
+    timestamp: EpochTimeStamp;
+}}

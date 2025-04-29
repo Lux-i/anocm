@@ -24,8 +24,9 @@ export class Database {
             if (!data) {
                 this.client.set('total_users', '0');
             }
-            console.log(data);
         });
+
+        console.debug("Loaded DB");
     }
 
     getRandomInt(min: number, max: number): number {

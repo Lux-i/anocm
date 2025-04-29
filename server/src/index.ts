@@ -1,3 +1,11 @@
+//Use env file automatically
+const result = require('dotenv').config();
+
+if(result.error){
+  console.error("Env file not working :3");
+  process.exit(1);
+}
+
 import { Request, Response, NextFunction } from "express";
 import WebSocket, { WebSocket as WebSocketType } from "ws";
 import { Message } from "@anocm/shared/dist";
@@ -8,7 +16,6 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const server = require("http").createServer(app);
-
 const database = new Database();
 
 let configPort;
@@ -119,3 +126,5 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
 });
 
 //#endregion
+
+
