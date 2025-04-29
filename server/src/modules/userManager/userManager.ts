@@ -57,9 +57,9 @@ export namespace UserManager {
   export function sendMessage(id: UUID, message: Message): boolean {
     if (isConnected(id)) {
       //get ws connection
-      const conn = users.get(id) as WebSocket;
+      const conn = users.get(id);
       //send msg
-      conn.send(JSON.stringify(message));
+      conn?.send(JSON.stringify(message));
       return true;
     } else {
       return false;
