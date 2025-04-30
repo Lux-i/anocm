@@ -49,7 +49,6 @@ const createUserLimiter = rateLimit({
 });
 
 app.use(limiter);
-app.use('/api/v1/user/newano', createUserLimiter);
 
 //#region middleware
 app.use(
@@ -93,7 +92,7 @@ app.set("view engine", "ejs");
 const userRouter = require("./routers/user").default;
 const chatRouter = require("./routers/chat").default;
 
-app.use("/api/v1/user", userRouter(database));
+app.use("/api/v1/user", createUserLimiter, userRouter(database));
 app.use("/api/v1/chat", chatRouter(database));
 
 //#endregion
