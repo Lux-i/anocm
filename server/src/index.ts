@@ -7,12 +7,13 @@ if (result.error) {
 }
 
 import { Request, Response, NextFunction } from "express";
+import { rateLimit } from 'express-rate-limit';
 import WebSocket, { WebSocket as WebSocketType } from "ws";
 import { Message } from "@anocm/shared/dist";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
 import { Database } from "./modules/database/database";
 import { UserManager } from "./modules/userManager/userManager";
-import { log } from "console";
+import { error, log } from "console";
 import chat from "./routers/chat";
 const express = require("express");
 const cors = require("cors");
@@ -31,6 +32,24 @@ try {
 const portArg = process.argv[2];
 
 const UsedPort = portArg || configPort || 8080;
+
+//Rate limiter
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 Minutes
+  limit: 100,
+  standardHeaders: 'draft-8',
+  message: { error: "Too many requests!" },
+});
+
+const createUserLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 Minutes
+  limit: 5,
+  standardHeaders: 'draft-8',
+  message: { error: "Too many user creation requests!" },
+});
+
+app.use(limiter);
+app.use('/api/v1/user/newano', createUserLimiter);
 
 //#region middleware
 app.use(
