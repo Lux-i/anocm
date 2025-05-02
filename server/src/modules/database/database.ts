@@ -1,6 +1,8 @@
 import { RedisClientType, createClient } from "redis";
 import { randomUUID, UUID } from "crypto";
 import { DatabaseTypes } from "@anocm/shared/dist";
+const argon2 = require("argon2");
+
 export namespace Database {
   const client: RedisClientType = createClient({
     username: process.env.DB_USERNAME,
@@ -151,12 +153,24 @@ export namespace Database {
         }
       } while (cursor !== 0);
 
+      try{
       let userId: UUID = randomUUID();
+      let hashPW = argon2.hash(password, {
+        type: argon2.argon2id,
+        memoryCost: 2 ** 16,    // 64 MB
+        timeCost: 5,
+        parallelism: 1,});
+
       await client.hSet(`user:${userId}`, {
         username: `${username}`,
-        password: `${password}`,
+        password: `${hashPW}`,
       });
       return userId;
+
+    }catch(err){
+        console.error("Error creating user: ", err);
+        return false;
+    }
     }
     return false;
   }
@@ -223,5 +237,18 @@ export namespace Database {
       return false;
     }
     return false;
+  }
+
+  export async function verifyHash(hash: string, password: string): Promise<boolean>{
+    try{
+        if(await argon2.verify(hash, password)){
+            return true;
+        }else{
+            return false;
+        }
+    }catch(err){
+        console.error("Hash verify error:", err);
+        return false;
+    }
   }
 }

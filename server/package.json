@@ -2,6 +2,7 @@
   "dependencies": {
     "@anocm/shared": "file:../shared",
     "@types/express": "^5.0.1",
+    "argon2": "^0.43.0",
     "bufferutil": "^4.0.9",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
