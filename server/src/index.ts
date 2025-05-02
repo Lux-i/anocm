@@ -17,7 +17,13 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const server = require("http").createServer(app);
-const database = new Database();
+
+Database.connectClient().then((succeeded: boolean) => {
+  if (!succeeded) {
+    console.log("Could not connect to Database");
+    process.exit(1);
+  }
+});
 
 let configPort;
 try {
@@ -90,8 +96,8 @@ app.set("view engine", "ejs");
 const userRouter = require("./routers/user").default;
 const chatRouter = require("./routers/chat").default;
 
-app.use("/api/v1/user", createUserLimiter, userRouter(database));
-app.use("/api/v1/chat", chatRouter(database));
+app.use("/api/v1/user", createUserLimiter, userRouter());
+app.use("/api/v1/chat", chatRouter());
 
 //#endregion
 
@@ -126,7 +132,7 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
 
     console.log(`Received message: ${message.content}`);
 
-    let res = routeMessageAction(message, database);
+    let res = routeMessageAction(message);
 
     //Broadcast to all connected
     if (res === false) {

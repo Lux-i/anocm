@@ -5,11 +5,11 @@ import { DatabaseTypes } from "@anocm/shared/dist";
 const express = require("express");
 const router = express.Router();
 
-export default (database: Database) => {
+export default () => {
   router.post("/newano", async (req: Request, res: Response) => {
     console.log("POST Request: new anonymous User");
     try {
-      database.createAnoUser().then((clientId: string) => {
+      Database.createAnoUser().then((clientId: string) => {
         const response: DatabaseTypes.DatabaseResponse = {
           success: true,
           id: clientId.toString(),
@@ -29,9 +29,8 @@ export default (database: Database) => {
   router.post("/newuser", async (req: Request, res: Response) => {
     console.log("POST Request: new User");
     try {
-      database
-        .createUser(req.body.username, req.body.password)
-        .then((userId: string | false) => {
+      Database.createUser(req.body.username, req.body.password).then(
+        (userId: string | false) => {
           if (userId == false) {
             const response: DatabaseTypes.DatabaseResponse = {
               success: false,
@@ -46,7 +45,8 @@ export default (database: Database) => {
             };
             res.send(response);
           }
-        });
+        }
+      );
     } catch (err: any) {
       const response: DatabaseTypes.DatabaseResponse = {
         success: false,

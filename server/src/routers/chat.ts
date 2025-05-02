@@ -1,17 +1,17 @@
 import { Request, Response } from "express";
 import { Database } from "../modules/database/database";
-import {DatabaseTypes} from "@anocm/shared/dist";
+import { DatabaseTypes } from "@anocm/shared/dist";
 
 const express = require("express");
 const router = express.Router();
 
 import { UUID } from "crypto";
 
-export default (database: Database) => {
+export default () => {
   router.post("/newchat", async (req: Request, res: Response) => {
     console.log("POST Request: new Chat");
     try {
-      database.createChat(req.body).then((chatId: UUID | false) => {
+      Database.createChat(req.body).then((chatId: UUID | false) => {
         if (chatId != false) {
           const response: DatabaseTypes.DatabaseResponse = {
             success: true,
@@ -47,7 +47,7 @@ export default (database: Database) => {
         });
       }
 
-      database.getChat(chatId!).then((chat: DatabaseTypes.Chat | false) => {
+      Database.getChat(chatId!).then((chat: DatabaseTypes.Chat | false) => {
         const response: DatabaseTypes.DatabaseResponse = {
           success: true,
           userData: chat,
@@ -66,9 +66,8 @@ export default (database: Database) => {
   router.post("/adduser", async (req: Request, res: Response) => {
     console.log("POST Request: add User to Chat");
     try {
-      database
-        .addUsertoChat(req.body.chatId, req.body.userId)
-        .then((response: boolean) => {
+      Database.addUsertoChat(req.body.chatId, req.body.userId).then(
+        (response: boolean) => {
           if (response == true) {
             const response: DatabaseTypes.DatabaseResponse = {
               success: true,
@@ -81,7 +80,8 @@ export default (database: Database) => {
             };
             res.send(response);
           }
-        });
+        }
+      );
     } catch (err: any) {
       const response: DatabaseTypes.DatabaseResponse = {
         success: false,

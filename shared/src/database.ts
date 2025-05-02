@@ -25,5 +25,7 @@ export namespace DatabaseTypes {
     message: string;
   }
 
-  export type messageStructure = {[key: EpochTimeStamp] : DatabaseTypes.ChatMessage};
+  export type messageStructure = {
+    [key: EpochTimeStamp]: DatabaseTypes.ChatMessage;
+  };
 }

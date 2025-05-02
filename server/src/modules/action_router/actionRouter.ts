@@ -5,8 +5,6 @@ import {
   removeFromChatNoConfirm,
 } from "../message/message";
 
-import { Database } from "../database/database";
-
 /**
  *
  * @param message message object
@@ -14,16 +12,16 @@ import { Database } from "../database/database";
  * @param handler singleton ws manager
  */
 
-export function routeMessageAction(message: Message, database: Database) {
+export function routeMessageAction(message: Message) {
   switch (message.action) {
     case Action.BroadcastToChat:
-      broadcastToChat(message, database);
+      broadcastToChat(message);
       break;
     case Action.AddClientToChatNoConfirm:
-      addToChatNoConfirm(message, database);
+      addToChatNoConfirm(message);
       break;
     case Action.RemoveClientFromChatNoConfirm:
-      removeFromChatNoConfirm(message, database);
+      removeFromChatNoConfirm(message);
       break;
     case Action.None:
     case Action.MessageResponse:

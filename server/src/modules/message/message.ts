@@ -4,8 +4,8 @@ import { UserManager } from "../userManager/userManager";
 import { Action, Message, ResponseContent } from "@anocm/shared/dist";
 import { validate } from "uuid";
 
-export async function broadcastToChat(message: Message, database: Database) {
-  const res = await database.getChat(message.chatID);
+export async function broadcastToChat(message: Message) {
+  const res = await Database.getChat(message.chatID);
 
   if (res === false) {
     UserManager.sendMessage(
@@ -56,7 +56,7 @@ export async function broadcastToChat(message: Message, database: Database) {
  * @param database Database object
  * @returns
  */
-export async function addToChatNoConfirm(message: Message, database: Database) {
+export async function addToChatNoConfirm(message: Message) {
   let reciever = isUUID(message.content) ? message.content : null;
 
   if (reciever === null) {
@@ -71,7 +71,7 @@ export async function addToChatNoConfirm(message: Message, database: Database) {
     return;
   }
 
-  const res = await database.addUsertoChat(message.chatID, reciever);
+  const res = await Database.addUsertoChat(message.chatID, reciever);
 
   if (res === false) {
     UserManager.sendMessage(
@@ -101,10 +101,7 @@ export async function addToChatNoConfirm(message: Message, database: Database) {
  * @param database Database object
  * @returns
  */
-export async function removeFromChatNoConfirm(
-  message: Message,
-  database: Database
-) {
+export async function removeFromChatNoConfirm(message: Message) {
   let reciever = isUUID(message.content) ? message.content : null;
 
   if (reciever === null) {
@@ -121,7 +118,7 @@ export async function removeFromChatNoConfirm(
 
   console.log(reciever);
 
-  const res = await database.deleteUserFromChat(message.chatID, reciever);
+  const res = await Database.deleteUserFromChat(message.chatID, reciever);
 
   console.log(res);
 
