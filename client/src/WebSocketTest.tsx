@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { DatabaseTypes} from '@anocm/shared/dist';
-import type { Message} from '@anocm/shared/dist';
+import { DatabaseTypes } from '@anocm/shared/dist';
+import type { Message } from '@anocm/shared/dist';
 
 import { UUID } from "crypto";
 import { NIL } from "uuid";
@@ -55,33 +55,33 @@ const WebSocketTest = () => {
     return () => { ws.current?.close(); };
   }, [userId]);
 
-  
+
   const connectWebSocket = () => {
     if (!userId) return setError('Bitte zuerst einen Benutzer erstellen');
-    
+
     // Bestehende Verbindung schließen
     if (ws.current) {
       ws.current.close();
       ws.current = null;
     }
-    
+
     // Neue Verbindung mit Verzögerung erstellen
     setTimeout(() => {
       console.log(`[WS] Verbindung wird hergestellt für Benutzer: ${userId}`);
       ws.current = new WebSocket(`ws://localhost:8080`);
-      
+
       ws.current.onopen = () => {
         console.log('[WS] Verbindung erfolgreich hergestellt');
         setConnected(true);
         setStatus('WebSocket verbunden');
-        
+
         // Initialisierungsnachricht senden
         setTimeout(() => {
           const initMsg = {
             action: Action.None,
             content: "init",
             senderID: userId,
-            chatID: userId,  
+            chatID: userId,
             timestamp: Date.now(),
           };
           console.log(`[WS] Benutzer ${userId} mit Server verknüpft`);
@@ -90,7 +90,7 @@ const WebSocketTest = () => {
           }
         }, 100);
       };
-      
+
       ws.current.onmessage = ev => {
         try {
           const msg = JSON.parse(ev.data);
@@ -100,7 +100,7 @@ const WebSocketTest = () => {
           } else if (msg.action === Action.MessageResponse) {
             console.log(`[WS] Server-Antwort empfangen`);
           }
-          
+
           if (msg.action === Action.BroadcastToChat) {
             setMessages(prev => [...prev, msg]);
           } else if (msg.action === Action.MessageResponse) {
@@ -116,13 +116,13 @@ const WebSocketTest = () => {
           console.error('[WS] Fehler bei Nachrichtenverarbeitung:', err);
         }
       };
-      
+
       ws.current.onclose = () => {
         console.log('[WS] Verbindung beendet');
         setConnected(false);
         setStatus('WebSocket getrennt');
       };
-      
+
       ws.current.onerror = err => {
         console.error('[WS] Verbindungsfehler:', err);
         setError('WebSocket-Fehler');
@@ -137,7 +137,7 @@ const WebSocketTest = () => {
       action: Action.BroadcastToChat,
       content: messageContent,
       senderID: userId as UUID,
-      chatID: activeChatId,
+      chatID: activeChatId as UUID,
       timestamp: Date.now(),
     };
     ws.current!.send(JSON.stringify(msg));
@@ -184,16 +184,16 @@ const WebSocketTest = () => {
         console.log(`[API] Anonymer Benutzer erstellt: ${data.id}`);
         setUserId(data.id);
         setStatus(`Anon-User erstellt: ${data.id}`);
-        
+
         if (ws.current) {
           ws.current.close();
         }
-        
+
         setTimeout(() => {
           console.log('[WS] Neue Verbindung nach Benutzer-Erstellung');
           connectWebSocket();
         }, 100);
-        
+
       } else throw new Error(data.error);
     } catch (err) {
       console.error('[API] Fehler bei Anon-User-Erstellung:', err);
@@ -202,7 +202,7 @@ const WebSocketTest = () => {
       setLoading(false);
     }
   };
-  
+
   const createUser = async () => {
     if (!username || !password) return setError('Name & Passwort angeben');
     console.log('[API] Benutzer registrieren');
@@ -219,16 +219,16 @@ const WebSocketTest = () => {
         console.log(`[API] Benutzer '${username}' erstellt mit ID: ${data.id}`);
         setUserId(data.id);
         setStatus(`User erstellt: ${username}`);
-        
+
         if (ws.current) {
           ws.current.close();
         }
-        
+
         setTimeout(() => {
           console.log('[WS] Neue Verbindung nach Benutzer-Erstellung');
           connectWebSocket();
         }, 100);
-        
+
       } else throw new Error(data.error);
     } catch (err) {
       console.error('[API] Fehler bei Benutzer-Registrierung:', err);
@@ -243,7 +243,7 @@ const WebSocketTest = () => {
     if (chatUsers.length === 0) {
       return <div className="text-gray-500 italic">Keine Benutzer hinzugefügt</div>;
     }
-    
+
     return (
       <div className="mt-2 space-y-2">
         <div className="font-semibold">Chat-Teilnehmer zum Erstellen:</div>
@@ -251,7 +251,7 @@ const WebSocketTest = () => {
           {chatUsers.map((user, index) => (
             <li key={index}>
               {user.username || user.userId}
-              <button 
+              <button
                 onClick={() => setChatUsers(chatUsers.filter((_, i) => i !== index))}
                 className="ml-4 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded"
               >
@@ -270,13 +270,13 @@ const WebSocketTest = () => {
       setError('Bitte eine User-ID eingeben');
       return;
     }
-    
+
     //schauen ob user bereits in liste
     if (chatUsers.some(user => user.userId === newUserId)) {
       setError('Dieser User ist bereits in der Liste');
       return;
     }
-    
+
     setChatUsers(prev => [...prev, { userId: newUserId }]);
     setNewUserId('');
     setError('');
@@ -289,18 +289,18 @@ const WebSocketTest = () => {
       setError('Kein Benutzer angemeldet');
       return;
     }
-    
+
     //schauen ob user bereits in liste
     if (chatUsers.some(user => user.userId === userId)) {
       setError('Sie sind bereits in der Liste');
       return;
     }
-    
+
     const newUser: DatabaseTypes.User = {
       userId: userId,
       username: username || undefined
     };
-    
+
     setChatUsers(prev => [...prev, newUser]);
     setStatus('Sie wurden zur Chat-Erstellung hinzugefügt');
   };
@@ -315,17 +315,17 @@ const WebSocketTest = () => {
         { userId: chatUsers[0].userId },
         { userId: chatUsers[1].userId }
       ];
-      
+
       console.log(`[API] Chat mit Teilnehmern: ${usersToSend[0].userId}, ${usersToSend[1].userId}`);
-      
+
       const res = await fetch(`${API_BASE}/chat/newchat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(usersToSend),
       });
-      
+
       const data: DatabaseTypes.DatabaseResponse = await res.json();
-      
+
       if (data.success && data.id) {
         console.log(`[API] Chat erfolgreich erstellt mit ID: ${data.id}`);
         setActiveChatId(data.id);
@@ -424,7 +424,7 @@ const WebSocketTest = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 p-6 space-y-6">
-      
+
       {/* status und error */}
       <div className="space-y-2">
         {status && (
@@ -477,7 +477,7 @@ const WebSocketTest = () => {
       {/* chat */}
       <div className="bg-white p-5 rounded-lg shadow-md space-y-3">
         <h2 className="text-2xl font-semibold text-gray-700">Chat</h2>
-        
+
         {/* chat erstellung */}
         <div className="border-b border-gray-200 pb-4">
           <h3 className="text-lg font-medium text-gray-700 mb-2">Chat erstellen</h3>
@@ -495,22 +495,21 @@ const WebSocketTest = () => {
               Hinzufügen
             </button>
           </div>
-          
+
           {renderChatUsersList()}
-          
+
           <button
             onClick={createChat}
             disabled={loading || chatUsers.length < 2}
-            className={`mt-3 px-4 py-2 rounded ${
-              chatUsers.length < 2 
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+            className={`mt-3 px-4 py-2 rounded ${chatUsers.length < 2
+                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                 : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
+              }`}
           >
             Chat erstellen ({chatUsers.length}/2)
           </button>
         </div>
-        
+
         {/* chat verwaltung*/}
         <div className="pt-2">
           <h3 className="text-lg font-medium text-gray-700 mb-2">Chat verwalten</h3>
@@ -529,7 +528,7 @@ const WebSocketTest = () => {
               Laden
             </button>
           </div>
-          
+
           <div className="flex flex-wrap gap-3 mt-3">
             <input
               placeholder="User-ID"
@@ -553,16 +552,16 @@ const WebSocketTest = () => {
             </button>
           </div>
         </div>
-        
+
         <div className="text-gray-600 mt-3">
           <div className="font-semibold">Aktuelle Teilnehmer:</div>
           {loadedChat
             ? Object.keys(loadedChat.chatUserList).map(u => (
-                <span key={u} className="font-mono mx-1 bg-gray-100 px-2 py-1 rounded">
-                  {u}
-                  {u === userId && <span className="text-xs text-blue-600"> (Sie)</span>}
-                </span>
-              ))
+              <span key={u} className="font-mono mx-1 bg-gray-100 px-2 py-1 rounded">
+                {u}
+                {u === userId && <span className="text-xs text-blue-600"> (Sie)</span>}
+              </span>
+            ))
             : 'Kein Chat geladen'}
         </div>
       </div>
@@ -591,13 +590,12 @@ const WebSocketTest = () => {
           {messages.map((msg, i) => (
             <div
               key={i}
-              className={`max-w-[70%] p-2 rounded-lg shadow ${
-                msg.system
+              className={`max-w-[70%] p-2 rounded-lg shadow ${msg.system
                   ? 'bg-gray-200 italic self-center'
                   : msg.senderID === userId
-                  ? 'bg-blue-100 self-end text-right'
-                  : 'bg-white self-start'
-              }`}
+                    ? 'bg-blue-100 self-end text-right'
+                    : 'bg-white self-start'
+                }`}
             >
               <div className="text-sm">{msg.content}</div>
               <div className="text-xs text-gray-500 mt-1">
