@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { DatabaseTypes } from '@anocm/shared/dist';
-import type { Message } from '@anocm/shared/dist';
+import { DatabaseTypes} from '@anocm/shared/dist';
+import type { Message} from '@anocm/shared/dist';
 
 import { UUID } from "crypto";
 import { NIL } from "uuid";
 
 
-// lokal weil import nicht funktioniert hat
 enum Action {
   None = "",
   BroadcastToChat = "BroadcastToChat",
@@ -16,7 +15,7 @@ enum Action {
   MessageResponse = "MessageResponse"
 }
 
-// Für Systemnachrichten
+// Erweiterter Message-Typ für Systemnachrichten
 interface TestMessage extends Message {
   system?: boolean;
 }
@@ -24,50 +23,41 @@ interface TestMessage extends Message {
 const WebSocketTest = () => {
   const API_BASE = 'http://localhost:8080/api/v1';
 
-  // Auth states
-  const [userId, setUserId] = useState<UUID>(NIL);
+  //auth states
+  const [userId, setUserId] = useState<UUID | string>(NIL);
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
-  // Chat states
-  const [activeChatId, setActiveChatId] = useState<UUID>(NIL);
+  //chat states
+  const [activeChatId, setActiveChatId] = useState<UUID | string>(NIL);
   const [chatUsers, setChatUsers] = useState<DatabaseTypes.User[]>([]);
   const [newUserId, setNewUserId] = useState<string>('');
   const [loadedChat, setLoadedChat] = useState<DatabaseTypes.Chat | null>(null);
 
-  // Messages states
+  //messages states
   const [messageContent, setMessageContent] = useState<string>('');
   const [messages, setMessages] = useState<TestMessage[]>([]);
 
-  // Status und error states
+  //status und error states
   const [status, setStatus] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
-  // WebSocket states
+  //websocket states
   const ws = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState<boolean>(false);
 
-  // Wenn userId gesetzt, mit WebSocket verbinden
+
+
+  //wenn userId gesetzt mit websocket verbinden
   useEffect(() => {
-    if (userId && userId !== NIL) {
-      console.log(`[WS-EFFECT] UserId hat sich geändert auf: ${userId}, versuche zu verbinden`);
-      connectWebSocket();
-    }
-    
-    return () => {
-      if (ws.current) {
-        console.log(`[WS-EFFECT] Cleanup - schließe Verbindung`);
-        ws.current.close();
-      }
-    };
+    if (userId && !connected) connectWebSocket();
+    return () => { ws.current?.close(); };
   }, [userId]);
+
   
   const connectWebSocket = () => {
-    if (!userId || userId === NIL) {
-      console.log('[WS] Keine Benutzer-ID vorhanden, WebSocket-Verbindung wird übersprungen');
-      return;
-    }
+    if (!userId) return setError('Bitte zuerst einen Benutzer erstellen');
     
     // Bestehende Verbindung schließen
     if (ws.current) {
@@ -75,8 +65,8 @@ const WebSocketTest = () => {
       ws.current = null;
     }
     
-    // Neue Verbindung erstellen
-    try {
+    // Neue Verbindung mit Verzögerung erstellen
+    setTimeout(() => {
       console.log(`[WS] Verbindung wird hergestellt für Benutzer: ${userId}`);
       ws.current = new WebSocket(`ws://localhost:8080`);
       
@@ -101,7 +91,31 @@ const WebSocketTest = () => {
         }, 100);
       };
       
-      ws.current.onmessage = handleWebSocketMessage;
+      ws.current.onmessage = ev => {
+        try {
+          const msg = JSON.parse(ev.data);
+          // Nur wichtige Ereignisse loggen
+          if (msg.action === Action.BroadcastToChat) {
+            console.log(`[WS] Chat-Nachricht empfangen in Chat: ${msg.chatID}`);
+          } else if (msg.action === Action.MessageResponse) {
+            console.log(`[WS] Server-Antwort empfangen`);
+          }
+          
+          if (msg.action === Action.BroadcastToChat) {
+            setMessages(prev => [...prev, msg]);
+          } else if (msg.action === Action.MessageResponse) {
+            try {
+              const content = JSON.parse(msg.content);
+              const txt = content?.message || msg.content;
+              setStatus(`Server: ${txt}`);
+            } catch (e) {
+              setStatus(`Server: ${msg.content}`);
+            }
+          }
+        } catch (err) {
+          console.error('[WS] Fehler bei Nachrichtenverarbeitung:', err);
+        }
+      };
       
       ws.current.onclose = () => {
         console.log('[WS] Verbindung beendet');
@@ -113,123 +127,28 @@ const WebSocketTest = () => {
         console.error('[WS] Verbindungsfehler:', err);
         setError('WebSocket-Fehler');
       };
-    } catch (error) {
-      console.error('[WS] Fehler beim Erstellen der WebSocket-Verbindung:', error);
-      setError(`WebSocket-Verbindungsfehler: ${error}`);
-    }
+    }, 50);
   };
 
- // WebSocket-Nachrichten
-const handleWebSocketMessage = (ev: MessageEvent) => {
-  try {
-    const msg = JSON.parse(ev.data);
-    
-    // Verschiedene Nachrichtentypen
-    if (msg.action === Action.BroadcastToChat) {
-      console.log(`[WS] Chat-Nachricht empfangen in Chat: ${msg.chatID}`);
-      
-      // Nachricht zu vorhandenen Messages hinzufügen
-      setMessages(prev => [...prev, msg]);
-      
-      // AUTOMATISCHE AKTIVIERUNG: Wenn eine Nachricht empfangen wird, 
-      // automatisch den entsprechenden Chat aktivieren
-      if (msg.chatID && msg.chatID !== activeChatId) {
-        console.log(`[WS] Automatische Aktivierung von Chat: ${msg.chatID}`);
-        setActiveChatId(msg.chatID);
-        // Chat sofort laden für Teilnehmerinformationen
-        getChat(msg.chatID, false);
-      }
-    } else if (msg.action === Action.MessageResponse) {
-      console.log(`[WS] Server-Antwort empfangen:`, msg);
-        
-        try {
-          const content = JSON.parse(msg.content);
-          
-          // Auf Erfolg/Fehler prüfen
-          if (content.sucess === false) {
-            setError(`Server: ${content.message}`);
-          } else {
-            setStatus(`Server: ${content.message}`);
-            
-            // Wenn ein Benutzer hinzugefügt oder entfernt wurde Chat neu laden
-            if (
-              content.message.includes("Added client") || 
-              content.message.includes("Removed user")
-            ) {
-              if (activeChatId && activeChatId !== NIL) {
-                getChat(activeChatId, false);
-              }
-            }
-          }
-        } catch (e) {
-          // Falls die Nachricht kein gültiges JSON ist
-          setStatus(`Server: ${msg.content}`);
-        }
-
-    }
-  } catch (err) {
-    console.error('[WS] Fehler bei Nachrichtenverarbeitung:', err);
-    setError(`Nachrichtenverarbeitungsfehler: ${err}`);
-  }
-};
-
-  //Nachricht an Chat senden
   const sendMessage = () => {
-    if (!connected) {
-      setError('WebSocket nicht verbunden');
-      return;
-    }
-    
-    if (!activeChatId || activeChatId === NIL) {
-      setError('Kein Chat ausgewählt');
-      return;
-    }
-    
-    if (!messageContent.trim()) {
-      setError('Nachricht darf nicht leer sein');
-      return;
-    }
-    
+    if (!connected || !messageContent.trim()) return;
     console.log(`[WS] Sende Nachricht an Chat ${activeChatId}`);
-    
     const msg: TestMessage = {
       action: Action.BroadcastToChat,
       content: messageContent,
-      senderID: userId,
+      senderID: userId as UUID,
       chatID: activeChatId,
       timestamp: Date.now(),
     };
-    
-    try {
-      ws.current!.send(JSON.stringify(msg));
-      setMessages(prev => [...prev, msg]);
-      setMessageContent('');
-      setStatus('Nachricht gesendet');
-    } catch (error) {
-      console.error('[WS] Fehler beim Senden der Nachricht:', error);
-      setError(`Fehler beim Senden: ${error}`);
-    }
+    ws.current!.send(JSON.stringify(msg));
+    setMessages(prev => [...prev, msg]);
+    setMessageContent('');
+    setStatus('Nachricht gesendet');
   };
 
-  // Benutzer aus Chat entfernen
   const removeUserFromChat = () => {
-    if (!connected) {
-      setError('WebSocket nicht verbunden');
-      return;
-    }
-    
-    if (!activeChatId || activeChatId === NIL) {
-      setError('Kein Chat ausgewählt');
-      return;
-    }
-    
-    if (!newUserId) {
-      setError('Keine Benutzer-ID angegeben');
-      return;
-    }
-    
+    if (!connected || !newUserId) return setError('IDs angeben');
     console.log(`[WS] Entferne Benutzer ${newUserId} aus Chat ${activeChatId}`);
-    
     const payload = {
       action: Action.RemoveClientFromChatNoConfirm,
       content: newUserId,
@@ -237,125 +156,89 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
       chatID: activeChatId,
       timestamp: Date.now(),
     };
-    
-    try {
-      ws.current!.send(JSON.stringify(payload));
-      
-      // Systemnachricht hinzufügen
-      setMessages(prev => [
-        ...prev,
-        {
-          system: true,
-          action: Action.BroadcastToChat,
-          content: `User ${newUserId} entfernt`,
-          senderID: 'system' as UUID,
-          chatID: activeChatId,
-          timestamp: Date.now(),
-        }
-      ]);
-      
-      setStatus(`Entferne Benutzer ${newUserId}...`);
-      setNewUserId('');
-      
-      // Nach kurzer Verzögerung Chat Daten aktualisieren
-      setTimeout(() => {
-        getChat(activeChatId, false);
-      }, 500);
-    } catch (error) {
-      console.error('[WS] Fehler beim Entfernen des Benutzers:', error);
-      setError(`Fehler beim Entfernen: ${error}`);
-    }
+    ws.current!.send(JSON.stringify(payload));
+    setMessages(prev => [
+      ...prev,
+      {
+        system: true,
+        action: Action.BroadcastToChat,
+        content: `User ${newUserId} entfernt`,
+        senderID: 'system' as UUID,
+        chatID: activeChatId as UUID,
+        timestamp: Date.now(),
+      }
+    ]);
+    setStatus(`User entfernt: ${newUserId}`);
+    setNewUserId('');
   };
 
-  // Anonymen Benutzer erstellen
+  //api funktionen
   const createAnonymousUser = async () => {
     console.log('[API] Anonymen Benutzer erstellen');
     setLoading(true);
     setError('');
-    
     try {
       const res = await fetch(`${API_BASE}/user/newano`, { method: 'POST' });
       const data: DatabaseTypes.DatabaseResponse = await res.json();
-      
       if (data.success && data.id) {
         console.log(`[API] Anonymer Benutzer erstellt: ${data.id}`);
-        
-        // Erst User-ID setzen
         setUserId(data.id);
         setStatus(`Anon-User erstellt: ${data.id}`);
         
-        // Bestehende Verbindung schließen falls vorhanden
         if (ws.current) {
           ws.current.close();
-          ws.current = null;
         }
         
-        // Kurze Verzögerung, damit React den State aktualisieren kann
         setTimeout(() => {
           console.log('[WS] Neue Verbindung nach Benutzer-Erstellung');
           connectWebSocket();
-        }, 300);
-      } else {
-        throw new Error(data.error || 'Unbekannter Fehler');
-      }
+        }, 100);
+        
+      } else throw new Error(data.error);
     } catch (err) {
       console.error('[API] Fehler bei Anon-User-Erstellung:', err);
-      setError(`Fehler beim Anlegen des anonymen Users: ${err}`);
+      setError('Fehler beim Anlegen des anonymen Users');
     } finally {
       setLoading(false);
     }
   };
   
-  // Registrierten Benutzer erstellen
   const createUser = async () => {
-    if (!username || !password) {
-      setError('Name & Passwort angeben');
-      return;
-    }
-    
+    if (!username || !password) return setError('Name & Passwort angeben');
     console.log('[API] Benutzer registrieren');
     setLoading(true);
     setError('');
-    
     try {
       const res = await fetch(`${API_BASE}/user/newuser`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      
       const data: DatabaseTypes.DatabaseResponse = await res.json();
-      
       if (data.success && data.id) {
         console.log(`[API] Benutzer '${username}' erstellt mit ID: ${data.id}`);
-        
-        // Erst User ID setzen
         setUserId(data.id);
         setStatus(`User erstellt: ${username}`);
         
-        // Bestehende Verbindung schließen falls vorhanden
         if (ws.current) {
           ws.current.close();
-          ws.current = null;
         }
         
-        // Kurze Verzögerung dass React State aktualisieren kann
         setTimeout(() => {
           console.log('[WS] Neue Verbindung nach Benutzer-Erstellung');
           connectWebSocket();
-        }, 300);
-      } else {
-        throw new Error(data.error || 'Unbekannter Fehler');
-      }
+        }, 100);
+        
+      } else throw new Error(data.error);
     } catch (err) {
       console.error('[API] Fehler bei Benutzer-Registrierung:', err);
-      setError(`Fehler bei User-Erstellung: ${err}`);
+      setError('Fehler bei User-Erstellung');
     } finally {
       setLoading(false);
     }
   };
 
-  // Chat Teilnehmer anzeigen
+  //aktuelle chat user
   const renderChatUsersList = () => {
     if (chatUsers.length === 0) {
       return <div className="text-gray-500 italic">Keine Benutzer hinzugefügt</div>;
@@ -366,11 +249,11 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
         <div className="font-semibold">Chat-Teilnehmer zum Erstellen:</div>
         <ul className="list-disc list-inside">
           {chatUsers.map((user, index) => (
-            <li key={index} className="flex items-center justify-between py-1">
-              <span className="truncate">{user.username || user.userId}</span>
+            <li key={index}>
+              {user.username || user.userId}
               <button 
                 onClick={() => setChatUsers(chatUsers.filter((_, i) => i !== index))}
-                className="ml-2 bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-sm"
+                className="ml-4 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded"
               >
                 Entfernen
               </button>
@@ -381,14 +264,14 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
     );
   };
 
-  // Benutzer zur Chat Erstellung hinzufügen
+  //user zur chat erstellung hinzufügen
   const addUserToChatCreation = () => {
     if (!newUserId.trim()) {
       setError('Bitte eine User-ID eingeben');
       return;
     }
     
-    // Prüfen ob Benutzer bereits in der Liste ist
+    //schauen ob user bereits in liste
     if (chatUsers.some(user => user.userId === newUserId)) {
       setError('Dieser User ist bereits in der Liste');
       return;
@@ -397,17 +280,17 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
     setChatUsers(prev => [...prev, { userId: newUserId }]);
     setNewUserId('');
     setError('');
-    setStatus(`User ${newUserId.substring(0, 8)}... zur Chat-Erstellung hinzugefügt`);
+    setStatus(`User ${newUserId} zur Chat-Erstellung hinzugefügt`);
   };
 
-  // Aktuellen Benutzer zur Chat-Erstellung hinzufügen
+  //aktuellen benutzer zur chat erstellung hinzufügen
   const addCurrentUserToChatCreation = () => {
-    if (!userId || userId === NIL) {
+    if (!userId) {
       setError('Kein Benutzer angemeldet');
       return;
     }
     
-    // Prüfen ob Benutzer bereits in der Liste ist
+    //schauen ob user bereits in liste
     if (chatUsers.some(user => user.userId === userId)) {
       setError('Sie sind bereits in der Liste');
       return;
@@ -422,24 +305,18 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
     setStatus('Sie wurden zur Chat-Erstellung hinzugefügt');
   };
 
-  // Chat erstellen
   const createChat = async () => {
-    if (chatUsers.length < 2) {
-      setError('Mind. 2 User nötig');
-      return;
-    }
-    
+    if (chatUsers.length < 2) return setError('Mind. 2 User nötig');
     console.log('[API] Chat wird erstellt');
     setLoading(true);
     setError('');
-    
     try {
       const usersToSend = [
         { userId: chatUsers[0].userId },
         { userId: chatUsers[1].userId }
       ];
       
-      console.log(`[API] Chat mit Teilnehmern: ${usersToSend.map(u => u.userId).join(', ')}`);
+      console.log(`[API] Chat mit Teilnehmern: ${usersToSend[0].userId}, ${usersToSend[1].userId}`);
       
       const res = await fetch(`${API_BASE}/chat/newchat`, {
         method: 'POST',
@@ -451,11 +328,7 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
       
       if (data.success && data.id) {
         console.log(`[API] Chat erfolgreich erstellt mit ID: ${data.id}`);
-        
-        // Aktiven Chat setzen und laden
         setActiveChatId(data.id);
-        
-        // Systemnachricht hinzufügen
         setMessages(prev => [
           ...prev,
           {
@@ -467,14 +340,7 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
             timestamp: Date.now(),
           }
         ]);
-        
         setStatus(`Chat erstellt: ${data.id}`);
-        
-        // Chat-Liste leeren
-        setChatUsers([]);
-        
-        // Chat sofort laden
-        getChat(data.id, true);
       } else {
         throw new Error(data.error || 'Unbekannter Fehler bei Chat-Erstellung');
       }
@@ -486,96 +352,53 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
     }
   };
 
-  // Chat laden
-  const getChat = async (chatId = activeChatId, showStatus = true) => {
-    if (!chatId || chatId === NIL) {
-      setError('Chat-ID angeben');
-      return;
-    }
-    
-    if (showStatus) {
-      console.log(`[API] Chat ${chatId} wird geladen`);
-      setLoading(true);
-    }
-    
+  const getChat = async () => {
+    if (!activeChatId) return setError('Chat-ID angeben');
+    console.log(`[API] Chat ${activeChatId} wird geladen`);
+    setLoading(true);
     setError('');
-    
     try {
-      const res = await fetch(`${API_BASE}/chat/getchat?chatid=${chatId}`);
+      const res = await fetch(`${API_BASE}/chat/getchat?chatid=${activeChatId}`);
       const data: DatabaseTypes.DatabaseResponse = await res.json();
-      
       if (data.success && data.userData) {
-        console.log(`[API] Chat ${chatId} erfolgreich geladen`);
+        console.log(`[API] Chat ${activeChatId} erfolgreich geladen`);
         setLoadedChat(data.userData as DatabaseTypes.Chat);
-        
-        if (showStatus) {
-          // Systemnachricht nur hinzufügen, wenn explizit geladen
-          setMessages(prev => [
-            ...prev,
-            {
-              system: true,
-              action: Action.BroadcastToChat,
-              content: `Chat ${chatId} geladen`,
-              senderID: 'system' as UUID,
-              chatID: chatId as UUID,
-              timestamp: Date.now(),
-            }
-          ]);
-          
-          setStatus(`Chat geladen: ${chatId}`);
-        }
-        
-        // Aktiven Chat setzen, falls noch nicht geschehen
-        if (activeChatId !== chatId) {
-          setActiveChatId(chatId);
-        }
-      } else {
-        throw new Error(data.error || 'Unbekannter Fehler beim Laden des Chats');
-      }
+        setMessages(prev => [
+          ...prev,
+          {
+            system: true,
+            action: Action.BroadcastToChat,
+            content: `Chat ${activeChatId} geladen`,
+            senderID: 'system' as UUID,
+            chatID: activeChatId as UUID,
+            timestamp: Date.now(),
+          }
+        ]);
+        setStatus(`Chat geladen: ${activeChatId}`);
+      } else throw new Error(data.error);
     } catch (err) {
       console.error('[API] Fehler beim Laden des Chats:', err);
-      if (showStatus) {
-        setError(`Fehler beim Chat-Laden: ${err}`);
-      }
+      setError('Fehler beim Chat-Laden');
     } finally {
-      if (showStatus) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
-  // Benutzer zum Chat hinzufügen
   const addUserToChat = async () => {
-    if (!activeChatId || activeChatId === NIL) {
-      setError('Kein Chat ausgewählt');
-      return;
-    }
-    
-    if (!newUserId) {
-      setError('Keine Benutzer-ID angegeben');
-      return;
-    }
-    
+    if (!activeChatId || !newUserId) return setError('IDs angeben');
     console.log(`[API] Füge Benutzer ${newUserId} zu Chat ${activeChatId} hinzu`);
     setLoading(true);
     setError('');
-    
     try {
       const res = await fetch(`${API_BASE}/chat/adduser`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chatId: activeChatId, userId: newUserId }),
       });
-      
       const data: DatabaseTypes.DatabaseResponse = await res.json();
-      
       if (data.success) {
         console.log(`[API] Benutzer ${newUserId} erfolgreich zu Chat hinzugefügt`);
-        
-        // Chat neu laden
-        await getChat(activeChatId, false);
-        
-        // Systemnachricht hinzufügen
+        await getChat();
         setMessages(prev => [
           ...prev,
           {
@@ -587,39 +410,68 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
             timestamp: Date.now(),
           } as TestMessage
         ]);
-        
-        setStatus(`Benutzer ${newUserId.substring(0, 8)}... hinzugefügt`);
-      } else {
-        throw new Error(data.error || 'Unbekannter Fehler beim Hinzufügen des Benutzers');
-      }
+      } else throw new Error(data.error);
     } catch (err) {
       console.error('[API] Fehler beim Hinzufügen des Benutzers:', err);
-      setError(`Fehler beim Hinzufügen: ${err}`);
+      setError('Fehler beim Hinzufügen des Users');
     } finally {
       setLoading(false);
       setNewUserId('');
     }
   };
 
-  // Zeit formatieren
-  const formatTime = (ts: number) => {
-    return new Date(ts).toLocaleTimeString();
-  };
-
-  // Verkürzte UUID anzeigen
-  const shortUUID = (id: string) => {
-    return id ? `${id.substring(0, 8)}...` : '';
-  };
+  const formatTime = (ts: number) => new Date(ts).toLocaleTimeString();
 
   return (
-    <div className="p-6 max-w-2xl mx-auto bg-white text-black font-sans space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">WebSocket Test</h2>
-        <span className={`text-sm ${connected ? 'text-green-500' : 'text-red-500'}`}>{connected ? 'Verbunden' : 'Getrennt'}</span>
+    <div className="min-h-screen bg-gray-100 text-gray-900 p-6 space-y-6">
+      
+      {/* status und error */}
+      <div className="space-y-2">
+        {status && (
+          <div className="bg-green-100 text-green-800 p-3 rounded shadow">{status}</div>
+        )}
+        {error && (
+          <div className="bg-red-100 text-red-800 p-3 rounded shadow">{error}</div>
+        )}
       </div>
 
-      <div id="join-status" className="text-xs text-gray-600 mt-2">
-        Nicht beigetreten
+      {/* benutzer */}
+      <div className="bg-white p-5 rounded-lg shadow-md space-y-3">
+        <h2 className="text-2xl font-semibold text-gray-700">Benutzer</h2>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={createAnonymousUser}
+            disabled={loading}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Anonym
+          </button>
+          <input
+            placeholder="User"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+          />
+          <input
+            type="password"
+            placeholder="Passwort"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+          />
+          <button
+            onClick={createUser}
+            disabled={loading}
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Registrieren
+          </button>
+        </div>
+        {userId && (
+          <div className="text-gray-600">
+            Angemeldet als <span className="font-mono text-blue-600">{userId}</span>
+          </div>
+        )}
       </div>
 
       {/* chat */}
@@ -643,14 +495,6 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
               Hinzufügen
             </button>
           </div>
-          
-          <button
-            onClick={addCurrentUserToChatCreation}
-            disabled={chatUsers.some(u => u.userId === userId)}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2 disabled:bg-blue-300"
-          >
-            Mich hinzufügen
-          </button>
           
           {renderChatUsersList()}
           
@@ -678,7 +522,7 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
               className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
             />
             <button
-              onClick={() => getChat()}
+              onClick={getChat}
               disabled={loading}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
             >
@@ -762,6 +606,7 @@ const handleWebSocketMessage = (ev: MessageEvent) => {
               </div>
             </div>
           ))}
+          <div />
         </div>
       </div>
     </div>
