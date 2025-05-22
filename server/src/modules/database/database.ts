@@ -12,11 +12,20 @@ export namespace Database {
       port: 18414,
     },
   });
-
+  /**
+   * Returns a random integer between min (inclusive) and max (exclusive)
+   * @param {number} min - Minimum value (inclusive)
+   * @param {number} max - Maximum value (exclusive)
+   * @returns {number} Random integer
+   */
   export function getRandomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min) + min);
   }
 
+  /**
+   * Connects the Redis client and initializes necessary keys
+   * @returns {Promise<boolean>} True if connected, false otherwise
+   */
   export async function connectClient(): Promise<boolean> {
     client.on("error", (err: Error) => {
       console.log("Redis client error: ", err);
@@ -39,8 +48,9 @@ export namespace Database {
   }
 
   /**
-   * Creates Chat with the Users in the User Array
-   * @returns chatId
+   * Creates a chat with the given users
+   * @param {DatabaseTypes.User[]} users - List of users
+   * @returns {Promise<UUID | false>} Chat ID if successful, otherwise false
    */
   export async function createChat(
     users: DatabaseTypes.User[]
@@ -74,6 +84,13 @@ export namespace Database {
     }
   }
 
+    /**
+   * Sends a message to a specific chat
+   * @param {string} chatId - Chat identifier
+   * @param {string} senderId - Sender's user ID
+   * @param {string} message - Message content
+   * @returns {Promise<boolean>} True if sent successfully, false otherwise
+   */
   export async function sendMessageToChat(
     chatId: string,
     senderId: string,
@@ -96,6 +113,11 @@ export namespace Database {
     }
   }
 
+  /**
+   * Retrieves all messages from a chat
+   * @param {string} chatId - Chat identifier
+   * @returns {Promise<DatabaseTypes.messageStructure | false>} Messages object or false
+   */
   export async function getChatMessages(
     chatId: string
   ): Promise<DatabaseTypes.messageStructure | false> {
@@ -176,8 +198,8 @@ export namespace Database {
   }
 
   /**
-   * Creates anonymous User key-value string that has the clientId
-   * @returns clientId
+   * Creates an anonymous user hashmap entry
+   * @returns {Promise<string>} Client ID
    */
   export async function createAnoUser(): Promise<string> {
     let userId: string = randomUUID();
@@ -188,6 +210,11 @@ export namespace Database {
     return clientId;
   }
 
+  /**
+   * Retrieves full chat data (users, settings, messages)
+   * @param {string} chatIdInput - Chat ID
+   * @returns {Promise<DatabaseTypes.Chat | false>} Chat object or false
+   */
   export async function getChat(
     chatIdInput: string
   ): Promise<DatabaseTypes.Chat | false> {
@@ -205,6 +232,12 @@ export namespace Database {
     }
   }
 
+    /**
+   * Adds a user to an existing chat
+   * @param {UUID} chatId - Chat ID
+   * @param {UUID} userId - User ID to be added
+   * @returns {Promise<boolean>} True if added, false otherwise
+   */
   export async function addUsertoChat(
     chatId: UUID,
     userId: UUID
@@ -222,6 +255,12 @@ export namespace Database {
     return false;
   }
 
+    /**
+   * Removes a user from a chat
+   * @param {UUID} chatId - Chat ID
+   * @param {UUID} userId - User ID to be removed
+   * @returns {Promise<boolean>} True if removed, false otherwise
+   */
   export async function deleteUserFromChat(
     chatId: UUID,
     userId: UUID
@@ -239,6 +278,12 @@ export namespace Database {
     return false;
   }
 
+    /**
+   * Verifies a password against a hash using argon2id
+   * @param {string} hash - Hashed password
+   * @param {string} password - Plain password
+   * @returns {Promise<boolean>} True if match, false otherwise
+   */
   export async function verifyHash(hash: string, password: string): Promise<boolean>{
     try{
         if(await argon2.verify(hash, password)){
