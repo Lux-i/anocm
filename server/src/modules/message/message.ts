@@ -11,7 +11,7 @@ export async function broadcastToChat(message: Message) {
     UserManager.sendMessage(
       message.senderID,
       messageResponse(message.senderID, {
-        sucess: false,
+        success: false,
         message: `Database Error`,
       })
     );
@@ -22,28 +22,28 @@ export async function broadcastToChat(message: Message) {
     UserManager.sendMessage(
       message.senderID,
       messageResponse(message.senderID, {
-        sucess: false,
+        success: false,
         message: `Message could not be broadcasted to chat with id '${message.chatID}'`,
       })
     );
     return;
   }
 
-  let sucessful: number = 0;
+  let successful: number = 0;
 
   Object.keys(res.chatUserList).forEach((id) => {
     if (isUUID(id)) {
       const uuid: UUID = id;
       UserManager.sendMessage(uuid, message);
-      sucessful++;
+      successful++;
     }
   });
 
   UserManager.sendMessage(
     message.senderID,
     messageResponse(message.senderID, {
-      sucess: true,
-      message: `Message broadcasted to ${sucessful} Clients in '${message.chatID}'`,
+      success: true,
+      message: `Message broadcasted to ${successful} Clients in '${message.chatID}'`,
     })
   );
 }
@@ -57,13 +57,13 @@ export async function broadcastToChat(message: Message) {
  * @returns
  */
 export async function addToChatNoConfirm(message: Message) {
-  let reciever = isUUID(message.content) ? message.content : null;
+  let receiver = isUUID(message.content) ? message.content : null;
 
-  if (reciever === null) {
+  if (receiver === null) {
     UserManager.sendMessage(
       message.senderID,
       messageResponse(message.senderID, {
-        sucess: false,
+        success: false,
         message: "Wrong format for content, should be UUID",
       })
     );
@@ -71,13 +71,13 @@ export async function addToChatNoConfirm(message: Message) {
     return;
   }
 
-  const res = await Database.addUsertoChat(message.chatID, reciever);
+  const res = await Database.addUsertoChat(message.chatID, receiver);
 
   if (res === false) {
     UserManager.sendMessage(
       message.senderID,
       messageResponse(message.senderID, {
-        sucess: false,
+        success: false,
         message: "Could not add user to chat. User or chat may be invalid",
       })
     );
@@ -87,7 +87,7 @@ export async function addToChatNoConfirm(message: Message) {
     UserManager.sendMessage(
       message.senderID,
       messageResponse(message.senderID, {
-        sucess: true,
+        success: true,
         message: `Added client ${message.content} to chat ${message.chatID}`,
       })
     );
@@ -108,7 +108,7 @@ export async function removeFromChatNoConfirm(message: Message) {
     UserManager.sendMessage(
       message.senderID,
       messageResponse(message.senderID, {
-        sucess: false,
+        success: false,
         message: "Wrong format for content, should be UUID",
       })
     );
@@ -126,7 +126,7 @@ export async function removeFromChatNoConfirm(message: Message) {
     UserManager.sendMessage(
       message.senderID,
       messageResponse(message.senderID, {
-        sucess: false,
+        success: false,
         message: "Could not remove user from chat.",
       })
     );
@@ -136,7 +136,7 @@ export async function removeFromChatNoConfirm(message: Message) {
     UserManager.sendMessage(
       message.senderID,
       messageResponse(message.senderID, {
-        sucess: true,
+        success: true,
         message: `Removed user ${message.content} from chat ${message.chatID}`,
       })
     );
