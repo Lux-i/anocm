@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Database } from "../../modules/database/database";
-import { DatabaseTypes } from "@anocm/shared/dist";
+import { DatabaseResponse, Chat } from "@anocm/shared/dist";
 
 const express = require("express");
 const router = express.Router();
@@ -10,14 +10,14 @@ export default () => {
         console.log("POST Request: new anonymous User");
         try {
             Database.createAnoUser().then((clientId: string) => {
-                const response: DatabaseTypes.DatabaseResponse = {
+                const response: DatabaseResponse = {
                     success: true,
                     id: clientId.toString(),
                 };
                 res.send(response);
             });
         } catch (err: any) {
-            const response: DatabaseTypes.DatabaseResponse = {
+            const response: DatabaseResponse = {
                 success: false,
                 error: err,
             };
@@ -32,13 +32,13 @@ export default () => {
             Database.createUser(req.body.username, req.body.password).then(
                 (userId: string | false) => {
                     if (userId == false) {
-                        const response: DatabaseTypes.DatabaseResponse = {
+                        const response: DatabaseResponse = {
                             success: false,
                             error: "Error creating User",
                         };
                         res.send(response);
                     } else {
-                        const response: DatabaseTypes.DatabaseResponse = {
+                        const response: DatabaseResponse = {
                             success: true,
                             id: userId.toString(),
                             userData: req.body.username,
@@ -48,7 +48,7 @@ export default () => {
                 }
             );
         } catch (err: any) {
-            const response: DatabaseTypes.DatabaseResponse = {
+            const response: DatabaseResponse = {
                 success: false,
                 error: err,
             };

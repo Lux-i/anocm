@@ -1,6 +1,6 @@
 import { RedisClientType, createClient } from "redis";
 import { randomUUID, UUID } from "crypto";
-import { DatabaseTypes } from "@anocm/shared/dist";
+import { DatabaseResponse, Chat, User, ChatMessage, messageStructure } from "@anocm/shared/dist";
 const argon2 = require("argon2");
 
 export namespace Database {
@@ -49,11 +49,11 @@ export namespace Database {
 
   /**
    * Creates a chat with the given users
-   * @param {DatabaseTypes.User[]} users - List of users
+   * @param {User[]} users - List of users
    * @returns {Promise<UUID | false>} Chat ID if successful, otherwise false
    */
   export async function createChat(
-    users: DatabaseTypes.User[]
+    users: User[]
   ): Promise<UUID | false> {
     if (users.length >= 2) {
       let chatId = randomUUID();
@@ -91,6 +91,19 @@ export namespace Database {
    * @param {string} message - Message content
    * @returns {Promise<boolean>} True if sent successfully, false otherwise
    */
+  export async function checkUserinChat(
+    chatId: string,
+    userId:string
+  ){
+    try{
+      let res = await client.hExists(`chat:${chatId}:users`, userId);
+      return res;
+    }catch(err: any){
+      console.error("Error checking User: ", err);
+      return -1;
+    }
+  }
+
   export async function sendMessageToChat(
     chatId: string,
     senderId: string,
@@ -120,19 +133,19 @@ export namespace Database {
   /**
    * Retrieves all messages from a chat
    * @param {string} chatId - Chat identifier
-   * @returns {Promise<DatabaseTypes.messageStructure | false>} Messages object or false
+   * @returns {Promise<messageStructure | false>} Messages object or false
    */
   export async function getChatMessages(
     chatId: string
-  ): Promise<DatabaseTypes.messageStructure | false> {
+  ): Promise<messageStructure | false> {
     if (await client.EXISTS(`chat:${chatId}:messages`)) {
       try {
         const response = await client.hGetAll(`chat:${chatId}:messages`);
         //console.log(response);
-        const convertedResponse: DatabaseTypes.messageStructure = {};
+        const convertedResponse: messageStructure = {};
 
         for (let [key, msg] of Object.entries(response)) {
-          const parsedMessage: DatabaseTypes.ChatMessage = JSON.parse(msg);
+          const parsedMessage: ChatMessage = JSON.parse(msg);
           const parsedKey: EpochTimeStamp = Number(key);
           convertedResponse[parsedKey] = parsedMessage;
         }
@@ -218,13 +231,13 @@ export namespace Database {
   /**
    * Retrieves full chat data (users, settings, messages)
    * @param {string} chatIdInput - Chat ID
-   * @returns {Promise<DatabaseTypes.Chat | false>} Chat object or false
+   * @returns {Promise<Chat | false>} Chat object or false
    */
   export async function getChat(
     chatIdInput: string
-  ): Promise<DatabaseTypes.Chat | false> {
+  ): Promise<Chat | false> {
     try {
-      const chat: DatabaseTypes.Chat = {
+      const chat: Chat = {
         chatId: chatIdInput,
         chatUserList: await client.hGetAll(`chat:${chatIdInput}:users`),
         chatSettings: await client.hGetAll(`chat:${chatIdInput}:settings`),
