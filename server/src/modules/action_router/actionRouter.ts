@@ -1,8 +1,6 @@
-import { Message, Action } from "@anocm/shared/dist";
+import { WsMessage, Action } from "@anocm/shared/dist";
 import {
-  addToChatNoConfirm,
   broadcastToChat,
-  removeFromChatNoConfirm,
 } from "../message/message";
 
 /**
@@ -12,21 +10,16 @@ import {
  * @param handler singleton ws manager
  */
 
-export function routeMessageAction(message: Message) {
+export function routeMessageAction(message: WsMessage) {
   switch (message.action) {
     case Action.BroadcastToChat:
       broadcastToChat(message);
       break;
-    case Action.AddClientToChatNoConfirm:
-      addToChatNoConfirm(message);
-      break;
-    case Action.RemoveClientFromChatNoConfirm:
-      removeFromChatNoConfirm(message);
+    case Action.Init:
       break;
     case Action.None:
     case Action.MessageResponse:
     default:
-      console.log("Didnt route anything");
       return false;
   }
 }

@@ -1,22 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { DatabaseTypes } from '@anocm/shared/dist';
-import type { Message } from '@anocm/shared/dist';
+import { DatabaseResponse, User, Chat } from '@anocm/shared/dist';
+import type { WsMessage } from '@anocm/shared/dist';
+import { Action } from '@anocm/shared/dist';
+
 
 import { UUID } from "crypto";
 import { NIL } from "uuid";
 
-
-enum Action {
-  None = "",
-  BroadcastToChat = "BroadcastToChat",
-  AddClientToChatNoConfirm = "AddClientToChatNoConfirm",
-  RemoveClientFromChatNoConfirm = "RemoveClientFromChatNoConfirm",
-  MessageResponse = "MessageResponse"
-}
+const SYSTEM_UUID = "00000000-0000-0000-0000-000000000000" as UUID;
 
 // Erweiterter Message-Typ für Systemnachrichten
-interface TestMessage extends Message {
+interface TestMessage extends WsMessage {
   system?: boolean;
 }
 
@@ -30,9 +25,9 @@ const WebSocketTest = () => {
 
   //chat states
   const [activeChatId, setActiveChatId] = useState<UUID | string>(NIL);
-  const [chatUsers, setChatUsers] = useState<DatabaseTypes.User[]>([]);
+  const [chatUsers, setChatUsers] = useState<User[]>([]);
   const [newUserId, setNewUserId] = useState<string>('');
-  const [loadedChat, setLoadedChat] = useState<DatabaseTypes.Chat | null>(null);
+  const [loadedChat, setLoadedChat] = useState<Chat | null>(null);
 
   //messages states
   const [messageContent, setMessageContent] = useState<string>('');
@@ -147,6 +142,10 @@ const WebSocketTest = () => {
   };
 
   const removeUserFromChat = () => {
+    //TODO: GEHT GRAD NICHT
+
+    return;
+    /*
     if (!connected || !newUserId) return setError('IDs angeben');
     console.log(`[WS] Entferne Benutzer ${newUserId} aus Chat ${activeChatId}`);
     const payload = {
@@ -163,13 +162,15 @@ const WebSocketTest = () => {
         system: true,
         action: Action.BroadcastToChat,
         content: `User ${newUserId} entfernt`,
-        senderID: 'system' as UUID,
+        senderID: SYSTEM_UUID,
         chatID: activeChatId as UUID,
         timestamp: Date.now(),
       }
     ]);
     setStatus(`User entfernt: ${newUserId}`);
     setNewUserId('');
+
+    */
   };
 
   //api funktionen
@@ -179,7 +180,7 @@ const WebSocketTest = () => {
     setError('');
     try {
       const res = await fetch(`${API_BASE}/user/newano`, { method: 'POST' });
-      const data: DatabaseTypes.DatabaseResponse = await res.json();
+      const data: DatabaseResponse = await res.json();
       if (data.success && data.id) {
         console.log(`[API] Anonymer Benutzer erstellt: ${data.id}`);
         setUserId(data.id);
@@ -214,7 +215,7 @@ const WebSocketTest = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      const data: DatabaseTypes.DatabaseResponse = await res.json();
+      const data: DatabaseResponse = await res.json();
       if (data.success && data.id) {
         console.log(`[API] Benutzer '${username}' erstellt mit ID: ${data.id}`);
         setUserId(data.id);
@@ -296,7 +297,7 @@ const WebSocketTest = () => {
       return;
     }
 
-    const newUser: DatabaseTypes.User = {
+    const newUser: User = {
       userId: userId,
       username: username || undefined
     };
@@ -324,7 +325,7 @@ const WebSocketTest = () => {
         body: JSON.stringify(usersToSend),
       });
 
-      const data: DatabaseTypes.DatabaseResponse = await res.json();
+      const data: DatabaseResponse = await res.json();
 
       if (data.success && data.id) {
         console.log(`[API] Chat erfolgreich erstellt mit ID: ${data.id}`);
@@ -359,10 +360,10 @@ const WebSocketTest = () => {
     setError('');
     try {
       const res = await fetch(`${API_BASE}/chat/getchat?chatid=${activeChatId}`);
-      const data: DatabaseTypes.DatabaseResponse = await res.json();
+      const data: DatabaseResponse = await res.json();
       if (data.success && data.userData) {
         console.log(`[API] Chat ${activeChatId} erfolgreich geladen`);
-        setLoadedChat(data.userData as DatabaseTypes.Chat);
+        setLoadedChat(data.userData as Chat);
         setMessages(prev => [
           ...prev,
           {
@@ -395,7 +396,7 @@ const WebSocketTest = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chatId: activeChatId, userId: newUserId }),
       });
-      const data: DatabaseTypes.DatabaseResponse = await res.json();
+      const data: DatabaseResponse = await res.json();
       if (data.success) {
         console.log(`[API] Benutzer ${newUserId} erfolgreich zu Chat hinzugefügt`);
         await getChat();
@@ -502,8 +503,8 @@ const WebSocketTest = () => {
             onClick={createChat}
             disabled={loading || chatUsers.length < 2}
             className={`mt-3 px-4 py-2 rounded ${chatUsers.length < 2
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
+              ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+              : 'bg-blue-500 hover:bg-blue-600 text-white'
               }`}
           >
             Chat erstellen ({chatUsers.length}/2)
@@ -591,10 +592,10 @@ const WebSocketTest = () => {
             <div
               key={i}
               className={`max-w-[70%] p-2 rounded-lg shadow ${msg.system
-                  ? 'bg-gray-200 italic self-center'
-                  : msg.senderID === userId
-                    ? 'bg-blue-100 self-end text-right'
-                    : 'bg-white self-start'
+                ? 'bg-gray-200 italic self-center'
+                : msg.senderID === userId
+                  ? 'bg-blue-100 self-end text-right'
+                  : 'bg-white self-start'
                 }`}
             >
               <div className="text-sm">{msg.content}</div>
