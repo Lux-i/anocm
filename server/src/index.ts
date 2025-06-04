@@ -45,7 +45,7 @@ const limiter = rateLimit({
   message: { error: "Too many requests!" },
 });
 
-const createUserLimiter = rateLimit({
+export const createUserLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 Minutes
   limit: 5,
   standardHeaders: "draft-8",
@@ -93,11 +93,8 @@ app.set("views", __dirname + "/html");
 app.set("view engine", "ejs");
 
 //#region API Endpoints
-const userRouter = require("./routers/user").default;
-const chatRouter = require("./routers/chat").default;
-
-app.use("/api/v1/user", createUserLimiter, userRouter());
-app.use("/api/v1/chat", chatRouter());
+const v1Router = require("./routers/v1").default;
+app.use("/api/v1", v1Router);
 
 //#endregion
 
