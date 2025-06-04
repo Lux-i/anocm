@@ -4,7 +4,6 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@anocm/shared": "file:",
         "crypto": "^1.0.1"
     },
     "devDependencies": {
