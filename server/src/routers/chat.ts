@@ -92,5 +92,21 @@ export default () => {
     }
   });
 
+  interface Message {
+    chatId: string,
+    senderId: string,
+    message: string,
+    ttl?: number,
+  }
+  router.post("send_message", async (req: Request, res: Response) =>{
+    try{
+      const data: Message = await req.body.json();
+      Database.sendMessageToChat(data.chatId, data.senderId, data.message, data.ttl).then()
+    }catch(err){
+
+    }
+  });
+
   return router;
+
 };
