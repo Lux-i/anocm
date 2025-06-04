@@ -12,7 +12,7 @@ export async function broadcastToChat(message: Message, database: Database, hand
         handler.sendMessage(message.senderID, messageResponse(
             message.senderID,
             {
-                sucess: false,
+                success: false,
                 message: `Database Error`
             }
 
@@ -24,7 +24,7 @@ export async function broadcastToChat(message: Message, database: Database, hand
         handler.sendMessage(message.senderID, messageResponse(
             message.senderID,
             {
-                sucess: false,
+                success: false,
                 message: `Message could not be broadcasted to chat with id '${message.chatID}'`
             }
 
@@ -46,7 +46,7 @@ export async function broadcastToChat(message: Message, database: Database, hand
         message.senderID,
         messageResponse(message.senderID,
             {
-                sucess: true,
+                success: true,
                 message: `Message broadcasted to ${sucessful} Clients in '${message.chatID}'`,
             }
 
