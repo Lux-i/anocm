@@ -1,6 +1,6 @@
 import { UUID } from "crypto";
 
-export type Message = {
+export type WsMessage = {
   action: Action;
   content: string;
   senderID: UUID;
@@ -17,7 +17,6 @@ export type ResponseContent = {
 export enum Action {
   None = "",
   BroadcastToChat = "BroadcastToChat",
-  AddClientToChatNoConfirm = "AddClientToChatNoConfirm",
-  RemoveClientFromChatNoConfirm = "RemoveClientFromChatNoConfirm",
+  Init = "Init",
   MessageResponse = "MessageResponse",
 }
