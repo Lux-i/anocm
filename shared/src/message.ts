@@ -9,7 +9,7 @@ export type Message = {
 };
 
 export type ResponseContent = {
-  success: boolean;
+  sucess: boolean;
   message: String;
   json?: Object;
 };
