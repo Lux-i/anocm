@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Database } from "../../modules/database/database";
-import { DatabaseTypes } from "@anocm/shared/dist";
+import { DatabaseResponse, Chat } from "@anocm/shared/dist";
 
 const express = require("express");
 const router = express.Router();
@@ -13,13 +13,13 @@ export default () => {
         try {
             Database.createChat(req.body).then((chatId: UUID | false) => {
                 if (chatId != false) {
-                    const response: DatabaseTypes.DatabaseResponse = {
+                    const response: DatabaseResponse = {
                         success: true,
                         id: chatId.toString(),
                     };
                     res.send(response);
                 } else {
-                    const response: DatabaseTypes.DatabaseResponse = {
+                    const response: DatabaseResponse = {
                         success: false,
                         error: `Error creating Chat`,
                     };
@@ -27,7 +27,7 @@ export default () => {
                 }
             });
         } catch (err: any) {
-            const response: DatabaseTypes.DatabaseResponse = {
+            const response: DatabaseResponse = {
                 success: false,
                 error: err,
             };
@@ -47,15 +47,15 @@ export default () => {
                 });
             }
 
-            Database.getChat(chatId!).then((chat: DatabaseTypes.Chat | false) => {
-                const response: DatabaseTypes.DatabaseResponse = {
+            Database.getChat(chatId!).then((chat: Chat | false) => {
+                const response: DatabaseResponse = {
                     success: true,
                     userData: chat,
                 };
                 res.send(response);
             });
         } catch (err: any) {
-            const response: DatabaseTypes.DatabaseResponse = {
+            const response: DatabaseResponse = {
                 success: false,
                 error: err,
             };
@@ -69,12 +69,12 @@ export default () => {
             Database.addUsertoChat(req.body.chatId, req.body.userId).then(
                 (response: boolean) => {
                     if (response == true) {
-                        const response: DatabaseTypes.DatabaseResponse = {
+                        const response: DatabaseResponse = {
                             success: true,
                         };
                         res.send(response);
                     } else {
-                        const response: DatabaseTypes.DatabaseResponse = {
+                        const response: DatabaseResponse = {
                             success: false,
                             error: `Error adding User`,
                         };
@@ -83,7 +83,7 @@ export default () => {
                 }
             );
         } catch (err: any) {
-            const response: DatabaseTypes.DatabaseResponse = {
+            const response: DatabaseResponse = {
                 success: false,
                 error: err,
             };
@@ -102,22 +102,30 @@ export default () => {
     router.post("send_message", async (req: Request, res: Response) =>{
         try{
             const data: Message = await req.body.json();
-            Database.sendMessageToChat(data.chatId, data.senderId, data.message, data.ttl).then(databaseResponse => {
-                if(databaseResponse == true){
-                    const response: DatabaseTypes.DatabaseResponse = {
-                        success: true,
-                    };
-                    res.send(response);
-                }else{
-                    const response: DatabaseTypes.DatabaseResponse = {
-                        success: false,
-                        error: `Error sending message`,
-                    };
-                    res.send(response);
-                }
-            });
+            if(await Database.checkUserinChat(data.chatId, data.senderId)){
+                Database.sendMessageToChat(data.chatId, data.senderId, data.message, data.ttl).then(databaseResponse => {
+                    if(databaseResponse == true){
+                        const response: DatabaseResponse = {
+                            success: true,
+                        };
+                        res.send(response);
+                    }else{
+                        const response: DatabaseResponse = {
+                            success: false,
+                            error: `Error sending message`,
+                        };
+                        res.send(response);
+                    }
+                });
+            }else{
+                const response: DatabaseResponse = {
+                    success: false,
+                    error: `Sender is not in Chat!`,
+                };
+                res.send(response);
+            }
         }catch(err: any){
-            const response: DatabaseTypes.DatabaseResponse = {
+            const response: DatabaseResponse = {
                 success: false,
                 error: err,
             };
