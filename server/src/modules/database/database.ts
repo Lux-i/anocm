@@ -94,7 +94,8 @@ export namespace Database {
   export async function sendMessageToChat(
     chatId: string,
     senderId: string,
-    message: string
+    message: string,
+    ttl?: number
   ): Promise<boolean> {
     try {
       const timestamp = Date.now();
@@ -107,6 +108,9 @@ export namespace Database {
         timestamp.toString(),
         JSON.stringify(messageObj)
       );
+      if(ttl){
+        await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
+      }
       return true;
     } catch {
       return false;
