@@ -96,6 +96,9 @@ app.set("view engine", "ejs");
 const v1Router = require("./routers/v1").default;
 app.use("/api/v1", v1Router);
 
+const v2Router = require("./routers/v2").default;
+app.use("/api/v2", v2Router);
+
 //#endregion
 
 //#region Browser Endpoints

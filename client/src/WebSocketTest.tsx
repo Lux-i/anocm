@@ -24,7 +24,7 @@ interface TestMessage extends WsMessage {
 }
 
 const WebSocketTest = () => {
-  const API_BASE = 'http://localhost:8080/api/v1';
+  const API_BASE = 'http://localhost:8080/api/v2';
 
   //auth states
   const [userId, setUserId] = useState<UUID | string>(NIL);
@@ -133,20 +133,32 @@ const WebSocketTest = () => {
     }, 50);
   };
 
-  const sendMessage = () => {
+  const sendMessage =  async () => {
     if (!connected || !messageContent.trim()) return;
-    console.log(`[WS] Sende Nachricht an Chat ${activeChatId}`);
+    console.log(`Sende Nachricht an Chat ${activeChatId}`);
     const msg: TestMessage = {
-      action: Action.BroadcastToChat,
       content: messageContent,
       senderID: userId as UUID,
       chatID: activeChatId as UUID,
       timestamp: Date.now(),
     };
-    ws.current!.send(JSON.stringify(msg));
-    setMessages(prev => [...prev, msg]);
-    setMessageContent('');
-    setStatus('Nachricht gesendet');
+    const response = await fetch("http://localhost:8080/api/v2/chat/send_message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",   // <--- Hier!
+      },
+        body: JSON.stringify(msg),
+    });
+    const data = await response.json();
+    if(data.success){
+        console.log(data);
+        setMessageContent('');
+        setStatus('Nachricht gesendet');
+
+    }else{
+        console.error(`There was an error: ${data.error}`);
+    }
+    
   };
 
   const removeUserFromChat = () => {
