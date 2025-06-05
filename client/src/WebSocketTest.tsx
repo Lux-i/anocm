@@ -2,7 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import { DatabaseResponse, User, Chat } from '@anocm/shared/dist';
 import type { WsMessage } from '@anocm/shared/dist';
-import { Action } from '@anocm/shared/dist';
+
+// for some reason this cannot be imported so idk what to do
+enum Action {
+  None = "",
+  BroadcastToChat = "BroadcastToChat",
+  Init = "Init",
+  MessageResponse = "MessageResponse",
+}
+
 
 
 import { UUID } from "crypto";
