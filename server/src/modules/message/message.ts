@@ -47,6 +47,13 @@ export async function broadcastToChat(message: WsMessage) {
 }
 
 export async function initWebsocketWithUserManager(message: WsMessage, ws: WebSocketType) {
+    if (!isUUID(message.senderID)) {
+        ws.send(JSON.stringify(messageResponse(message.senderID, {
+            success: false,
+            message: `Invalid UUID "${message.senderID}"`,
+        })));
+    }
+
     UserManager.setUser(message.senderID, ws);
 
     if (UserManager.isConnected(message.senderID)) {
