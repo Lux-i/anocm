@@ -91,6 +91,34 @@ export default () => {
             console.error("Error adding User: ", err);
         }
     });
+    router.post("/remuser", async (req: Request, res: Response) => {
+        console.log("POST Request: remove User from Chat");
+        try {
+            Database.deleteUserFromChat(req.body.chatId, req.body.userId).then(
+                (response: boolean) => {
+                    if (response == true) {
+                        const response: DatabaseResponse = {
+                            success: true,
+                        };
+                        res.send(response);
+                    } else {
+                        const response: DatabaseResponse = {
+                            success: false,
+                            error: `Error removing User`,
+                        };
+                        res.send(response);
+                    }
+                }
+            );
+        } catch (err: any) {
+            const response: DatabaseResponse = {
+                success: false,
+                error: err,
+            };
+            res.send(response);
+            console.error("Error adding User: ", err);
+        }
+    });
     
     interface Message {
         chatId: string,
