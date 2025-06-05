@@ -1,7 +1,8 @@
 import { RedisClientType, createClient } from "redis";
 import { randomUUID, UUID } from "crypto";
-import { DatabaseResponse, Chat, User, ChatMessage, messageStructure, chatSettings } from "@anocm/shared/dist";
+import { DatabaseResponse, Chat, User, ChatMessage, messageStructure, chatSettings, WsMessage, Action } from "@anocm/shared/dist";
 import user from "../../routes/v1/user";
+import { broadcastToChat } from "../message/message";
 const argon2 = require("argon2");
 
 export namespace Database {
@@ -160,20 +161,20 @@ export namespace Database {
   export async function checkUserinChat(
     chatId: string,
     userId: string
-  ){
-  try {
-    if (typeof chatId !== "string" || typeof userId !== "string") {
-      throw new TypeError(`Invalid types: chatId=${typeof chatId}, userId=${typeof userId}`);
+  ) {
+    try {
+      if (typeof chatId !== "string" || typeof userId !== "string") {
+        throw new TypeError(`Invalid types: chatId=${typeof chatId}, userId=${typeof userId}`);
+      }
+
+      console.log(`Checking user in chat with chatId='${chatId}' and userId='${userId}'`);
+
+      let res = await client.hExists(`chat:${chatId}:users`, userId);
+      return res;
+    } catch (err: any) {
+      console.error("Error checking User: ", err);
+      return -1;
     }
-
-    console.log(`Checking user in chat with chatId='${chatId}' and userId='${userId}'`);
-
-    let res = await client.hExists(`chat:${chatId}:users`, userId);
-    return res;
-  } catch(err: any) {
-    console.error("Error checking User: ", err);
-    return -1;
-  }
   }
 
   /**
@@ -200,9 +201,19 @@ export namespace Database {
         timestamp,
         JSON.stringify(messageObj)
       );
-      if(ttl){
+      if (ttl) {
         await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
       }
+
+      let msg: WsMessage = {
+        action: Action.BroadcastToChat,
+        content: message,
+        senderID: senderId as UUID,
+        chatID: chatId as UUID,
+        timestamp: Number(timestamp)
+      }
+
+      broadcastToChat(msg);
       return true;
     } catch {
       return false;
@@ -271,25 +282,26 @@ export namespace Database {
         }
       } while (cursor !== 0);
 
-      try{
-      let userId: UUID = randomUUID();
-      //Uses argon2id hashing
-      let hashPW = await argon2.hash(password, {
-        type: argon2.argon2id,
-        memoryCost: 2 ** 16,    // 64 MB
-        timeCost: 5,
-        parallelism: 1,});
+      try {
+        let userId: UUID = randomUUID();
+        //Uses argon2id hashing
+        let hashPW = await argon2.hash(password, {
+          type: argon2.argon2id,
+          memoryCost: 2 ** 16,    // 64 MB
+          timeCost: 5,
+          parallelism: 1,
+        });
 
-      await client.hSet(`user:${userId}`, {
-        username: `${username}`,
-        password: `${hashPW}`,
-      });
-      return userId;
+        await client.hSet(`user:${userId}`, {
+          username: `${username}`,
+          password: `${hashPW}`,
+        });
+        return userId;
 
-    }catch(err){
+      } catch (err) {
         console.error("Error creating user: ", err);
         return false;
-    }
+      }
     }
     return false;
   }
@@ -330,12 +342,12 @@ export namespace Database {
     }
   }
 
-    /**
-   * Adds a user to an existing chat
-   * @param {UUID} chatId - Chat ID
-   * @param {UUID} userId - User ID to be added
-   * @returns {Promise<boolean>} True if added, false otherwise
-   */
+  /**
+ * Adds a user to an existing chat
+ * @param {UUID} chatId - Chat ID
+ * @param {UUID} userId - User ID to be added
+ * @returns {Promise<boolean>} True if added, false otherwise
+ */
   export async function addUsertoChat(
     chatId: UUID,
     userId: UUID,
@@ -358,12 +370,12 @@ export namespace Database {
     return false;
   }
 
-    /**
-   * Removes a user from a chat
-   * @param {UUID} chatId - Chat ID
-   * @param {UUID} userId - User ID to be removed
-   * @returns {Promise<boolean>} True if removed, false otherwise
-   */
+  /**
+ * Removes a user from a chat
+ * @param {UUID} chatId - Chat ID
+ * @param {UUID} userId - User ID to be removed
+ * @returns {Promise<boolean>} True if removed, false otherwise
+ */
   export async function deleteUserFromChat(
     chatId: UUID,
     userId: UUID
@@ -381,22 +393,22 @@ export namespace Database {
     return false;
   }
 
-    /**
-   * Verifies a password against a hash using argon2id
-   * @param {string} hash - Hashed password
-   * @param {string} password - Plain password
-   * @returns {Promise<boolean>} True if match, false otherwise
-   */
-  export async function verifyHash(hash: string, password: string): Promise<boolean>{
-    try{
-        if(await argon2.verify(hash, password)){
-            return true;
-        }else{
-            return false;
-        }
-    }catch(err){
-        console.error("Hash verify error:", err);
+  /**
+ * Verifies a password against a hash using argon2id
+ * @param {string} hash - Hashed password
+ * @param {string} password - Plain password
+ * @returns {Promise<boolean>} True if match, false otherwise
+ */
+  export async function verifyHash(hash: string, password: string): Promise<boolean> {
+    try {
+      if (await argon2.verify(hash, password)) {
+        return true;
+      } else {
         return false;
+      }
+    } catch (err) {
+      console.error("Hash verify error:", err);
+      return false;
     }
   }
 
