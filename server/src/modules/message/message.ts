@@ -30,13 +30,10 @@ export async function broadcastToChat(message: WsMessage) {
         return;
     }
 
-    let successful: number = 0;
-
     Object.keys(res.chatUserList).forEach((id) => {
         if (isUUID(id)) {
             const uuid: UUID = id;
             UserManager.sendMessage(uuid, message);
-            successful++;
         }
     });
 
@@ -44,7 +41,7 @@ export async function broadcastToChat(message: WsMessage) {
         message.senderID,
         messageResponse(message.senderID, {
             success: true,
-            message: `Message broadcasted to ${successful} Clients in '${message.chatID}'`,
+            message: `Message broadcasted to Clients in '${message.chatID}'`,
         })
     );
 }
