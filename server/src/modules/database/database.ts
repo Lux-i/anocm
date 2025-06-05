@@ -231,6 +231,7 @@ export namespace Database {
     await client.hSet(`user:${userId}`, {
       UUID: `${userId}`,
     });
+    await client.expire(`user:${userId}`, 259200);
     return userId;
   }
 
