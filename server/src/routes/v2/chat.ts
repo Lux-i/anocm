@@ -121,17 +121,19 @@ export default () => {
     });
     
     interface Message {
-        chatId: string,
-        senderId: string,
-        message: string,
+        chatID: string,
+        senderID: string,
+        content: string,
+        timestamp: string,
         ttl?: number,
     }
 
-    router.post("send_message", async (req: Request, res: Response) =>{
+    router.post("/send_message", async (req: Request, res: Response) =>{
+        console.log("send message");
         try{
-            const data: Message = await req.body.json();
-            if(await Database.checkUserinChat(data.chatId, data.senderId)){
-                Database.sendMessageToChat(data.chatId, data.senderId, data.message, data.ttl).then(databaseResponse => {
+            const data: Message = req.body;
+            if(await Database.checkUserinChat(data.chatID, data.senderID)){
+                Database.sendMessageToChat(data.chatID, data.senderID, data.content, data.timestamp, data.ttl).then(databaseResponse => {
                     if(databaseResponse == true){
                         const response: DatabaseResponse = {
                             success: true,

@@ -59,9 +59,8 @@ export namespace Database {
       let chatId = randomUUID();
       for (const user of users) {
         if (!(await client.exists(`user:${user.userId}`))) {
-          if (!(await client.exists(`anon_user:${user.userId}`))) {
+            console.log("User not found");
             return false;
-          }
         }
       }
       for (const user of users) {
@@ -80,6 +79,7 @@ export namespace Database {
 
       return chatId;
     } else {
+      console.log("Not enough");
       return false;
     }
   }
@@ -93,32 +93,38 @@ export namespace Database {
    */
   export async function checkUserinChat(
     chatId: string,
-    userId:string
+    userId: string
   ){
-    try{
-      let res = await client.hExists(`chat:${chatId}:users`, userId);
-      return res;
-    }catch(err: any){
-      console.error("Error checking User: ", err);
-      return -1;
+  try {
+    if (typeof chatId !== "string" || typeof userId !== "string") {
+      throw new TypeError(`Invalid types: chatId=${typeof chatId}, userId=${typeof userId}`);
     }
+
+    console.log(`Checking user in chat with chatId='${chatId}' and userId='${userId}'`);
+
+    let res = await client.hExists(`chat:${chatId}:users`, userId);
+    return res;
+  } catch(err: any) {
+    console.error("Error checking User: ", err);
+    return -1;
+  }
   }
 
   export async function sendMessageToChat(
     chatId: string,
     senderId: string,
     message: string,
-    ttl?: number
+    timestamp: string,
+    ttl?: number,
   ): Promise<boolean> {
     try {
-      const timestamp = Date.now();
       const messageObj = {
         from: senderId,
         message: message,
       };
       await client.hSet(
         `chat:${chatId}:messages`,
-        timestamp.toString(),
+        timestamp,
         JSON.stringify(messageObj)
       );
       if(ttl){
@@ -221,11 +227,11 @@ export namespace Database {
    */
   export async function createAnoUser(): Promise<string> {
     let userId: string = randomUUID();
-    let clientId: string = randomUUID();
+    //let clientId: string = randomUUID();
     await client.hSet(`user:${userId}`, {
       UUID: `${userId}`,
     });
-    return clientId;
+    return userId;
   }
 
   /**
