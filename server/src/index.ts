@@ -9,7 +9,7 @@ if (result.error) {
 import { Request, Response, NextFunction } from "express";
 import { rateLimit } from "express-rate-limit";
 import WebSocket, { WebSocket as WebSocketType } from "ws";
-import { Message } from "@anocm/shared/dist";
+import { WsMessage } from "@anocm/shared/dist";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
 import { Database } from "./modules/database/database";
 import { UserManager } from "./modules/userManager/userManager";
@@ -122,14 +122,11 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
   ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
 
   ws.on("message", async (data: WebSocket.RawData) => {
-    const message: Message = JSON.parse(data.toString());
-
-    //TODO: for testing purposes this should link the ws
-    UserManager.setUser(message.senderID, ws);
+    const message: WsMessage = JSON.parse(data.toString());
+    let res = routeMessageAction(message, ws);
 
     console.log(`Received message: ${message.content}`);
 
-    let res = routeMessageAction(message);
 
     //Broadcast to all connected
     if (res === false) {

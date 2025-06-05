@@ -3,6 +3,7 @@ import { Database } from "../database/database";
 import { UserManager } from "../userManager/userManager";
 import { Action, WsMessage, ResponseContent } from "@anocm/shared/dist";
 import { validate } from "uuid";
+import { WebSocket as WebSocketType } from "ws";
 
 export async function broadcastToChat(message: WsMessage) {
     const res = await Database.getChat(message.chatID);
@@ -48,7 +49,26 @@ export async function broadcastToChat(message: WsMessage) {
     );
 }
 
-export async function initWebsocketWithUserManager(message: WsMessage) {
+export async function initWebsocketWithUserManager(message: WsMessage, ws: WebSocketType) {
+    UserManager.setUser(message.senderID, ws);
+
+    if (UserManager.isConnected(message.senderID)) {
+        UserManager.sendMessage(
+            message.senderID,
+            messageResponse(message.senderID, {
+                success: true,
+                message: `Connected user "${message.senderID}" to account websocket`,
+            })
+        );
+    } else {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(messageResponse(message.senderID, {
+                success: false,
+                message: `Could not connect "${message.senderID}" to account websocket`,
+            })));
+        }
+    }
+
 
 }
 //#region other

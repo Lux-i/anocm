@@ -1,7 +1,7 @@
 //utility class to interact with a websocket connection based on a UUID
 
 import { UUID } from "crypto";
-import { Message } from "@anocm/shared/dist";
+import { WsMessage } from "@anocm/shared/dist";
 import { WebSocket } from "ws";
 
 export namespace UserManager {
@@ -54,7 +54,7 @@ export namespace UserManager {
    * @param message message to send
    * @returns if message could be sent
    */
-  export function sendMessage(id: UUID, message: Message): boolean {
+  export function sendMessage(id: UUID, message: WsMessage): boolean {
     if (isConnected(id)) {
       //get ws connection
       const conn = users.get(id);
