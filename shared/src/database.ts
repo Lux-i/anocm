@@ -28,3 +28,9 @@ export type messageStructure = {
   [key: EpochTimeStamp]: ChatMessage;
 };
 
+export interface chatSettings {
+ defaultTTL: number,
+ minTTL: number,
+ maxTTL: number
+}
+
