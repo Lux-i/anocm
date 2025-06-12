@@ -19,7 +19,7 @@ export async function broadcastToChat(message: WsMessage) {
         return;
     }
 
-    if (!(message.senderID in res.chatUserList)) {
+    if (!Database.checkUserinChat(message.chatID, message.senderID)) {
         UserManager.sendMessage(
             message.senderID,
             messageResponse(message.senderID, {
