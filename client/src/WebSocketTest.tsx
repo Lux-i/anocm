@@ -51,6 +51,11 @@ const WebSocketTest = () => {
   const [connected, setConnected] = useState<boolean>(false);
 
 
+  const userIdRef = useRef(userId);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   //wenn userId gesetzt mit websocket verbinden
   useEffect(() => {
@@ -81,13 +86,13 @@ const WebSocketTest = () => {
         // Initialisierungsnachricht senden
         setTimeout(() => {
           const initMsg = {
-            action: Action.None,
+            action: Action.Init,
             content: "init",
-            senderID: userId,
-            chatID: userId,
+            senderID: userIdRef.current,
+            chatID: userIdRef.current,
             timestamp: Date.now(),
           };
-          console.log(`[WS] Benutzer ${userId} mit Server verknüpft`);
+          console.log(`[WS] Benutzer ${userIdRef.current} mit Server verknüpft`);
           if (ws.current && ws.current.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify(initMsg));
           }
@@ -133,32 +138,32 @@ const WebSocketTest = () => {
     }, 50);
   };
 
-  const sendMessage =  async () => {
+  const sendMessage = async () => {
     if (!connected || !messageContent.trim()) return;
     console.log(`Sende Nachricht an Chat ${activeChatId}`);
-    const msg: TestMessage = {
+    const msg = {
       content: messageContent,
       senderID: userId as UUID,
       chatID: activeChatId as UUID,
       timestamp: Date.now(),
     };
     const response = await fetch("http://localhost:8080/api/v2/chat/send_message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",   // <--- Hier!
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",   // <--- Hier!
       },
-        body: JSON.stringify(msg),
+      body: JSON.stringify(msg),
     });
     const data = await response.json();
-    if(data.success){
-        console.log(data);
-        setMessageContent('');
-        setStatus('Nachricht gesendet');
+    if (data.success) {
+      console.log(data);
+      setMessageContent('');
+      setStatus('Nachricht gesendet');
 
-    }else{
-        console.error(`There was an error: ${data.error}`);
+    } else {
+      console.error(`There was an error: ${data.error}`);
     }
-    
+
   };
 
   const removeUserFromChat = () => {
