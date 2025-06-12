@@ -1,7 +1,6 @@
 import { RedisClientType, createClient } from "redis";
 import { randomUUID, UUID } from "crypto";
-import { DatabaseResponse, Chat, User, ChatMessage, messageStructure, chatSettings, WsMessage, Action } from "@anocm/shared/dist";
-import user from "../../routes/v1/user";
+import { Chat, User, ChatMessage, messageStructure, chatSettings, WsMessage, Action } from "@anocm/shared/dist";
 import { broadcastToChat } from "../message/message";
 const argon2 = require("argon2");
 
