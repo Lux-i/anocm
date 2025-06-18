@@ -11,7 +11,7 @@ export default () => {
     router.post("/newchat", async (req: Request, res: Response) => {
         console.log("POST Request: new Chat");
         try {
-            Database.createChat(req.body).then((chatId: UUID | false) => {
+            Database.createChat(req.body.userList, req.body.ttl, req.body.minTTL, req.body.maxTTL, req.body.creatorId, req.body.creatorToken).then((chatId: UUID | false) => {
                 if (chatId != false) {
                     const response: DatabaseResponse = {
                         success: true,
@@ -66,7 +66,7 @@ export default () => {
     router.post("/adduser", async (req: Request, res: Response) => {
         console.log("POST Request: add User to Chat");
         try {
-            Database.addUsertoChat(req.body.chatId, req.body.userId).then(
+            Database.addUsertoChat(req.body.chatId, req.body.userId, req.body.adminId, req.body.adminToken).then(
                 (response: boolean) => {
                     if (response == true) {
                         const response: DatabaseResponse = {
