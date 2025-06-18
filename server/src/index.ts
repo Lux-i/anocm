@@ -9,7 +9,7 @@ if (result.error) {
 import { Request, Response, NextFunction } from "express";
 import { rateLimit } from "express-rate-limit";
 import WebSocket, { WebSocket as WebSocketType } from "ws";
-import { Message } from "@anocm/shared/dist";
+import { WsMessage } from "@anocm/shared/dist";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
 import { Database } from "./modules/database/database";
 import { UserManager } from "./modules/userManager/userManager";
@@ -45,7 +45,7 @@ const limiter = rateLimit({
   message: { error: "Too many requests!" },
 });
 
-const createUserLimiter = rateLimit({
+export const createUserLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 Minutes
   limit: 5,
   standardHeaders: "draft-8",
@@ -93,11 +93,11 @@ app.set("views", __dirname + "/html");
 app.set("view engine", "ejs");
 
 //#region API Endpoints
-const userRouter = require("./routers/user").default;
-const chatRouter = require("./routers/chat").default;
+const v1Router = require("./routers/v1").default;
+app.use("/api/v1", v1Router);
 
-app.use("/api/v1/user", createUserLimiter, userRouter());
-app.use("/api/v1/chat", chatRouter());
+const v2Router = require("./routers/v2").default;
+app.use("/api/v2", v2Router);
 
 //#endregion
 
@@ -125,14 +125,11 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
   ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
 
   ws.on("message", async (data: WebSocket.RawData) => {
-    const message: Message = JSON.parse(data.toString());
-
-    //TODO: for testing purposes this should link the ws
-    UserManager.setUser(message.senderID, ws);
+    const message: WsMessage = JSON.parse(data.toString());
+    let res = routeMessageAction(message, ws);
 
     console.log(`Received message: ${message.content}`);
 
-    let res = routeMessageAction(message);
 
     //Broadcast to all connected
     if (res === false) {

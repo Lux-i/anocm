@@ -1,6 +1,7 @@
 import { RedisClientType, createClient } from "redis";
 import { randomUUID, UUID } from "crypto";
-import { DatabaseTypes } from "@anocm/shared/dist";
+import { Chat, User, ChatMessage, messageStructure, chatSettings, WsMessage, Action } from "@anocm/shared/dist";
+import { broadcastToChat } from "../message/message";
 const argon2 = require("argon2");
 
 export namespace Database {
@@ -49,42 +50,133 @@ export namespace Database {
 
   /**
    * Creates a chat with the given users
-   * @param {DatabaseTypes.User[]} users - List of users
+   * @param {User[]} users - List of users
    * @returns {Promise<UUID | false>} Chat ID if successful, otherwise false
    */
   export async function createChat(
-    users: DatabaseTypes.User[]
+    users: User[],
+    ttl: number,
+    minTTL: number,
+    maxTTL: number,
+    userId: UUID,
+    token: UUID
   ): Promise<UUID | false> {
-    if (users.length >= 2) {
-      let chatId = randomUUID();
-      for (const user of users) {
-        if (!(await client.exists(`user:${user.userId}`))) {
-          if (!(await client.exists(`anon_user:${user.userId}`))) {
-            return false;
+    if(await verifyUser(userId, token)){
+      if (users.length >= 2) {
+        let chatId = randomUUID();
+        for (const user of users) {
+          if (!(await client.exists(`user:${user.userId}`))) {
+              console.log("User not found");
+              return false;
           }
         }
+        if(users.length == 2){
+          for (const user of users) {
+            await client.hSet(`chat:${chatId}:users`, `${user.userId}`, `admin`);
+          }
+        }else{
+          for (const user of users) {
+            await client.hSet(`chat:${chatId}:users`, `${user.userId}`, `member`);
+          }
+          await client.hSet(`chat:${chatId}:users`, `${userId}`, `admin`)
+        }
+        
+        await client.hSet(`chat:${chatId}:settings`, {
+          defaultMessageTTL: ttl,
+          minMessageTTL: minTTL,
+          maxMessageTTL: maxTTL
+        });
+  
+        return chatId;
+      } else {
+        console.log("Not enough");
+        return false;
       }
-      for (const user of users) {
-        await client.hSet(`chat:${chatId}:users`, `${user.userId}`, `member`);
-      }
+    }
+    return false;
+  }
 
-      await client.hSet(
-        `chat:${chatId}:users`,
-        `${users.at(0)?.userId}`,
-        "admin"
-      );
-
+  export async function editChatSettings(
+    chatId: UUID,
+    newSettings: chatSettings
+  ){
+    if(newSettings.defaultTTL){
       await client.hSet(`chat:${chatId}:settings`, {
-        admin: `${users.at(0)?.userId}`,
+        defaultMessageTTL: newSettings.defaultTTL
       });
-
-      return chatId;
-    } else {
-      return false;
+    }
+    if(newSettings.minTTL){
+      await client.hSet(`chat:${chatId}:settings`, {
+        minMessageTTL: newSettings.minTTL
+      });
+    }
+    if(newSettings.maxTTL){
+      await client.hSet(`chat:${chatId}:settings`, {
+        maxMessageTTL: newSettings.maxTTL
+      });
     }
   }
 
-    /**
+  export async function addAdmintoChat(
+    newAdmins: User[],
+    chatId: UUID,
+    adminId: UUID,
+    adminToken: UUID
+  ){
+    if(newAdmins.length < 1){
+      return;
+    }
+    if(!(await checkAdmin(adminId, adminToken, chatId))){
+      return;
+    }
+
+    for(const newAdmin of newAdmins){
+      if(await checkUserinChat(chatId, newAdmin.userId) == false){
+        return;
+      }
+      await client.hSet(`chat:${chatId}:users`, `${newAdmin.userId}`, `admin`);
+    }
+  }
+
+  export async function removeAdminRole(
+    userId: UUID,
+    chatId: UUID,
+    adminId: UUID,
+    adminToken: UUID
+  ){
+    if((await client.hLen(`chat:${chatId}:users`)) == 2){
+      return;
+    }
+    if(!(await checkAdmin(adminId, adminToken, chatId))){
+      return;
+    }
+    if(await checkUserinChat(chatId, userId) == false){
+        return;
+    }
+      await client.hSet(`chat:${chatId}:users`, `${userId}`, `member`);
+    
+  }
+
+  export async function checkUserinChat(
+    chatId: string,
+    userId: string
+  ) {
+    try {
+      if (typeof chatId !== "string" || typeof userId !== "string") {
+        throw new TypeError(`Invalid types: chatId=${typeof chatId}, userId=${typeof userId}`);
+      }
+
+      console.log(`Checking user in chat with chatId='${chatId}' and userId='${userId}'`);
+
+      let res = await client.hExists(`chat:${chatId}:users`, userId);
+      return res;
+    } catch (err: any) {
+      console.error("Error checking User: ", err);
+      return -1;
+    }
+  }
+
+  /**
    * Sends a message to a specific chat
    * @param {string} chatId - Chat identifier
    * @param {string} senderId - Sender's user ID
@@ -94,19 +186,33 @@ export namespace Database {
   export async function sendMessageToChat(
     chatId: string,
     senderId: string,
-    message: string
+    message: string,
+    timestamp: string,
+    ttl?: number,
   ): Promise<boolean> {
     try {
-      const timestamp = Date.now();
       const messageObj = {
         from: senderId,
         message: message,
       };
       await client.hSet(
         `chat:${chatId}:messages`,
-        timestamp.toString(),
+        timestamp,
         JSON.stringify(messageObj)
       );
+      if (ttl) {
+        await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
+      }
+
+      let msg: WsMessage = {
+        action: Action.BroadcastToChat,
+        content: message,
+        senderID: senderId as UUID,
+        chatID: chatId as UUID,
+        timestamp: Number(timestamp)
+      }
+
+      broadcastToChat(msg);
       return true;
     } catch {
       return false;
@@ -116,19 +222,19 @@ export namespace Database {
   /**
    * Retrieves all messages from a chat
    * @param {string} chatId - Chat identifier
-   * @returns {Promise<DatabaseTypes.messageStructure | false>} Messages object or false
+   * @returns {Promise<messageStructure | false>} Messages object or false
    */
   export async function getChatMessages(
     chatId: string
-  ): Promise<DatabaseTypes.messageStructure | false> {
+  ): Promise<messageStructure | false> {
     if (await client.EXISTS(`chat:${chatId}:messages`)) {
       try {
         const response = await client.hGetAll(`chat:${chatId}:messages`);
         //console.log(response);
-        const convertedResponse: DatabaseTypes.messageStructure = {};
+        const convertedResponse: messageStructure = {};
 
         for (let [key, msg] of Object.entries(response)) {
-          const parsedMessage: DatabaseTypes.ChatMessage = JSON.parse(msg);
+          const parsedMessage: ChatMessage = JSON.parse(msg);
           const parsedKey: EpochTimeStamp = Number(key);
           convertedResponse[parsedKey] = parsedMessage;
         }
@@ -175,25 +281,26 @@ export namespace Database {
         }
       } while (cursor !== 0);
 
-      try{
-      let userId: UUID = randomUUID();
-      //Uses argon2id hashing
-      let hashPW = await argon2.hash(password, {
-        type: argon2.argon2id,
-        memoryCost: 2 ** 16,    // 64 MB
-        timeCost: 5,
-        parallelism: 1,});
+      try {
+        let userId: UUID = randomUUID();
+        //Uses argon2id hashing
+        let hashPW = await argon2.hash(password, {
+          type: argon2.argon2id,
+          memoryCost: 2 ** 16,    // 64 MB
+          timeCost: 5,
+          parallelism: 1,
+        });
 
-      await client.hSet(`user:${userId}`, {
-        username: `${username}`,
-        password: `${hashPW}`,
-      });
-      return userId;
+        await client.hSet(`user:${userId}`, {
+          username: `${username}`,
+          password: `${hashPW}`,
+        });
+        return userId;
 
-    }catch(err){
+      } catch (err) {
         console.error("Error creating user: ", err);
         return false;
-    }
+      }
     }
     return false;
   }
@@ -204,23 +311,24 @@ export namespace Database {
    */
   export async function createAnoUser(): Promise<string> {
     let userId: string = randomUUID();
-    let clientId: string = randomUUID();
+    //let clientId: string = randomUUID();
     await client.hSet(`user:${userId}`, {
       UUID: `${userId}`,
     });
-    return clientId;
+    await client.expire(`user:${userId}`, 259200);
+    return userId;
   }
 
   /**
    * Retrieves full chat data (users, settings, messages)
    * @param {string} chatIdInput - Chat ID
-   * @returns {Promise<DatabaseTypes.Chat | false>} Chat object or false
+   * @returns {Promise<Chat | false>} Chat object or false
    */
   export async function getChat(
     chatIdInput: string
-  ): Promise<DatabaseTypes.Chat | false> {
+  ): Promise<Chat | false> {
     try {
-      const chat: DatabaseTypes.Chat = {
+      const chat: Chat = {
         chatId: chatIdInput,
         chatUserList: await client.hGetAll(`chat:${chatIdInput}:users`),
         chatSettings: await client.hGetAll(`chat:${chatIdInput}:settings`),
@@ -233,35 +341,40 @@ export namespace Database {
     }
   }
 
-    /**
-   * Adds a user to an existing chat
-   * @param {UUID} chatId - Chat ID
-   * @param {UUID} userId - User ID to be added
-   * @returns {Promise<boolean>} True if added, false otherwise
-   */
+  /**
+ * Adds a user to an existing chat
+ * @param {UUID} chatId - Chat ID
+ * @param {UUID} userId - User ID to be added
+ * @returns {Promise<boolean>} True if added, false otherwise
+ */
   export async function addUsertoChat(
     chatId: UUID,
-    userId: UUID
+    userId: UUID,
+    adminId: UUID,
+    adminToken: UUID,
   ): Promise<boolean> {
-    if (
-      (await client.exists(`user:${userId}`)) &&
-      !(await client.HEXISTS(`chat:${chatId}:users`, `${userId}`))
-    ) {
-      if (await client.hSet(`chat:${chatId}:users`, `${userId}`, "member")) {
-        return true;
+    if(await checkAdmin(adminId, adminToken, chatId)){
+      if (
+        (await client.exists(`user:${userId}`)) &&
+        !(await client.HEXISTS(`chat:${chatId}:users`, `${userId}`))
+      ) {
+        if (await client.hSet(`chat:${chatId}:users`, `${userId}`, "member")) {
+          return true;
+        }
+      } else {
+        return false;
       }
-    } else {
       return false;
     }
     return false;
   }
 
-    /**
-   * Removes a user from a chat
-   * @param {UUID} chatId - Chat ID
-   * @param {UUID} userId - User ID to be removed
-   * @returns {Promise<boolean>} True if removed, false otherwise
-   */
+  /**
+ * Removes a user from a chat
+ * @param {UUID} chatId - Chat ID
+ * @param {UUID} userId - User ID to be removed
+ * @returns {Promise<boolean>} True if removed, false otherwise
+ */
   export async function deleteUserFromChat(
     chatId: UUID,
     userId: UUID
@@ -279,22 +392,43 @@ export namespace Database {
     return false;
   }
 
-    /**
-   * Verifies a password against a hash using argon2id
-   * @param {string} hash - Hashed password
-   * @param {string} password - Plain password
-   * @returns {Promise<boolean>} True if match, false otherwise
-   */
-  export async function verifyHash(hash: string, password: string): Promise<boolean>{
-    try{
-        if(await argon2.verify(hash, password)){
-            return true;
-        }else{
-            return false;
-        }
-    }catch(err){
-        console.error("Hash verify error:", err);
+  /**
+ * Verifies a password against a hash using argon2id
+ * @param {string} hash - Hashed password
+ * @param {string} password - Plain password
+ * @returns {Promise<boolean>} True if match, false otherwise
+ */
+  export async function verifyHash(hash: string, password: string): Promise<boolean> {
+    try {
+      if (await argon2.verify(hash, password)) {
+        return true;
+      } else {
         return false;
+      }
+    } catch (err) {
+      console.error("Hash verify error:", err);
+      return false;
     }
+  }
+
+  export async function verifyUser(userId: UUID, token: UUID): Promise<boolean>{
+    const savedToken = await client.hGet(`user:${userId}`, "token");
+    if(savedToken == token){
+      return true;
+    }
+    return false;
+  }
+
+  export async function checkAdmin(userId: UUID, token: UUID, chatId: UUID): Promise<boolean>{
+    if(await verifyUser(userId, token)){
+      const userRole = await client.hGet(`chat:${chatId}:users`, `${userId}`);
+      if(userRole){
+        if(userRole == "admin"){
+          return true;
+        }
+        return false;
+      }
+    }
+    return false;
   }
 }
