@@ -56,5 +56,40 @@ export default () => {
             console.error("Error sending response: ", err);
         }
     });
+
+    router.post("/login", async (req: Request, res: Response) => {
+        console.log("POST Request: new Login");
+        try {
+            Database.loginUser(req.body.userId_username, req.body.password).then(
+                (token: string[] | false) => {
+                    if (token == false) {
+                        const response: DatabaseResponse = {
+                            success: false,
+                            error: "Error logging in",
+                        };
+                        res.send(response);
+                    } else {
+                        if(token.length == 1){
+                            const response: DatabaseResponse = {
+                                success: true,
+                                id: token[0],
+                                userData: token[1],
+                            };
+                            res.send(response);
+                        }else{
+
+                        }
+                    }
+                }
+            );
+        } catch (err: any) {
+            const response: DatabaseResponse = {
+                success: false,
+                error: err,
+            };
+            res.send(response);
+            console.error("Error sending response: ", err);
+        }
+    });
     return router;
 };

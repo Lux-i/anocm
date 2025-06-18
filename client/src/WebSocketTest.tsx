@@ -34,6 +34,9 @@ const WebSocketTest = () => {
   //chat states
   const [activeChatId, setActiveChatId] = useState<UUID | string>(NIL);
   const [chatUsers, setChatUsers] = useState<User[]>([]);
+  const [chatMinTTL, setChatMinTTL] = useState<number>(-1);
+  const [chatDefTTL, setChatDefTTL] = useState<number>(-1);
+  const [chatMaxTTL, setChatMaxTTL] = useState<number>(345600);
   const [newUserId, setNewUserId] = useState<string>('');
   const [loadedChat, setLoadedChat] = useState<Chat | null>(null);
 
@@ -342,12 +345,19 @@ const WebSocketTest = () => {
         { userId: chatUsers[1].userId }
       ];
 
+      const formData = new FormData();
+      formData.append("userList", JSON.stringify(usersToSend));
+      formData.append("minTTL", `${chatMinTTL}`);
+      formData.append("ttl", `${chatDefTTL}`);
+      formData.append("maxTTL", `${chatMaxTTL}`);
+      formData.append("creatorId", userId);
+
       console.log(`[API] Chat mit Teilnehmern: ${usersToSend[0].userId}, ${usersToSend[1].userId}`);
 
       const res = await fetch(`${API_BASE}/chat/newchat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(usersToSend),
+        body: formData,
       });
 
       const data: DatabaseResponse = await res.json();
@@ -520,6 +530,27 @@ const WebSocketTest = () => {
             >
               Hinzufügen
             </button>
+            <input
+              type="number"
+              placeholder="minTTL hinzufügen"
+              value={chatMinTTL}
+              onChange={e => setChatMinTTL(e.target.valueAsNumber)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+            />
+            <input
+              type="number"
+              placeholder="minTTL hinzufügen"
+              value={chatDefTTL}
+              onChange={e => setChatDefTTL(e.target.valueAsNumber)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+            />
+            <input
+              type="number"
+              placeholder="minTTL hinzufügen"
+              value={chatMaxTTL}
+              onChange={e => setChatMaxTTL(e.target.valueAsNumber)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+            />
           </div>
 
           {renderChatUsersList()}

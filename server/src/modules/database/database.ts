@@ -295,12 +295,53 @@ export namespace Database {
           username: `${username}`,
           password: `${hashPW}`,
         });
+
         return userId;
 
       } catch (err) {
         console.error("Error creating user: ", err);
         return false;
       }
+    }
+    return false;
+  }
+
+  export async function loginUser(userId_username: UUID | string, password?:string): Promise<string[] | false>{
+    
+    let token: UUID = randomUUID();
+
+    if(typeof password == "undefined"){
+          await client.hSet(`user:${userId_username}`, {
+            token: `${token}`,
+          });
+          await client.hExpire(`user:${userId_username}:messages`, `token`, 345600);
+          return [token];
+    }else{
+      let cursor = 0;
+  
+        do {
+          const scanResult = await client.scan(cursor, {
+            MATCH: "user:*",
+            COUNT: 1000,
+          });
+  
+          cursor = Number(scanResult.cursor);
+          const keys = scanResult.keys;
+  
+          for (const key of keys) {
+            const searchResult = await client.hGet(key, "username");
+            if (searchResult == userId_username) {
+              let hashPW = await client.hGet(`user:${key}`, "password");
+              if((await verifyHash(hashPW!, password))){
+                await client.hSet(`user:${userId_username}`, {
+                  token: `${token}`,
+                });
+                await client.hExpire(`user:${key}:messages`, `token`, 345600);
+                return [key, token];
+              }
+            }
+          }
+        } while (cursor !== 0);
     }
     return false;
   }
