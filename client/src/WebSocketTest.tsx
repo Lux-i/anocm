@@ -267,6 +267,14 @@ const WebSocketTest = () => {
     }
   };
 
+  const loginAnonymousUser = async () => {
+  
+  }
+
+  const loginUser = async () => {
+    
+  }
+
   //aktuelle chat user
   const renderChatUsersList = () => {
     if (chatUsers.length === 0) {
@@ -471,9 +479,9 @@ const WebSocketTest = () => {
         )}
       </div>
 
-      {/* benutzer */}
+      {/* Registrierung */}
       <div className="bg-white p-5 rounded-lg shadow-md space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-700">Benutzer</h2>
+        <h2 className="text-2xl font-semibold text-gray-700">Registrierung</h2>
         <div className="flex flex-wrap gap-3">
           <button
             onClick={createAnonymousUser}
@@ -510,6 +518,46 @@ const WebSocketTest = () => {
         )}
       </div>
 
+      {/* Login */}
+
+      <div className="bg-white p-5 rounded-lg shadow-md space-y-3">
+        <h2 className="text-2xl font-semibold text-gray-700">Login</h2>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={loginAnonymousUser}
+            disabled={loading}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Anonym
+          </button>
+          <input
+            placeholder="User"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+          />
+          <input
+            type="password"
+            placeholder="Passwort"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+          />
+          <button
+            onClick={loginUser}
+            disabled={loading}
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Einloggen
+          </button>
+        </div>
+        {userId && (
+          <div className="text-gray-600">
+            Angemeldet als <span className="font-mono text-blue-600">{userId}</span>
+          </div>
+        )}
+      </div>
+
       {/* chat */}
       <div className="bg-white p-5 rounded-lg shadow-md space-y-3">
         <h2 className="text-2xl font-semibold text-gray-700">Chat</h2>
@@ -517,40 +565,69 @@ const WebSocketTest = () => {
         {/* chat erstellung */}
         <div className="border-b border-gray-200 pb-4">
           <h3 className="text-lg font-medium text-gray-700 mb-2">Chat erstellen</h3>
-          <div className="flex flex-wrap gap-3 mb-2">
-            <input
-              placeholder="User-ID hinzufügen"
-              value={newUserId}
-              onChange={e => setNewUserId(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
-            />
-            <button
-              onClick={addUserToChatCreation}
-              className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded"
-            >
-              Hinzufügen
-            </button>
-            <input
-              type="number"
-              placeholder="minTTL hinzufügen"
-              value={chatMinTTL}
-              onChange={e => setChatMinTTL(e.target.valueAsNumber)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
-            />
-            <input
-              type="number"
-              placeholder="minTTL hinzufügen"
-              value={chatDefTTL}
-              onChange={e => setChatDefTTL(e.target.valueAsNumber)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
-            />
-            <input
-              type="number"
-              placeholder="minTTL hinzufügen"
-              value={chatMaxTTL}
-              onChange={e => setChatMaxTTL(e.target.valueAsNumber)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
-            />
+          <div className="flex flex-col gap-3 mb-2">
+            <div className="flex items-center gap-3">
+              <input
+                placeholder="User-ID hinzufügen"
+                value={newUserId}
+                onChange={e => setNewUserId(e.target.value)}
+                className="flex-auto px-3 py-2 border border-gray-300 rounded text-gray-900"
+              />
+              <button
+                onClick={addUserToChatCreation}
+                className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded"
+              >
+                Hinzufügen
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <label
+                htmlFor="minTTL"
+                className="flex-none w-2/12 bg-white text-black px-4 py-2"
+              >
+                Min. TTL:
+              </label>
+              <input
+                id="minTTL"
+                type="number"
+                placeholder="minTTL hinzufügen"
+                value={chatMinTTL}
+                onChange={e => setChatMinTTL(e.target.valueAsNumber)}
+                className="flex-auto px-3 py-2 border border-gray-300 rounded text-gray-900"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <label
+                htmlFor="defTTL"
+                className="flex-none w-2/12 bg-white text-black px-4 py-2"
+              >
+                Def. TTL:
+              </label>
+              <input
+                id="defTTL"
+                type="number"
+                placeholder="defTTL hinzufügen"
+                value={chatDefTTL}
+                onChange={e => setChatDefTTL(e.target.valueAsNumber)}
+                className="flex-auto px-3 py-2 border border-gray-300 rounded text-gray-900"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <label
+                htmlFor="maxTTL"
+                className="flex-none w-2/12 bg-white text-black px-4 py-2"
+              >
+                Max. TTL:
+              </label>
+              <input
+                id="maxTTL"
+                type="number"
+                placeholder="maxTTL hinzufügen"
+                value={chatMaxTTL}
+                onChange={e => setChatMaxTTL(e.target.valueAsNumber)}
+                className="flex-auto px-3 py-2 border border-gray-300 rounded text-gray-900"
+              />
+            </div>
           </div>
 
           {renderChatUsersList()}
