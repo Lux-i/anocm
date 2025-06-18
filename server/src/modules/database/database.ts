@@ -189,8 +189,19 @@ export namespace Database {
     message: string,
     timestamp: string,
     ttl?: number,
-  ): Promise<boolean> {
+  ): Promise<boolean | any> {
     try {
+
+      if(!(await client.hExists(`chat:${chatId}:users`, `${senderId}`))){
+        throw Error("Client doesnt exist in chat");
+      }
+      let minTTL = parseInt(await client.hGet(`chat:${chatId}:settings`, `minTTL`) ?? "0");
+      let maxTTL = parseInt(await client.hGet(`chat:${chatId}:settings`, `maxTTL`) ?? "0");
+
+      if(ttl && (ttl < minTTL || ttl > maxTTL)){
+        throw RangeError("Time to live is invalid")
+      }
+
       const messageObj = {
         from: senderId,
         message: message,
@@ -200,6 +211,7 @@ export namespace Database {
         timestamp,
         JSON.stringify(messageObj)
       );
+
       if (ttl) {
         await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
       }
@@ -214,8 +226,8 @@ export namespace Database {
 
       broadcastToChat(msg);
       return true;
-    } catch {
-      return false;
+    } catch(ex) {
+      return ex;
     }
   }
 

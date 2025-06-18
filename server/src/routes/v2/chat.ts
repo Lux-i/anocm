@@ -142,7 +142,7 @@ export default () => {
                     }else{
                         const response: DatabaseResponse = {
                             success: false,
-                            error: `Error sending message`,
+                            error: databaseResponse,
                         };
                         res.send(response);
                     }
