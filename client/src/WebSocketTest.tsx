@@ -613,7 +613,7 @@ const WebSocketTest = () => {
         <div className="text-gray-600 mt-3">
           <div className="font-semibold">Aktuelle Teilnehmer:</div>
           {loadedChat
-            ? Object.keys(loadedChat.chatUserList).map(u => (
+            ? Object.keys(loadedChat.chatUserList!).map(u => (
               <span key={u} className="font-mono mx-1 bg-gray-100 px-2 py-1 rounded">
                 {u}
                 {u === userId && <span className="text-xs text-blue-600"> (Sie)</span>}

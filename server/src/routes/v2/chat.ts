@@ -7,6 +7,10 @@ const router = express.Router();
 
 import { UUID } from "crypto";
 
+function instanceOfChat(object: any): object is Chat {
+    return 'member' in object;
+}
+
 export default () => {
     router.post("/newchat", async (req: Request, res: Response) => {
         console.log("POST Request: new Chat");
@@ -38,21 +42,68 @@ export default () => {
 
     router.get("/getchat", async (req: Request, res: Response) => {
         try {
-            const chatId = req.query.chatid as string;
+            const chatId = req.query.chatid as UUID;
+            const token = req.query.token as UUID;
+            const userId = req.query.userid as UUID;
 
-            if (!chatId) {
+            if (!chatId || !token || !userId) {
                 return res.status(400).json({
                     success: false,
-                    error: "Missing ChatId in query.",
+                    error: "Missing parameters in query.",
                 });
             }
 
-            Database.getChat(chatId!).then((chat: Chat | false) => {
-                const response: DatabaseResponse = {
-                    success: true,
-                    userData: chat,
-                };
-                res.send(response);
+            Database.getChat(chatId, userId, token).then((chat: Chat | any) => {
+                if(instanceOfChat(chat)){
+                    const response: DatabaseResponse = {
+                        success: true,
+                        userData: chat,
+                    };
+                    res.send(response);
+                }else{
+                    const response: DatabaseResponse = {
+                        success: false,
+                        userData: chat,
+                    };
+                    res.send(response);
+                }
+            });
+        } catch (err: any) {
+            const response: DatabaseResponse = {
+                success: false,
+                error: err,
+            };
+            res.send(response);
+        }
+    });
+
+    router.get("/getChatSettings", async (req: Request, res: Response) => {
+        try {
+            const chatId = req.query.chatid as UUID;
+            const token = req.query.token as UUID;
+            const userId = req.query.userid as UUID;
+
+            if (!chatId || !token || !userId) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Missing parameters in query.",
+                });
+            }
+
+            Database.getChatSettings(chatId, userId, token).then((chat: Chat | any) => {
+                if(instanceOfChat(chat)){
+                    const response: DatabaseResponse = {
+                        success: true,
+                        userData: chat,
+                    };
+                    res.send(response);
+                }else{
+                    const response: DatabaseResponse = {
+                        success: false,
+                        userData: chat,
+                    };
+                    res.send(response);
+                }
             });
         } catch (err: any) {
             const response: DatabaseResponse = {

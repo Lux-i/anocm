@@ -378,9 +378,14 @@ export namespace Database {
    * @returns {Promise<Chat | false>} Chat object or false
    */
   export async function getChat(
-    chatIdInput: string
-  ): Promise<Chat | false> {
+    chatIdInput: UUID,
+    adminId: UUID,
+    adminToken: UUID
+  ): Promise<Chat | any> {
     try {
+      if(!(await checkAdmin(adminId, adminToken, chatIdInput))){
+        throw Error("User is not permitted");
+      }
       const chat: Chat = {
         chatId: chatIdInput,
         chatUserList: await client.hGetAll(`chat:${chatIdInput}:users`),
@@ -389,10 +394,31 @@ export namespace Database {
       };
 
       return chat;
-    } catch {
-      return false;
+    } catch(ex: any) {
+      return ex;
     }
   }
+
+  export async function getChatSettings(
+    chatIdInput: UUID,
+    adminId: UUID,
+    adminToken: UUID
+  ): Promise<Chat | false> {
+    try {
+      if(!(await checkAdmin(adminId, adminToken, chatIdInput))){
+        throw Error("User is not permitted");
+      }
+      const chat: Chat = {
+        chatId: chatIdInput,
+        chatSettings: await client.hGetAll(`chat:${chatIdInput}:settings`),
+      };
+
+      return chat;
+    } catch(ex: any) {
+      return ex;
+    }
+  }
+
 
   /**
  * Adds a user to an existing chat

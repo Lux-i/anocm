@@ -7,8 +7,8 @@ export interface User {
 
 export interface Chat {
   chatId: string;
-  chatUserList: Record<UUID, string>;
-  chatSettings: any;
+  chatUserList?: Record<UUID, string>;
+  chatSettings?: any;
   chatMessages?: any;
 }
 
