@@ -160,7 +160,7 @@ export namespace Database {
   export async function checkUserinChat(
     chatId: string,
     userId: string
-  ) {
+  ) : Promise<boolean | -1> {
     try {
       if (typeof chatId !== "string" || typeof userId !== "string") {
         throw new TypeError(`Invalid types: chatId=${typeof chatId}, userId=${typeof userId}`);
@@ -192,9 +192,10 @@ export namespace Database {
   ): Promise<boolean | any> {
     try {
 
-      if(!(await client.hExists(`chat:${chatId}:users`, `${senderId}`))){
+      if(!(await checkUserinChat(chatId, senderId))){
         throw Error("Client doesnt exist in chat");
       }
+
       let minTTL = parseInt(await client.hGet(`chat:${chatId}:settings`, `minTTL`) ?? "0");
       let maxTTL = parseInt(await client.hGet(`chat:${chatId}:settings`, `maxTTL`) ?? "0");
 
@@ -237,8 +238,14 @@ export namespace Database {
    * @returns {Promise<messageStructure | false>} Messages object or false
    */
   export async function getChatMessages(
-    chatId: string
+    chatId: string,
+    userId: UUID,
+    userToken: UUID,
   ): Promise<messageStructure | false> {
+    if((await verifyUser(userId, userToken)) || (await checkUserinChat(chatId, userId))){
+      return false;
+    }
+
     if (await client.EXISTS(`chat:${chatId}:messages`)) {
       try {
         const response = await client.hGetAll(`chat:${chatId}:messages`);
@@ -456,8 +463,13 @@ export namespace Database {
  */
   export async function deleteUserFromChat(
     chatId: UUID,
-    userId: UUID
+    userId: UUID,
+    adminId: UUID,
+    adminToken: UUID
   ): Promise<boolean> {
+    if(!(await checkAdmin(adminId, adminToken, chatId))){
+      return false;
+    }
     if (
       (await client.exists(`user:${userId}`)) &&
       (await client.HEXISTS(`chat:${chatId}:users`, `${userId}`))

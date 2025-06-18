@@ -145,7 +145,7 @@ export default () => {
     router.post("/remuser", async (req: Request, res: Response) => {
         console.log("POST Request: remove User from Chat");
         try {
-            Database.deleteUserFromChat(req.body.chatId, req.body.userId).then(
+            Database.deleteUserFromChat(req.body.chatId, req.body.userId, req.body.adminId, req.body.adminToken).then(
                 (response: boolean) => {
                     if (response == true) {
                         const response: DatabaseResponse = {
