@@ -28,6 +28,7 @@ const WebSocketTest = () => {
 
   //auth states
   const [userId, setUserId] = useState<UUID | string>(NIL);
+  const [token, setToken] = useState<UUID | string>(NIL);
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
@@ -359,6 +360,7 @@ const WebSocketTest = () => {
       formData.append("ttl", `${chatDefTTL}`);
       formData.append("maxTTL", `${chatMaxTTL}`);
       formData.append("creatorId", userId);
+      formData.append("creatorToken", token);
 
       console.log(`[API] Chat mit Teilnehmern: ${usersToSend[0].userId}, ${usersToSend[1].userId}`);
 
@@ -402,7 +404,7 @@ const WebSocketTest = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/chat/getchat?chatid=${activeChatId}`);
+      const res = await fetch(`${API_BASE}/chat/getchat?chatid=${activeChatId}&userId=${userId}&token=${token}`);
       const data: DatabaseResponse = await res.json();
       if (data.success && data.userData) {
         console.log(`[API] Chat ${activeChatId} erfolgreich geladen`);
@@ -437,7 +439,7 @@ const WebSocketTest = () => {
       const res = await fetch(`${API_BASE}/chat/adduser`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chatId: activeChatId, userId: newUserId }),
+        body: JSON.stringify({ chatId: activeChatId, userId: newUserId, adminId: userId, adminToken: token }),
       });
       const data: DatabaseResponse = await res.json();
       if (data.success) {
