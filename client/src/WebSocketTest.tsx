@@ -276,16 +276,12 @@ const WebSocketTest = () => {
   };
 
   const loginAnonymousUser = async () => {
-    //TODO: GEHT GRAD NICHT
-
-    return;
-    /*
     if (!loginUsername) return setError('ID angeben');
     console.log('[API] Anonymen Benutzer einloggen');
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/login`, { 
+      const res = await fetch(`${API_BASE}/user/login`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId_username: loginUsername, password: '' })
@@ -313,15 +309,9 @@ const WebSocketTest = () => {
     } finally {
       setLoading(false);
     }
-
-    */
   };
 
   const loginUser = async () => {
-    //TODO: GEHT GRAD NICHT
-
-    return;
-    /*
     if (!loginUsername || !loginPassword) return setError('Name & Passwort angeben');
     console.log('[API] Benutzer einloggen');
     setLoading(true);
@@ -331,7 +321,7 @@ const WebSocketTest = () => {
       password: loginPassword
     }
     try {
-      const res = await fetch(`${API_BASE}/login`, {
+      const res = await fetch(`${API_BASE}/user/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginUser)
@@ -363,8 +353,6 @@ const WebSocketTest = () => {
     } finally {
       setLoading(false);
     }
-
-    */
   }
 
   //aktuelle chat user
