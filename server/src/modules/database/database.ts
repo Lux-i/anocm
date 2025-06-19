@@ -3,6 +3,7 @@ import { randomUUID, UUID } from "crypto";
 import { Chat, User, ChatMessage, messageStructure, chatSettings, WsMessage, Action } from "@anocm/shared/dist";
 import { broadcastToChat } from "../message/message";
 import { log } from "console";
+import chat from "../../routes/v1/chat";
 const argon2 = require("argon2");
 
 export namespace Database {
@@ -195,6 +196,8 @@ export namespace Database {
     try {
 
       if(!(await checkUserinChat(chatId, senderId))){
+        console.log("not in chat");
+        
         throw Error("Client doesnt exist in chat");
       }
 
@@ -202,6 +205,8 @@ export namespace Database {
       let maxTTL = parseInt(await client.hGet(`chat:${chatId}:settings`, `maxTTL`) ?? "0");
 
       if(ttl && (ttl < minTTL || ttl > maxTTL)){
+        console.log("invalid");
+        
         throw RangeError("Time to live is invalid")
       }
 
@@ -215,10 +220,13 @@ export namespace Database {
         JSON.stringify(messageObj)
       );
 
+      let defaultMessageTTL = await client.hGet(`chat:${chatId}:settings`, "defaultMessageTTL");
+
       if (ttl) {
         await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
+      }else if(parseInt(defaultMessageTTL!) != -1){
+        await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, parseInt(defaultMessageTTL!));
       }
-
       let msg: WsMessage = {
         action: Action.BroadcastToChat,
         content: message,

@@ -156,13 +156,14 @@ const WebSocketTest = () => {
     const msg = {
       content: messageContent,
       senderID: userId as UUID,
+      senderToken: token,
       chatID: activeChatId as UUID,
       timestamp: Date.now(),
     };
     const response = await fetch("http://localhost:8080/api/v2/chat/send_message", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",   // <--- Hier!
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(msg),
     });
@@ -173,7 +174,7 @@ const WebSocketTest = () => {
       setStatus('Nachricht gesendet');
 
     } else {
-      console.error(`There was an error: ${data.error}`);
+      console.error(`There was an error: ${JSON.stringify(data.error)}`);
     }
 
   };
