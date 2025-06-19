@@ -2,6 +2,7 @@ import { RedisClientType, createClient } from "redis";
 import { randomUUID, UUID } from "crypto";
 import { Chat, User, ChatMessage, messageStructure, chatSettings, WsMessage, Action } from "@anocm/shared/dist";
 import { broadcastToChat } from "../message/message";
+import { log } from "console";
 const argon2 = require("argon2");
 
 export namespace Database {
@@ -186,6 +187,7 @@ export namespace Database {
   export async function sendMessageToChat(
     chatId: string,
     senderId: string,
+    senderToken: string,
     message: string,
     timestamp: string,
     ttl?: number,
@@ -221,6 +223,7 @@ export namespace Database {
         action: Action.BroadcastToChat,
         content: message,
         senderID: senderId as UUID,
+        senderToken: senderToken,
         chatID: chatId as UUID,
         timestamp: Number(timestamp)
       }
@@ -240,7 +243,7 @@ export namespace Database {
   export async function getChatMessages(
     chatId: string,
     userId: UUID,
-    userToken: UUID,
+    userToken: string,
   ): Promise<messageStructure | false> {
     if((await verifyUser(userId, userToken)) || (await checkUserinChat(chatId, userId))){
       return false;
@@ -328,6 +331,7 @@ export namespace Database {
   export async function loginUser(userId_username: UUID | string, password?:string): Promise<string[] | false>{
     
     let token: UUID = randomUUID();
+    
 
     if(typeof password == "undefined"){
           await client.hSet(`user:${userId_username}`, {
@@ -341,7 +345,7 @@ export namespace Database {
         do {
           const scanResult = await client.scan(cursor, {
             MATCH: "user:*",
-            COUNT: 1000,
+            COUNT: 100,
           });
   
           cursor = Number(scanResult.cursor);
@@ -350,18 +354,21 @@ export namespace Database {
           for (const key of keys) {
             const searchResult = await client.hGet(key, "username");
             if (searchResult == userId_username) {
-              let hashPW = await client.hGet(`user:${key}`, "password");
+              let hashPW = await client.hGet(key, "password");
               if((await verifyHash(hashPW!, password))){
-                await client.hSet(`user:${userId_username}`, {
+                await client.hSet(key, {
                   token: `${token}`,
                 });
                 await client.hExpire(`user:${key}:messages`, `token`, 345600);
-                return [key, token];
+                let userId = key.replace("user:", "");
+                return [userId, token];
               }
             }
           }
         } while (cursor !== 0);
     }
+    console.log("user not found");
+    
     return false;
   }
 
@@ -385,12 +392,15 @@ export namespace Database {
    * @returns {Promise<Chat | false>} Chat object or false
    */
   export async function getChat(
-    chatIdInput: UUID,
-    adminId: UUID,
-    adminToken: UUID
+    chatIdInput: string,
+    adminId: string,
+    adminToken: string
   ): Promise<Chat | any> {
     try {
+      adminId = adminId.replace("user:", "");
       if(!(await checkAdmin(adminId, adminToken, chatIdInput))){
+        console.log("Not permitted!");
+        
         throw Error("User is not permitted");
       }
       const chat: Chat = {
@@ -491,9 +501,19 @@ export namespace Database {
  */
   export async function verifyHash(hash: string, password: string): Promise<boolean> {
     try {
+      if (!hash || typeof hash !== "string" || hash.trim() === "") {
+        
+        console.error("verifyHash: Hash is empty or undefined");
+      return false;
+    }
+
       if (await argon2.verify(hash, password)) {
+        console.log("verified!");
+        
         return true;
       } else {
+        console.log("wrong password!");
+        
         return false;
       }
     } catch (err) {
@@ -502,7 +522,7 @@ export namespace Database {
     }
   }
 
-  export async function verifyUser(userId: UUID, token: UUID): Promise<boolean>{
+  export async function verifyUser(userId: string, token: string): Promise<boolean>{
     const savedToken = await client.hGet(`user:${userId}`, "token");
     if(savedToken == token){
       return true;
@@ -510,7 +530,7 @@ export namespace Database {
     return false;
   }
 
-  export async function checkAdmin(userId: UUID, token: UUID, chatId: UUID): Promise<boolean>{
+  export async function checkAdmin(userId: string, token: string, chatId: string): Promise<boolean>{
     if(await verifyUser(userId, token)){
       const userRole = await client.hGet(`chat:${chatId}:users`, `${userId}`);
       if(userRole){

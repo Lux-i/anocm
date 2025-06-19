@@ -42,9 +42,9 @@ export default () => {
 
     router.get("/getchat", async (req: Request, res: Response) => {
         try {
-            const chatId = req.query.chatid as UUID;
-            const token = req.query.token as UUID;
-            const userId = req.query.userid as UUID;
+            const chatId = req.query.chatid as string;
+            const token = req.query.token as string;
+            const userId = req.query.userid as string;
 
             if (!chatId || !token || !userId) {
                 return res.status(400).json({
@@ -174,6 +174,7 @@ export default () => {
     interface Message {
         chatID: string,
         senderID: string,
+        senderToken: string,
         content: string,
         timestamp: string,
         ttl?: number,
@@ -184,7 +185,7 @@ export default () => {
         try{
             const data: Message = req.body;
             if(await Database.checkUserinChat(data.chatID, data.senderID)){
-                Database.sendMessageToChat(data.chatID, data.senderID, data.content, data.timestamp, data.ttl).then(databaseResponse => {
+                Database.sendMessageToChat(data.chatID, data.senderID, data.senderToken,data.content, data.timestamp, data.ttl).then(databaseResponse => {
                     if(databaseResponse == true){
                         const response: DatabaseResponse = {
                             success: true,

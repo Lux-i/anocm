@@ -72,12 +72,17 @@ export default () => {
                         if(token.length == 1){
                             const response: DatabaseResponse = {
                                 success: true,
-                                id: token[0],
+                                id: req.body.userId_username,
                                 userData: token[1],
                             };
                             res.send(response);
                         }else{
-
+                            const response: DatabaseResponse = {
+                                success: true,
+                                id: token[0],
+                                userData: token[1],
+                            };
+                            res.send(response);
                         }
                     }
                 }

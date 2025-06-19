@@ -6,7 +6,7 @@ import { validate } from "uuid";
 import { WebSocket as WebSocketType } from "ws";
 
 export async function broadcastToChat(message: WsMessage) {
-    const res = await Database.getChat(message.chatID);
+    const res = await Database.getChatMessages(message.chatID, message.senderID, message.senderToken!);
 
     if (res === false) {
         UserManager.sendMessage(
@@ -30,7 +30,7 @@ export async function broadcastToChat(message: WsMessage) {
         return;
     }
 
-    Object.keys(res.chatUserList).forEach((id) => {
+    Object.keys(res).forEach((id) => {
         if (isUUID(id)) {
             const uuid: UUID = id;
             UserManager.sendMessage(uuid, message);

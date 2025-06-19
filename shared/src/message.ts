@@ -4,6 +4,7 @@ export type WsMessage = {
   action: Action;
   content: string;
   senderID: UUID;
+  senderToken?: string;
   chatID: UUID;
   timestamp: EpochTimeStamp;
 };

@@ -16,6 +16,7 @@ enum Action {
 import { UUID } from "crypto";
 import { NIL } from "uuid";
 import { create } from 'domain';
+import { log } from 'console';
 
 const SYSTEM_UUID = "00000000-0000-0000-0000-000000000000" as UUID;
 
@@ -276,16 +277,12 @@ const WebSocketTest = () => {
   };
 
   const loginAnonymousUser = async () => {
-    //TODO: GEHT GRAD NICHT
-
-    return;
-    /*
     if (!loginUsername) return setError('ID angeben');
     console.log('[API] Anonymen Benutzer einloggen');
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/login`, { 
+      const res = await fetch(`${API_BASE}/user/login`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId_username: loginUsername, password: '' })
@@ -313,15 +310,11 @@ const WebSocketTest = () => {
     } finally {
       setLoading(false);
     }
-
-    */
   };
 
   const loginUser = async () => {
     //TODO: GEHT GRAD NICHT
-
-    return;
-    /*
+    
     if (!loginUsername || !loginPassword) return setError('Name & Passwort angeben');
     console.log('[API] Benutzer einloggen');
     setLoading(true);
@@ -331,7 +324,7 @@ const WebSocketTest = () => {
       password: loginPassword
     }
     try {
-      const res = await fetch(`${API_BASE}/login`, {
+      const res = await fetch(`${API_BASE}/user/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginUser)
@@ -344,7 +337,9 @@ const WebSocketTest = () => {
       if (data.success && data.id) {
         console.log(`[API] Benutzer '${data.id}' eingeloggt mit UserData: ${data.userData}`);
         setUserId(data.id);
-        setToken(data.userData.token);
+        const newToken = data.userData as string;
+        setToken(newToken);
+        
         setStatus(`User eingeloggt: ${loginUsername}`);
 
         if (ws.current) {
@@ -364,7 +359,6 @@ const WebSocketTest = () => {
       setLoading(false);
     }
 
-    */
   }
 
   //aktuelle chat user
@@ -474,6 +468,7 @@ const WebSocketTest = () => {
             action: Action.BroadcastToChat,
             content: `Chat ${data.id} erstellt`,
             senderID: 'system' as UUID,
+            senderToken: token,
             chatID: data.id as UUID,
             timestamp: Date.now(),
           }
@@ -508,6 +503,7 @@ const WebSocketTest = () => {
             action: Action.BroadcastToChat,
             content: `Chat ${activeChatId} geladen`,
             senderID: 'system' as UUID,
+            senderToken: token,
             chatID: activeChatId as UUID,
             timestamp: Date.now(),
           }
