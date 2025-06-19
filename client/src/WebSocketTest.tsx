@@ -313,8 +313,6 @@ const WebSocketTest = () => {
   };
 
   const loginUser = async () => {
-    //TODO: GEHT GRAD NICHT
-    
     if (!loginUsername || !loginPassword) return setError('Name & Passwort angeben');
     console.log('[API] Benutzer einloggen');
     setLoading(true);
@@ -358,7 +356,6 @@ const WebSocketTest = () => {
     } finally {
       setLoading(false);
     }
-
   }
 
   //aktuelle chat user
