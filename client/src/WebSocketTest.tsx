@@ -15,6 +15,7 @@ enum Action {
 
 import { UUID } from "crypto";
 import { NIL } from "uuid";
+import { create } from 'domain';
 
 const SYSTEM_UUID = "00000000-0000-0000-0000-000000000000" as UUID;
 
@@ -29,8 +30,14 @@ const WebSocketTest = () => {
   //auth states
   const [userId, setUserId] = useState<UUID | string>(NIL);
   const [token, setToken] = useState<UUID | string>(NIL);
-  const [username, setUsername] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+
+  //registration states
+  const [createUsername, setCreateUsername] = useState<string>('');
+  const [createPassword, setCreatePassword] = useState<string>('');
+
+  //login states
+  const [loginUsername, setLoginUsername] = useState<string>('');
+  const [loginPassword, setLoginPassword] = useState<string>('');
 
   //chat states
   const [activeChatId, setActiveChatId] = useState<UUID | string>(NIL);
@@ -212,9 +219,9 @@ const WebSocketTest = () => {
       const data: DatabaseResponse = await res.json();
       if (data.success && data.id) {
         console.log(`[API] Anonymer Benutzer erstellt: ${data.id}`);
-        setUserId(data.id);
+        //setUserId(data.id);
         setStatus(`Anon-User erstellt: ${data.id}`);
-
+        /*
         if (ws.current) {
           ws.current.close();
         }
@@ -223,7 +230,7 @@ const WebSocketTest = () => {
           console.log('[WS] Neue Verbindung nach Benutzer-Erstellung');
           connectWebSocket();
         }, 100);
-
+        */
       } else throw new Error(data.error);
     } catch (err) {
       console.error('[API] Fehler bei Anon-User-Erstellung:', err);
@@ -234,7 +241,7 @@ const WebSocketTest = () => {
   };
 
   const createUser = async () => {
-    if (!username || !password) return setError('Name & Passwort angeben');
+    if (!createUsername || !createPassword) return setError('Name & Passwort angeben');
     console.log('[API] Benutzer registrieren');
     setLoading(true);
     setError('');
@@ -242,13 +249,53 @@ const WebSocketTest = () => {
       const res = await fetch(`${API_BASE}/user/newuser`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: createUsername, password: createPassword }),
       });
       const data: DatabaseResponse = await res.json();
       if (data.success && data.id) {
-        console.log(`[API] Benutzer '${username}' erstellt mit ID: ${data.id}`);
+        console.log(`[API] Benutzer '${createUsername}' erstellt mit ID: ${data.id}`);
+        //setUserId(data.id);
+        setStatus(`User erstellt: ${createUsername}`);
+        /*
+        if (ws.current) {
+          ws.current.close();
+        }
+
+        setTimeout(() => {
+          console.log('[WS] Neue Verbindung nach Benutzer-Erstellung');
+          connectWebSocket();
+        }, 100);
+        */
+      } else throw new Error(data.error);
+    } catch (err) {
+      console.error('[API] Fehler bei Benutzer-Registrierung:', err);
+      setError('Fehler bei User-Erstellung');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginAnonymousUser = async () => {
+    //TODO: GEHT GRAD NICHT
+
+    return;
+    /*
+    if (!loginUsername) return setError('ID angeben');
+    console.log('[API] Anonymen Benutzer einloggen');
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/login`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId_username: loginUsername, password: '' })
+      });
+      const data: DatabaseResponse = await res.json();
+      if (data.success && data.id) {
+        console.log(`[API] Anonymer Benutzer eingeloggt: ${data.id}`);
         setUserId(data.id);
-        setStatus(`User erstellt: ${username}`);
+        setToken(data.userData.token);
+        setStatus(`Anon-User eingellogt: ${data.id}`);
 
         if (ws.current) {
           ws.current.close();
@@ -261,19 +308,63 @@ const WebSocketTest = () => {
 
       } else throw new Error(data.error);
     } catch (err) {
-      console.error('[API] Fehler bei Benutzer-Registrierung:', err);
-      setError('Fehler bei User-Erstellung');
+      console.error('[API] Fehler bei Anon-User-Anmeldung:', err);
+      setError('Fehler beim Anmelden des anonymen Users');
     } finally {
       setLoading(false);
     }
+
+    */
   };
 
-  const loginAnonymousUser = async () => {
-  
-  }
-
   const loginUser = async () => {
-    
+    //TODO: GEHT GRAD NICHT
+
+    return;
+    /*
+    if (!loginUsername || !loginPassword) return setError('Name & Passwort angeben');
+    console.log('[API] Benutzer einloggen');
+    setLoading(true);
+    setError('');
+    const loginUser = {
+      userId_username: loginUsername,
+      password: loginPassword
+    }
+    try {
+      const res = await fetch(`${API_BASE}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginUser)
+      });
+
+      const data: DatabaseResponse = await res.json();
+      
+      console.log(data);
+      
+      if (data.success && data.id) {
+        console.log(`[API] Benutzer '${data.id}' eingeloggt mit UserData: ${data.userData}`);
+        setUserId(data.id);
+        setToken(data.userData.token);
+        setStatus(`User eingeloggt: ${loginUsername}`);
+
+        if (ws.current) {
+          ws.current.close();
+        }
+
+        setTimeout(() => {
+          console.log('[WS] Neue Verbindung nach Benutzer-Erstellung');
+          connectWebSocket();
+        }, 100);
+
+      } else throw new Error(data.error);
+    } catch (err) {
+      console.error('[API] Fehler bei Benutzer-Login:', err);
+      setError('Fehler bei User-Anmeldung');
+    } finally {
+      setLoading(false);
+    }
+
+    */
   }
 
   //aktuelle chat user
@@ -336,7 +427,7 @@ const WebSocketTest = () => {
 
     const newUser: User = {
       userId: userId,
-      username: username || undefined
+      username: loginUsername || undefined
     };
 
     setChatUsers(prev => [...prev, newUser]);
@@ -495,15 +586,15 @@ const WebSocketTest = () => {
           </button>
           <input
             placeholder="User"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
+            value={createUsername}
+            onChange={e => setCreateUsername(e.target.value)}
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
           />
           <input
             type="password"
             placeholder="Passwort"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
+            value={createPassword}
+            onChange={e => setCreatePassword(e.target.value)}
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
           />
           <button
@@ -535,15 +626,15 @@ const WebSocketTest = () => {
           </button>
           <input
             placeholder="User"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
+            value={loginUsername}
+            onChange={e => setLoginUsername(e.target.value)}
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
           />
           <input
             type="password"
             placeholder="Passwort"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
+            value={loginPassword}
+            onChange={e => setLoginPassword(e.target.value)}
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
           />
           <button
