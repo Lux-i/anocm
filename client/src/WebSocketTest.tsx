@@ -349,25 +349,26 @@ const WebSocketTest = () => {
     setLoading(true);
     setError('');
     try {
-      const usersToSend = [
-        { userId: chatUsers[0].userId },
-        { userId: chatUsers[1].userId }
-      ];
+    const usersToSend = [
+      { userId: chatUsers[0].userId },
+      { userId: chatUsers[1].userId }
+    ];
 
-      const formData = new FormData();
-      formData.append("userList", JSON.stringify(usersToSend));
-      formData.append("minTTL", `${chatMinTTL}`);
-      formData.append("ttl", `${chatDefTTL}`);
-      formData.append("maxTTL", `${chatMaxTTL}`);
-      formData.append("creatorId", userId);
-      formData.append("creatorToken", token);
+    const body = JSON.stringify({
+      userList: usersToSend,
+      minTTL: `${chatMinTTL}`,
+      ttl: `${chatDefTTL}`,
+      maxTTL: `${chatMaxTTL}`,
+      creatorId: userId,
+      creatorToken: token
+    });
 
       console.log(`[API] Chat mit Teilnehmern: ${usersToSend[0].userId}, ${usersToSend[1].userId}`);
 
       const res = await fetch(`${API_BASE}/chat/newchat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: formData,
+        body
       });
 
       const data: DatabaseResponse = await res.json();
@@ -404,7 +405,7 @@ const WebSocketTest = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/chat/getchat?chatid=${activeChatId}&userId=${userId}&token=${token}`);
+      const res = await fetch(`${API_BASE}/chat/getchat?chatid=${activeChatId}&token=${token}&userid=${userId}`);
       const data: DatabaseResponse = await res.json();
       if (data.success && data.userData) {
         console.log(`[API] Chat ${activeChatId} erfolgreich geladen`);
