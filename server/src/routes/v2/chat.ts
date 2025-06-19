@@ -8,7 +8,7 @@ const router = express.Router();
 import { UUID } from "crypto";
 
 function instanceOfChat(object: any): object is Chat {
-    return 'member' in object;
+    return "chatId" in object;
 }
 
 export default () => {
