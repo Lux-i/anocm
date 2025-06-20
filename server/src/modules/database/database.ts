@@ -2,8 +2,6 @@ import { RedisClientType, createClient } from "redis";
 import { randomUUID, UUID } from "crypto";
 import { Chat, User, ChatMessage, messageStructure, chatSettings, WsMessage, Action } from "@anocm/shared/dist";
 import { broadcastToChat } from "../message/message";
-import { log } from "console";
-import chat from "../../routes/v1/chat";
 const argon2 = require("argon2");
 
 export namespace Database {
@@ -429,9 +427,13 @@ export namespace Database {
 
       const rawMessages = await client.hGetAll(`chat:${chatIdInput}:messages`);
 
-      const chatMessages = Object.values(rawMessages).map(msgStr => {
+      const chatMessages = Object.entries(rawMessages).map(([timestamp, msgStr]) => {
         try {
-          return JSON.parse(msgStr);
+          const parsedMsg = JSON.parse(msgStr);
+          return {
+            timestamp, // der Key aus Redis
+            ...parsedMsg // die geparste Nachricht
+          };
         } catch {
           return null;
         }
