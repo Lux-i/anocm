@@ -75,14 +75,21 @@ export namespace Database {
         if(users.length == 2){
           for (const user of users) {
             await client.hSet(`chat:${chatId}:users`, `${user.userId}`, `admin`);
+            if((await client.ttl(`user:${user.userId}`)) != -1){
+              await client.hExpire(`chat:${chatId}:users`, `${user.userId}`, (await client.ttl(`user:${user.userId}`)));
+            }
           }
         }else{
           for (const user of users) {
             await client.hSet(`chat:${chatId}:users`, `${user.userId}`, `member`);
+            if((await client.ttl(`user:${user.userId}`)) != -1){
+              await client.hExpire(`chat:${chatId}:users`, `${user.userId}`, (await client.ttl(`user:${user.userId}`)));
+            }
           }
           await client.hSet(`chat:${chatId}:users`, `${userId}`, `admin`)
         }
         
+
         await client.hSet(`chat:${chatId}:settings`, {
           defaultMessageTTL: ttl,
           minMessageTTL: minTTL,
