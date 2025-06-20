@@ -262,7 +262,9 @@ export namespace Database {
           JSON.stringify(messageObj)
         );
 
-        await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
+        if (ttl !== -1) {
+          await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
+        }
       }
 
       let msg: WsMessage = {
@@ -277,6 +279,8 @@ export namespace Database {
       broadcastToChat(msg);
       return true;
     } catch (ex) {
+      console.log("Error sending message: ", ex);
+
       return ex;
     }
   }
