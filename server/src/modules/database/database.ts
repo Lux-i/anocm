@@ -353,10 +353,12 @@ export namespace Database {
     
 
     if(typeof password == "undefined"){
+        console.log(userId_username);
+      
           await client.hSet(`user:${userId_username}`, {
             token: `${token}`,
           });
-          await client.hExpire(`user:${userId_username}:messages`, `token`, 345600);
+          await client.hExpire(`user:${userId_username}`, `token`, 345600);
           return [token];
     }else{
       let cursor = 0;
@@ -378,7 +380,7 @@ export namespace Database {
                 await client.hSet(key, {
                   token: `${token}`,
                 });
-                await client.hExpire(`user:${key}:messages`, `token`, 345600);
+                console.log(await client.hExpire(key, `token`, 345600));
                 let userId = key.replace("user:", "");
                 return [userId, token];
               }
