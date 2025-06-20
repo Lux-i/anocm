@@ -51,6 +51,7 @@ const WebSocketTest = () => {
   //messages states
   const [messageContent, setMessageContent] = useState<string>('');
   const [messages, setMessages] = useState<TestMessage[]>([]);
+  const [messageTTL, setMessageTTL] = useState<number>(-1);
 
   //status und error states
   const [status, setStatus] = useState<string>('');
@@ -162,6 +163,7 @@ const WebSocketTest = () => {
       senderToken: token,
       chatID: activeChatId as UUID,
       timestamp: Date.now(),
+      ttl: messageTTL,
     };
     const response = await fetch("http://localhost:8080/api/v2/chat/send_message", {
       method: "POST",
@@ -830,6 +832,14 @@ const WebSocketTest = () => {
             placeholder="Nachrichteninhalt"
             value={messageContent}
             onChange={e => setMessageContent(e.target.value)}
+            disabled={!connected || !activeChatId}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
+          />
+          <input
+            type="number"
+            placeholder="TTL"
+            value={messageTTL}
+            onChange={e => setMessageTTL(e.target.valueAsNumber)}
             disabled={!connected || !activeChatId}
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
           />
