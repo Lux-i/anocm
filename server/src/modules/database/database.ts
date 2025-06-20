@@ -420,6 +420,7 @@ export namespace Database {
     try {
       adminId = adminId.replace("user:", "");
       if(!(await checkAdmin(adminId, adminToken, chatIdInput))){
+        
         console.log("Not permitted!");
         
         throw Error("User is not permitted");
@@ -521,6 +522,10 @@ export namespace Database {
       (await client.HEXISTS(`chat:${chatId}:users`, `${userId}`))
     ) {
       if (await client.hDel(`chat:${chatId}:users`, `${userId}`)) {
+        if(!(await client.exists(`chat:${chatId}:users`))){
+          await client.del(`chat:${chatId}:messages`);
+          await client.del(`chat:${chatId}:settings`);
+        }
         return true;
       }
     } else {
