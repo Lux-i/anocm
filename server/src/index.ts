@@ -126,9 +126,7 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
 
   ws.on("message", async (data: WebSocket.RawData) => {
     
-    const message: WsMessage = JSON.parse(data.toString());
-    console.log("Mlem", message);
-    
+    const message: WsMessage = JSON.parse(data.toString());  
     let res = routeMessageAction(message, ws);
 
     console.log(`Received message: ${message.content}`);

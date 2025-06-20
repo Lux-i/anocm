@@ -299,10 +299,10 @@ const WebSocketTest = () => {
       });
       const data: DatabaseResponse = await res.json();
       if (data.success && data.id) {
-        console.log(`[API] Anonymer Benutzer ${loginUsername} eingeloggt mit token: ${data.id}`);
+        console.log(`[API] Anonymer Benutzer ${loginUsername} eingeloggt mit token: ${data.userData}`);
         setUserId(loginUsername);
-        setToken(data.id);
-        setStatus(`Anon-User eingeloggt mit token: ${data.id}`);
+        setToken(data.userData);
+        setStatus(`Anon-User eingeloggt mit token: ${data.userData}`);
 
         if (ws.current) {
           ws.current.close();

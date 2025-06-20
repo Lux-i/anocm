@@ -63,10 +63,13 @@ export namespace Database {
     userId: UUID,
     token: UUID
   ): Promise<UUID | false> {
+    console.log(token);
+    
     if(await verifyUser(userId, token)){
       if (users.length >= 2) {
         let chatId = randomUUID();
         for (const user of users) {
+          
           if (!(await client.exists(`user:${user.userId}`))) {
               console.log("User not found");
               return false;
@@ -556,6 +559,10 @@ export namespace Database {
 
   export async function verifyUser(userId: string, token: string): Promise<boolean>{
     const savedToken = await client.hGet(`user:${userId}`, "token");
+    console.log(savedToken);
+    console.log(token);
+    
+    
     if(savedToken == token){
       return true;
     }
