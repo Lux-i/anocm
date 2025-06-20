@@ -5,41 +5,60 @@ import { Action, WsMessage, ResponseContent } from "@anocm/shared/dist";
 import { validate } from "uuid";
 import { WebSocket as WebSocketType } from "ws";
 
-export async function broadcastToChat(message: WsMessage) {
-    const messageCopy = JSON.parse(JSON.stringify(message));
-    
-    
-    const res = await Database.getChatMessages(messageCopy.chatID, messageCopy.senderID, messageCopy.senderToken!);
 
-    if (res === false) {
+export async function broadcastToChat(message: WsMessage) {
+    let messageCopy = JSON.parse(JSON.stringify(message));
+
+    if (message.senderToken === undefined || isUUID(message.senderToken) === false) {
         UserManager.sendMessage(
-            messageCopy.senderID,
-            messageResponse(messageCopy.senderID, {
+            message.senderID,
+            messageResponse(message.senderID, {
                 success: false,
-                message: `Database Error`,
-            }, messageCopy.chatID)
+                message: `No sender token provided`,
+            })
         );
         return;
     }
 
-    
-    const uniqueSenderIDs = new Set(
-        Object.values(res)
-            .map((entry) => entry.senderId)
-            .filter((id) => isUUID(id))
-    );
+    const res = await Database.getChatUsers(messageCopy.chatID, message.senderToken, message.senderID);
 
-    uniqueSenderIDs.forEach((uuid) => {
-        const result = UserManager.sendMessage(uuid as UUID, messageCopy);
-        console.log("res: ", result);
+    if (res === false || res.chatUserList === undefined) {
+        UserManager.sendMessage(
+            message.senderID,
+            messageResponse(message.senderID, {
+                success: false,
+                message: `Database Error`,
+            })
+        );
+        return;
+    }
+
+    if (!Database.checkUserinChat(message.chatID, message.senderID)) {
+        UserManager.sendMessage(
+            message.senderID,
+            messageResponse(message.senderID, {
+                success: false,
+                message: `Message could not be broadcasted to chat with id '${message.chatID}'`,
+            })
+        );
+        return;
+    }
+
+    messageCopy.senderToken = undefined; // remove token from message
+
+    Object.keys(res.chatUserList).forEach((id) => {
+        if (isUUID(id)) {
+            const uuid: UUID = id;
+            UserManager.sendMessage(uuid, message);
+        }
     });
 
     UserManager.sendMessage(
-        messageCopy.senderID,
-        messageResponse(messageCopy.senderID, {
+        message.senderID,
+        messageResponse(message.senderID, {
             success: true,
-            message: `Message broadcasted to Clients in '${messageCopy.chatID}'`,
-        }, messageCopy.chatID)
+            message: `Message broadcasted to Clients in '${message.chatID}'`,
+        })
     );
 }
 
@@ -48,7 +67,7 @@ export async function initWebsocketWithUserManager(message: WsMessage, ws: WebSo
         ws.send(JSON.stringify(messageResponse(message.senderID, {
             success: false,
             message: `Invalid UUID "${message.senderID}"`,
-        }, message.chatID)));
+        })));
     }
 
     UserManager.setUser(message.senderID, ws);
@@ -59,14 +78,14 @@ export async function initWebsocketWithUserManager(message: WsMessage, ws: WebSo
             messageResponse(message.senderID, {
                 success: true,
                 message: `Connected user "${message.senderID}" to account websocket`,
-            }, message.chatID)
+            })
         );
     } else {
         if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify(messageResponse(message.senderID, {
                 success: false,
                 message: `Could not connect "${message.senderID}" to account websocket`,
-            }, message.chatID)));
+            })));
         }
     }
 
@@ -77,7 +96,7 @@ export async function initWebsocketWithUserManager(message: WsMessage, ws: WebSo
  this is to assert that if the output is true, value is of type UUID
  */
 function isUUID(value: string): value is UUID {
-  return validate(value);
+    return validate(value);
 }
 
 /**
@@ -86,16 +105,16 @@ function isUUID(value: string): value is UUID {
  * @param content of type Response Content, has sucess bool, message and json response
  * @returns Message object
  */
-function messageResponse(senderID: UUID, content: ResponseContent, chatID: UUID): WsMessage {
+function messageResponse(senderID: UUID, content: ResponseContent): WsMessage {
     const msg: WsMessage = {
         action: Action.MessageResponse,
         content: JSON.stringify(content),
         timestamp: Date.now(),
         senderID: senderID,
-        chatID: chatID,
+        chatID: senderID,
     };
 
-  return msg;
+    return msg;
 }
 
 //#endregion
