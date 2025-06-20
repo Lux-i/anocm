@@ -167,7 +167,7 @@ export default () => {
                 error: err,
             };
             res.send(response);
-            console.error("Error adding User: ", err);
+            console.error("Error removing User: ", err);
         }
     });
     
