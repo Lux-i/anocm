@@ -295,21 +295,21 @@ const WebSocketTest = () => {
       const res = await fetch(`${API_BASE}/user/login`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId_username: loginUsername, password: '' })
+        body: JSON.stringify({ userId_username: loginUsername })
       });
       const data: DatabaseResponse = await res.json();
       if (data.success && data.id) {
-        console.log(`[API] Anonymer Benutzer eingeloggt: ${data.id}`);
-        setUserId(data.id);
-        setToken(data.userData.token);
-        setStatus(`Anon-User eingellogt: ${data.id}`);
+        console.log(`[API] Anonymer Benutzer ${loginUsername} eingeloggt mit token: ${data.id}`);
+        setUserId(loginUsername);
+        setToken(data.id);
+        setStatus(`Anon-User eingeloggt mit token: ${data.id}`);
 
         if (ws.current) {
           ws.current.close();
         }
 
         setTimeout(() => {
-          console.log('[WS] Neue Verbindung nach Benutzer-Erstellung');
+          console.log('[WS] Neue Verbindung nach Benutzer-Anmeldung');
           connectWebSocket();
         }, 100);
 
