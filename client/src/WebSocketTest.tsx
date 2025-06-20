@@ -506,14 +506,18 @@ const WebSocketTest = () => {
         console.log(data.userData.chatMessages);
         
         const chatMessagesObj = data.userData.chatMessages || {};
-        const parsedMessages = Object.entries(chatMessagesObj).map(([timeStamp, msgStr]) => {
+        console.log(chatMessagesObj);
+        
+        const parsedMessages = Object.entries(chatMessagesObj).map(([timeStamp, msgEntry]) => {
           try {
-            const msg = JSON.parse(msgStr as string);
+            const msg = typeof msgEntry === "string" ? JSON.parse(msgEntry) : msgEntry;
+            console.log(msg);
+            
             return {
               system: false,
               action: Action.MessageResponse,
-              content: msg.message,
-              senderID:msg.from,
+              content: msg.content,
+              senderID: msg.senderID,
               chatID: activeChatId as UUID,
               timestamp: Number(timeStamp)
             } as TestMessage;
