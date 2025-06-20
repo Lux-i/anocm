@@ -208,11 +208,43 @@ export namespace Database {
         throw Error("Client doesnt exist in chat");
       }
 
-      let minTTL = parseInt(await client.hGet(`chat:${chatId}:settings`, `minTTL`) ?? "0");
-      let maxTTL = parseInt(await client.hGet(`chat:${chatId}:settings`, `maxTTL`) ?? "0");
+      const minTTLRes = await client.hGet(`chat:${chatId}:settings`, `minMessageTTL`);
+      const maxTTLRes = await client.hGet(`chat:${chatId}:settings`, `maxMessageTTL`);
 
-      if (ttl && (ttl < minTTL || ttl > maxTTL)) {
+
+      let minTTL = parseInt(minTTLRes ?? "0");
+      let maxTTL = parseInt(maxTTLRes ?? "0");
+
+      if (ttl === undefined) {
+        ttl = parseInt(await client.hGet(`chat:${chatId}:settings`, `defaultMessageTTL`) ?? "0");
+      }
+
+
+      const isPermanentMinTTL: boolean = minTTL === -1;
+      const isPermanentMaxTTL: boolean = maxTTL === -1;
+
+      const constTTLBelowMin: boolean = ttl < minTTL;
+      const constTTLAboveMax: boolean = ttl > maxTTL;
+
+      const isPermanentTTL: boolean = ttl === -1;
+      const isBroadcast: boolean = ttl === 0;
+
+      const minCheck: boolean = !isPermanentMinTTL && (!isBroadcast && !isPermanentTTL) && constTTLBelowMin;
+      const maxCheck: boolean = !isPermanentMaxTTL && constTTLAboveMax;
+
+      const permanentCheck: boolean = isPermanentTTL && maxTTL !== -1;
+
+
+      if (minCheck || maxCheck || permanentCheck) {
         console.log("invalid");
+
+        console.log(`minTTL: ${minTTL}, maxTTL: ${maxTTL}, ttl: ${ttl}`);
+
+        console.log(`isPermanentMinTTL: ${isPermanentMinTTL}, isBroadcast: ${isBroadcast}, 
+          constTTLBelowMin: ${constTTLBelowMin}, constTTLAboveMax: ${constTTLAboveMax}, isPermanentTTL: ${isPermanentTTL}, 
+          minCheck: ${minCheck}, maxCheck: ${maxCheck}, permanentCheck: ${permanentCheck}`);
+
+
 
         throw RangeError("Time to live is invalid")
       }
@@ -230,13 +262,7 @@ export namespace Database {
           JSON.stringify(messageObj)
         );
 
-        let defaultMessageTTL = await client.hGet(`chat:${chatId}:settings`, "defaultMessageTTL");
-
-        if (ttl) {
-          await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
-        } else if (parseInt(defaultMessageTTL!) != -1) {
-          await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, parseInt(defaultMessageTTL!));
-        }
+        await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
       }
 
       let msg: WsMessage = {
@@ -487,11 +513,11 @@ export namespace Database {
 
 
   /**
- * Adds a user to an existing chat
- * @param {UUID} chatId - Chat ID
- * @param {UUID} userId - User ID to be added
- * @returns {Promise<boolean>} True if added, false otherwise
- */
+  * Adds a user to an existing chat
+  * @param {UUID} chatId - Chat ID
+  * @param {UUID} userId - User ID to be added
+  * @returns {Promise<boolean>} True if added, false otherwise
+  */
   export async function addUsertoChat(
     chatId: UUID,
     userId: UUID,
@@ -515,11 +541,11 @@ export namespace Database {
   }
 
   /**
- * Removes a user from a chat
- * @param {UUID} chatId - Chat ID
- * @param {UUID} userId - User ID to be removed
- * @returns {Promise<boolean>} True if removed, false otherwise
- */
+  * Removes a user from a chat
+  * @param {UUID} chatId - Chat ID
+  * @param {UUID} userId - User ID to be removed
+  * @returns {Promise<boolean>} True if removed, false otherwise
+  */
   export async function deleteUserFromChat(
     chatId: UUID,
     userId: UUID,
@@ -547,11 +573,11 @@ export namespace Database {
   }
 
   /**
- * Verifies a password against a hash using argon2id
- * @param {string} hash - Hashed password
- * @param {string} password - Plain password
- * @returns {Promise<boolean>} True if match, false otherwise
- */
+  * Verifies a password against a hash using argon2id
+  * @param {string} hash - Hashed password
+  * @param {string} password - Plain password
+  * @returns {Promise<boolean>} True if match, false otherwise
+  */
   export async function verifyHash(hash: string, password: string): Promise<boolean> {
     try {
       if (!hash || typeof hash !== "string" || hash.trim() === "") {
