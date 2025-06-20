@@ -20,7 +20,7 @@ export interface DatabaseResponse {
 }
 
 export interface ChatMessage {
-  from: UUID;
+  senderId: UUID;
   message: string;
 }
 

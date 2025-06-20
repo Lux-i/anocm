@@ -268,8 +268,15 @@ export namespace Database {
         const convertedResponse: messageStructure = {};
 
         for (let [key, msg] of Object.entries(response)) {
-          const parsedMessage: ChatMessage = JSON.parse(msg);
           const parsedKey: EpochTimeStamp = Number(key);
+
+          const rawMessage = typeof msg === "string" ? JSON.parse(msg) : msg;
+
+          const parsedMessage: ChatMessage = {
+            senderId: rawMessage.senderID,
+            message: rawMessage.content
+          };
+
           convertedResponse[parsedKey] = parsedMessage;
         }
         return convertedResponse;

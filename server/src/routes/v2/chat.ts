@@ -185,7 +185,7 @@ export default () => {
         try{
             const data: Message = req.body;
             if(await Database.checkUserinChat(data.chatID, data.senderID)){
-                Database.sendMessageToChat(data.chatID, data.senderID, data.senderToken,data.content, data.timestamp, data.ttl).then(databaseResponse => {
+                Database.sendMessageToChat(data.chatID, data.senderID, data.senderToken,data.content, parseInt(data.timestamp), data.ttl).then(databaseResponse => {
                     if(databaseResponse == true){
                         const response: DatabaseResponse = {
                             success: true,

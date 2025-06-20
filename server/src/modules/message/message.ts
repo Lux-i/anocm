@@ -6,7 +6,6 @@ import { validate } from "uuid";
 import { WebSocket as WebSocketType } from "ws";
 
 export async function broadcastToChat(message: WsMessage) {
-    console.log(message);
     const messageCopy = JSON.parse(JSON.stringify(message));
     
     
@@ -23,24 +22,16 @@ export async function broadcastToChat(message: WsMessage) {
         return;
     }
 
-    if (!(await Database.checkUserinChat(messageCopy.chatID, messageCopy.senderID))) {
-        UserManager.sendMessage(
-            messageCopy.senderID,
-            messageResponse(messageCopy.senderID, {
-                success: false,
-                message: `Message could not be broadcasted to chat with id '${messageCopy.chatID}'`,
-            }, messageCopy.chatID)
-        );
-        return;
-    }
+    
+    const uniqueSenderIDs = new Set(
+        Object.values(res)
+            .map((entry) => entry.senderId)
+            .filter((id) => isUUID(id))
+    );
 
-    Object.keys(res).forEach((id) => {
-        if (isUUID(id)) {
-            const uuid: UUID = id;
-            console.log(message);
-            
-            UserManager.sendMessage(uuid, message);
-        }
+    uniqueSenderIDs.forEach((uuid) => {
+        const result = UserManager.sendMessage(uuid as UUID, messageCopy);
+        console.log("res: ", result);
     });
 
     UserManager.sendMessage(
