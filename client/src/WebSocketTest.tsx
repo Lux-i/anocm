@@ -188,39 +188,37 @@ const WebSocketTest = () => {
     // }
   };
 
-  const removeUserFromChat = () => {
-    //TODO: GEHT GRAD NICHT
-
-    return;
-    /*
-    if (!connected || !newUserId) return setError('IDs angeben');
-    console.log(`[WS] Entferne Benutzer ${newUserId} aus Chat ${activeChatId}`);
-    const payload = {
-      action: Action.RemoveClientFromChatNoConfirm,
-      content: newUserId,
-      senderID: userId,
-      chatID: activeChatId,
-      timestamp: Date.now(),
-    };
-    ws.current!.send(JSON.stringify(payload));
-    setMessages(prev => [
-      ...prev,
-      {
-        system: true,
-        action: Action.BroadcastToChat,
-        content: `User ${newUserId} entfernt`,
-        senderID: SYSTEM_UUID,
-        chatID: activeChatId as UUID,
-        timestamp: Date.now(),
+  //api funktionen
+  const removeUserFromChat = async () => {
+    if (!newUserId.trim()) return setError('Bitte eine User-ID angeben');
+    if (!activeChatId) return setError('Keine Chat-ID angegeben');
+    console.log(`[API] Entferne Benutzer ${newUserId} aus Chat ${activeChatId}`);
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/chat/remuser`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chatId: activeChatId,
+          userId: newUserId,
+          adminId: userId,
+          adminToken: token
+        })
+      });
+      const data: DatabaseResponse = await res.json();
+      if (data.success) {
+        console.log(`[API] Benutzer ${newUserId} aus aktiven Chat ${activeChatId} entfernt`);
+        setStatus(`Benutzer ${newUserId} aus Chat ${activeChatId} entfernt`);
       }
-    ]);
-    setStatus(`User entfernt: ${newUserId}`);
-    setNewUserId('');
-
-    */
+    } catch (err) {
+      console.error(`[API] Fehler bei Entfernung von User ${newUserId} aus Chat ${activeChatId}:`, err);
+      setError(`Fehler beim Entfernen von User ${newUserId} aus Chat ${activeChatId}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  //api funktionen
   const createAnonymousUser = async () => {
     console.log('[API] Anonymen Benutzer erstellen');
     setLoading(true);
