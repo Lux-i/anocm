@@ -515,6 +515,26 @@ export namespace Database {
     }
   }
 
+  export async function getChatUsers(
+    chatIdInput: UUID,
+    userToken: UUID,
+    userId: UUID
+  ): Promise<Chat | false> {
+    try {
+      if (!(await verifyUser(userId, userToken))) {
+        throw Error("User is not permitted");
+      }
+      const chat: Chat = {
+        chatId: chatIdInput,
+        chatUserList: await client.hGetAll(`chat:${chatIdInput}:users`),
+      };
+
+      return chat;
+    } catch (ex: any) {
+      return ex;
+    }
+  }
+
 
   /**
   * Adds a user to an existing chat
