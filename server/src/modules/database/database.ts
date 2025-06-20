@@ -61,41 +61,41 @@ export namespace Database {
     userId: UUID,
     token: UUID
   ): Promise<UUID | false> {
-    
-    if(await verifyUser(userId, token)){
+
+    if (await verifyUser(userId, token)) {
       if (users.length >= 2) {
         let chatId = randomUUID();
         for (const user of users) {
-          
+
           if (!(await client.exists(`user:${user.userId}`))) {
-              console.log("User not found");
-              return false;
+            console.log("User not found");
+            return false;
           }
         }
-        if(users.length == 2){
+        if (users.length == 2) {
           for (const user of users) {
             await client.hSet(`chat:${chatId}:users`, `${user.userId}`, `admin`);
-            if((await client.ttl(`user:${user.userId}`)) != -1){
+            if ((await client.ttl(`user:${user.userId}`)) != -1) {
               await client.hExpire(`chat:${chatId}:users`, `${user.userId}`, (await client.ttl(`user:${user.userId}`)));
             }
           }
-        }else{
+        } else {
           for (const user of users) {
             await client.hSet(`chat:${chatId}:users`, `${user.userId}`, `member`);
-            if((await client.ttl(`user:${user.userId}`)) != -1){
+            if ((await client.ttl(`user:${user.userId}`)) != -1) {
               await client.hExpire(`chat:${chatId}:users`, `${user.userId}`, (await client.ttl(`user:${user.userId}`)));
             }
           }
           await client.hSet(`chat:${chatId}:users`, `${userId}`, `admin`)
         }
-        
+
 
         await client.hSet(`chat:${chatId}:settings`, {
           defaultMessageTTL: ttl,
           minMessageTTL: minTTL,
           maxMessageTTL: maxTTL
         });
-  
+
         return chatId;
       } else {
         console.log("Not enough");
@@ -108,18 +108,18 @@ export namespace Database {
   export async function editChatSettings(
     chatId: UUID,
     newSettings: chatSettings
-  ){
-    if(newSettings.defaultTTL){
+  ) {
+    if (newSettings.defaultTTL) {
       await client.hSet(`chat:${chatId}:settings`, {
         defaultMessageTTL: newSettings.defaultTTL
       });
     }
-    if(newSettings.minTTL){
+    if (newSettings.minTTL) {
       await client.hSet(`chat:${chatId}:settings`, {
         minMessageTTL: newSettings.minTTL
       });
     }
-    if(newSettings.maxTTL){
+    if (newSettings.maxTTL) {
       await client.hSet(`chat:${chatId}:settings`, {
         maxMessageTTL: newSettings.maxTTL
       });
@@ -131,16 +131,16 @@ export namespace Database {
     chatId: UUID,
     adminId: UUID,
     adminToken: UUID
-  ){
-    if(newAdmins.length < 1){
+  ) {
+    if (newAdmins.length < 1) {
       return;
     }
-    if(!(await checkAdmin(adminId, adminToken, chatId))){
+    if (!(await checkAdmin(adminId, adminToken, chatId))) {
       return;
     }
 
-    for(const newAdmin of newAdmins){
-      if(await checkUserinChat(chatId, newAdmin.userId) == false){
+    for (const newAdmin of newAdmins) {
+      if (await checkUserinChat(chatId, newAdmin.userId) == false) {
         return;
       }
       await client.hSet(`chat:${chatId}:users`, `${newAdmin.userId}`, `admin`);
@@ -152,24 +152,24 @@ export namespace Database {
     chatId: UUID,
     adminId: UUID,
     adminToken: UUID
-  ){
-    if((await client.hLen(`chat:${chatId}:users`)) == 2){
+  ) {
+    if ((await client.hLen(`chat:${chatId}:users`)) == 2) {
       return;
     }
-    if(!(await checkAdmin(adminId, adminToken, chatId))){
+    if (!(await checkAdmin(adminId, adminToken, chatId))) {
       return;
     }
-    if(await checkUserinChat(chatId, userId) == false){
-        return;
+    if (await checkUserinChat(chatId, userId) == false) {
+      return;
     }
-      await client.hSet(`chat:${chatId}:users`, `${userId}`, `member`);
-    
+    await client.hSet(`chat:${chatId}:users`, `${userId}`, `member`);
+
   }
 
   export async function checkUserinChat(
     chatId: string,
     userId: string
-  ) : Promise<boolean | -1> {
+  ): Promise<boolean | -1> {
     try {
       if (typeof chatId !== "string" || typeof userId !== "string") {
         throw new TypeError(`Invalid types: chatId=${typeof chatId}, userId=${typeof userId}`);
@@ -202,18 +202,18 @@ export namespace Database {
   ): Promise<boolean | any> {
     try {
 
-      if(!(await checkUserinChat(chatId, senderId))){
+      if (!(await checkUserinChat(chatId, senderId))) {
         console.log("not in chat");
-        
+
         throw Error("Client doesnt exist in chat");
       }
 
       let minTTL = parseInt(await client.hGet(`chat:${chatId}:settings`, `minTTL`) ?? "0");
       let maxTTL = parseInt(await client.hGet(`chat:${chatId}:settings`, `maxTTL`) ?? "0");
 
-      if(ttl && (ttl < minTTL || ttl > maxTTL)){
+      if (ttl && (ttl < minTTL || ttl > maxTTL)) {
         console.log("invalid");
-        
+
         throw RangeError("Time to live is invalid")
       }
 
@@ -221,19 +221,24 @@ export namespace Database {
         senderID: senderId,
         content: message,
       };
-      await client.hSet(
-        `chat:${chatId}:messages`,
-        timestamp,
-        JSON.stringify(messageObj)
-      );
 
-      let defaultMessageTTL = await client.hGet(`chat:${chatId}:settings`, "defaultMessageTTL");
 
-      if (ttl) {
-        await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
-      }else if(parseInt(defaultMessageTTL!) != -1){
-        await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, parseInt(defaultMessageTTL!));
+      if (ttl !== 0) {
+        await client.hSet(
+          `chat:${chatId}:messages`,
+          timestamp,
+          JSON.stringify(messageObj)
+        );
+
+        let defaultMessageTTL = await client.hGet(`chat:${chatId}:settings`, "defaultMessageTTL");
+
+        if (ttl) {
+          await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
+        } else if (parseInt(defaultMessageTTL!) != -1) {
+          await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, parseInt(defaultMessageTTL!));
+        }
       }
+
       let msg: WsMessage = {
         action: Action.BroadcastToChat,
         content: message,
@@ -245,7 +250,7 @@ export namespace Database {
 
       broadcastToChat(msg);
       return true;
-    } catch(ex) {
+    } catch (ex) {
       return ex;
     }
   }
@@ -260,11 +265,11 @@ export namespace Database {
     userId: UUID,
     userToken: string,
   ): Promise<messageStructure | false> {
-    if(!(await verifyUser(userId, userToken)) || !(await checkUserinChat(chatId, userId))){
+    if (!(await verifyUser(userId, userToken)) || !(await checkUserinChat(chatId, userId))) {
       console.log(userToken);
       console.log(userId);
       console.log("no no");
-      
+
       return false;
     }
 
@@ -354,49 +359,49 @@ export namespace Database {
     return false;
   }
 
-  export async function loginUser(userId_username: UUID | string, password?:string): Promise<string[] | false>{
-    
-    let token: UUID = randomUUID();
-    
+  export async function loginUser(userId_username: UUID | string, password?: string): Promise<string[] | false> {
 
-    if(typeof password == "undefined"){
-        console.log(userId_username);
-      
-          await client.hSet(`user:${userId_username}`, {
-            token: `${token}`,
-          });
-          await client.hExpire(`user:${userId_username}`, `token`, 345600);
-          return [token];
-    }else{
+    let token: UUID = randomUUID();
+
+
+    if (typeof password == "undefined") {
+      console.log(userId_username);
+
+      await client.hSet(`user:${userId_username}`, {
+        token: `${token}`,
+      });
+      await client.hExpire(`user:${userId_username}`, `token`, 345600);
+      return [token];
+    } else {
       let cursor = 0;
-  
-        do {
-          const scanResult = await client.scan(cursor, {
-            MATCH: "user:*",
-            COUNT: 100,
-          });
-  
-          cursor = Number(scanResult.cursor);
-          const keys = scanResult.keys;
-  
-          for (const key of keys) {
-            const searchResult = await client.hGet(key, "username");
-            if (searchResult == userId_username) {
-              let hashPW = await client.hGet(key, "password");
-              if((await verifyHash(hashPW!, password))){
-                await client.hSet(key, {
-                  token: `${token}`,
-                });
-                console.log(await client.hExpire(key, `token`, 345600));
-                let userId = key.replace("user:", "");
-                return [userId, token];
-              }
+
+      do {
+        const scanResult = await client.scan(cursor, {
+          MATCH: "user:*",
+          COUNT: 100,
+        });
+
+        cursor = Number(scanResult.cursor);
+        const keys = scanResult.keys;
+
+        for (const key of keys) {
+          const searchResult = await client.hGet(key, "username");
+          if (searchResult == userId_username) {
+            let hashPW = await client.hGet(key, "password");
+            if ((await verifyHash(hashPW!, password))) {
+              await client.hSet(key, {
+                token: `${token}`,
+              });
+              console.log(await client.hExpire(key, `token`, 345600));
+              let userId = key.replace("user:", "");
+              return [userId, token];
             }
           }
-        } while (cursor !== 0);
+        }
+      } while (cursor !== 0);
     }
     console.log("user not found");
-    
+
     return false;
   }
 
@@ -426,10 +431,10 @@ export namespace Database {
   ): Promise<Chat | any> {
     try {
       adminId = adminId.replace("user:", "");
-      if(!(await checkAdmin(adminId, adminToken, chatIdInput))){
-        
+      if (!(await checkAdmin(adminId, adminToken, chatIdInput))) {
+
         console.log("Not permitted!");
-        
+
         throw Error("User is not permitted");
       }
 
@@ -455,7 +460,7 @@ export namespace Database {
       };
 
       return chat;
-    } catch(ex: any) {
+    } catch (ex: any) {
       return ex;
     }
   }
@@ -466,7 +471,7 @@ export namespace Database {
     adminToken: UUID
   ): Promise<Chat | false> {
     try {
-      if(!(await checkAdmin(adminId, adminToken, chatIdInput))){
+      if (!(await checkAdmin(adminId, adminToken, chatIdInput))) {
         throw Error("User is not permitted");
       }
       const chat: Chat = {
@@ -475,7 +480,7 @@ export namespace Database {
       };
 
       return chat;
-    } catch(ex: any) {
+    } catch (ex: any) {
       return ex;
     }
   }
@@ -493,7 +498,7 @@ export namespace Database {
     adminId: UUID,
     adminToken: UUID,
   ): Promise<boolean> {
-    if(await checkAdmin(adminId, adminToken, chatId)){
+    if (await checkAdmin(adminId, adminToken, chatId)) {
       if (
         (await client.exists(`user:${userId}`)) &&
         !(await client.HEXISTS(`chat:${chatId}:users`, `${userId}`))
@@ -521,7 +526,7 @@ export namespace Database {
     adminId: UUID,
     adminToken: UUID
   ): Promise<boolean> {
-    if(!(await checkAdmin(adminId, adminToken, chatId))){
+    if (!(await checkAdmin(adminId, adminToken, chatId))) {
       return false;
     }
     if (
@@ -529,7 +534,7 @@ export namespace Database {
       (await client.HEXISTS(`chat:${chatId}:users`, `${userId}`))
     ) {
       if (await client.hDel(`chat:${chatId}:users`, `${userId}`)) {
-        if(!(await client.exists(`chat:${chatId}:users`))){
+        if (!(await client.exists(`chat:${chatId}:users`))) {
           await client.del(`chat:${chatId}:messages`);
           await client.del(`chat:${chatId}:settings`);
         }
@@ -550,18 +555,18 @@ export namespace Database {
   export async function verifyHash(hash: string, password: string): Promise<boolean> {
     try {
       if (!hash || typeof hash !== "string" || hash.trim() === "") {
-        
+
         console.error("verifyHash: Hash is empty or undefined");
-      return false;
-    }
+        return false;
+      }
 
       if (await argon2.verify(hash, password)) {
         console.log("verified!");
-        
+
         return true;
       } else {
         console.log("wrong password!");
-        
+
         return false;
       }
     } catch (err) {
@@ -570,19 +575,19 @@ export namespace Database {
     }
   }
 
-  export async function verifyUser(userId: string, token: string): Promise<boolean>{
+  export async function verifyUser(userId: string, token: string): Promise<boolean> {
     const savedToken = await client.hGet(`user:${userId}`, "token");
-    if(savedToken == token){
+    if (savedToken == token) {
       return true;
     }
     return false;
   }
 
-  export async function checkAdmin(userId: string, token: string, chatId: string): Promise<boolean>{
-    if(await verifyUser(userId, token)){
+  export async function checkAdmin(userId: string, token: string, chatId: string): Promise<boolean> {
+    if (await verifyUser(userId, token)) {
       const userRole = await client.hGet(`chat:${chatId}:users`, `${userId}`);
-      if(userRole){
-        if(userRole == "admin"){
+      if (userRole) {
+        if (userRole == "admin") {
           return true;
         }
         return false;
