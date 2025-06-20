@@ -73,7 +73,7 @@ export default () => {
                             const response: DatabaseResponse = {
                                 success: true,
                                 id: req.body.userId_username,
-                                userData: token[1],
+                                userData: token[0],
                             };
                             res.send(response);
                         }else{
