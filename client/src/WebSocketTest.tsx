@@ -295,21 +295,21 @@ const WebSocketTest = () => {
       const res = await fetch(`${API_BASE}/user/login`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId_username: loginUsername, password: '' })
+        body: JSON.stringify({ userId_username: loginUsername })
       });
       const data: DatabaseResponse = await res.json();
       if (data.success && data.id) {
-        console.log(`[API] Anonymer Benutzer eingeloggt: ${data.id}`);
-        setUserId(data.id);
-        setToken(data.userData.token);
-        setStatus(`Anon-User eingellogt: ${data.id}`);
+        console.log(`[API] Anonymer Benutzer ${loginUsername} eingeloggt mit token: ${data.id}`);
+        setUserId(loginUsername);
+        setToken(data.id);
+        setStatus(`Anon-User eingeloggt mit token: ${data.id}`);
 
         if (ws.current) {
           ws.current.close();
         }
 
         setTimeout(() => {
-          console.log('[WS] Neue Verbindung nach Benutzer-Erstellung');
+          console.log('[WS] Neue Verbindung nach Benutzer-Anmeldung');
           connectWebSocket();
         }, 100);
 
@@ -505,8 +505,31 @@ const WebSocketTest = () => {
         setLoadedChat(data.userData as Chat);
         console.log(data.userData.chatMessages);
         
-        setMessages([
-          ...(data.userData.chatMessages || []),
+        const chatMessagesObj = data.userData.chatMessages || {};
+        const parsedMessages = Object.entries(chatMessagesObj).map(([timeStamp, msgStr]) => {
+          try {
+            const msg = JSON.parse(msgStr as string);
+            return {
+              system: false,
+              action: Action.MessageResponse,
+              content: msg.message,
+              senderID:msg.from,
+              chatID: activeChatId as UUID,
+              timestamp: Number(timeStamp)
+            } as TestMessage;
+          } catch (e) {
+            return {
+              system: true,
+              action: Action.BroadcastToChat,
+              content: '[Fehler beim Parsen der Nachricht]',
+              senderID: 'system' as UUID,
+              senderToken: token,
+              chatID: activeChatId as UUID,
+              timestamp: Date.now(),
+            } as TestMessage;
+          }
+        });
+        setMessages([...parsedMessages,
           {
             system: true,
             action: Action.BroadcastToChat,
@@ -820,22 +843,25 @@ const WebSocketTest = () => {
           </button>
         </div>
         <div className="h-64 overflow-y-auto bg-gray-50 p-3 rounded flex flex-col space-y-2">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`max-w-[70%] p-2 rounded-lg shadow ${msg.system
-                ? 'bg-gray-200 italic self-center'
-                : msg.senderID === userId
-                  ? 'bg-blue-100 self-end text-right'
-                  : 'bg-white self-start'
-                }`}
-            >
-              <div className="text-sm">{msg.content}</div>
-              <div className="text-xs text-gray-500 mt-1">
-                {formatTime(msg.timestamp)}
-                {msg.system ? '' : ` | ${msg.senderID == userId ? 'Sie' : msg.senderID}`}
+          {messages
+            .slice()
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .map((msg, i) => (
+              <div
+                key={i}
+                className={`max-w-[70%] p-2 rounded-lg shadow ${msg.system
+                  ? 'bg-gray-200 italic self-center'
+                  : msg.senderID === userId
+                    ? 'bg-blue-100 self-end text-right'
+                    : 'bg-white self-start'
+                  }`}
+              >
+                <div className="text-sm">{msg.content}</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {formatTime(msg.timestamp)}
+                  {msg.system ? '' : ` | ${msg.senderID == userId ? 'Sie' : msg.senderID}`}
+                </div>
               </div>
-            </div>
           ))}
           <div />
         </div>
