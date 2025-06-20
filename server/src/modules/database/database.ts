@@ -190,7 +190,7 @@ export namespace Database {
     senderId: string,
     senderToken: string,
     message: string,
-    timestamp: string,
+    timestamp: number,
     ttl?: number,
   ): Promise<boolean | any> {
     try {
@@ -211,8 +211,8 @@ export namespace Database {
       }
 
       const messageObj = {
-        from: senderId,
-        message: message,
+        senderID: senderId,
+        content: message,
       };
       await client.hSet(
         `chat:${chatId}:messages`,
@@ -253,7 +253,11 @@ export namespace Database {
     userId: UUID,
     userToken: string,
   ): Promise<messageStructure | false> {
-    if((await verifyUser(userId, userToken)) || (await checkUserinChat(chatId, userId))){
+    if(!(await verifyUser(userId, userToken)) || !(await checkUserinChat(chatId, userId))){
+      console.log(userToken);
+      console.log(userId);
+      console.log("no no");
+      
       return false;
     }
 
@@ -411,11 +415,22 @@ export namespace Database {
         
         throw Error("User is not permitted");
       }
+
+      const rawMessages = await client.hGetAll(`chat:${chatIdInput}:messages`);
+
+      const chatMessages = Object.values(rawMessages).map(msgStr => {
+        try {
+          return JSON.parse(msgStr);
+        } catch {
+          return null;
+        }
+      }).filter(Boolean);
+
       const chat: Chat = {
         chatId: chatIdInput,
         chatUserList: await client.hGetAll(`chat:${chatIdInput}:users`),
         chatSettings: await client.hGetAll(`chat:${chatIdInput}:settings`),
-        chatMessages: await client.hGetAll(`chat:${chatIdInput}:messages`),
+        chatMessages: chatMessages,
       };
 
       return chat;

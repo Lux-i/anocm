@@ -114,14 +114,18 @@ const WebSocketTest = () => {
       ws.current.onmessage = ev => {
         try {
           const msg = JSON.parse(ev.data);
+          console.log("[WS] Nachricht empfangen:", ev.data);
           // Nur wichtige Ereignisse loggen
           if (msg.action === Action.BroadcastToChat) {
             console.log(`[WS] Chat-Nachricht empfangen in Chat: ${msg.chatID}`);
           } else if (msg.action === Action.MessageResponse) {
+            
             console.log(`[WS] Server-Antwort empfangen`);
           }
 
           if (msg.action === Action.BroadcastToChat) {
+            console.log("Nachricht da");
+            console.log("Empfangene Nachricht:", msg);
             setMessages(prev => [...prev, msg]);
           } else if (msg.action === Action.MessageResponse) {
             try {
@@ -172,11 +176,16 @@ const WebSocketTest = () => {
       console.log(data);
       setMessageContent('');
       setStatus('Nachricht gesendet');
-
     } else {
       console.error(`There was an error: ${JSON.stringify(data.error)}`);
     }
-
+    // if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+    //   ws.current.send(JSON.stringify(msg));
+    //   setMessageContent('');
+    //   setStatus('Nachricht gesendet');
+    // } else {
+    //   setError('WebSocket-Verbindung ist nicht geöffnet');
+    // }
   };
 
   const removeUserFromChat = () => {
@@ -494,8 +503,10 @@ const WebSocketTest = () => {
       if (data.success && data.userData) {
         console.log(`[API] Chat ${activeChatId} erfolgreich geladen`);
         setLoadedChat(data.userData as Chat);
-        setMessages(prev => [
-          ...prev,
+        console.log(data.userData.chatMessages);
+        
+        setMessages([
+          ...(data.userData.chatMessages || []),
           {
             system: true,
             action: Action.BroadcastToChat,
@@ -822,7 +833,7 @@ const WebSocketTest = () => {
               <div className="text-sm">{msg.content}</div>
               <div className="text-xs text-gray-500 mt-1">
                 {formatTime(msg.timestamp)}
-                {msg.system ? '' : ` | ${msg.senderID === userId ? 'Sie' : msg.senderID}`}
+                {msg.system ? '' : ` | ${msg.senderID == userId ? 'Sie' : msg.senderID}`}
               </div>
             </div>
           ))}
