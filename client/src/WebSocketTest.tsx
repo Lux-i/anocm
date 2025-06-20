@@ -507,7 +507,7 @@ const WebSocketTest = () => {
         
         const chatMessagesObj = data.userData.chatMessages || {};
         
-        const parsedMessages = Object.entries(chatMessagesObj).map(([msgEntry]) => {
+        const parsedMessages = Object.entries(chatMessagesObj).map(([timeStamp, msgEntry]) => {
           try {
             const msg = typeof msgEntry === "string" ? JSON.parse(msgEntry) : msgEntry;
             

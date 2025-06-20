@@ -431,8 +431,8 @@ export namespace Database {
         try {
           const parsedMsg = JSON.parse(msgStr);
           return {
-            timestamp, // der Key aus Redis
-            ...parsedMsg // die geparste Nachricht
+            timestamp,
+            ...parsedMsg
           };
         } catch {
           return null;
