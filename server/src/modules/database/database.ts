@@ -2,6 +2,7 @@ import { RedisClientType, createClient } from "redis";
 import { randomUUID, UUID } from "crypto";
 import { Chat, User, ChatMessage, messageStructure, chatSettings, WsMessage, Action } from "@anocm/shared/dist";
 import { broadcastToChat } from "../message/message";
+import chat from "../../routes/v1/chat";
 const argon2 = require("argon2");
 
 export namespace Database {
@@ -80,7 +81,7 @@ export namespace Database {
             }
 
              let chatArray = await client.hGet(`user:${user.userId}`, `chatList`);
-             if(chatArray == undefined){
+             if(chatArray == null){
               let newChatArray: string[] = [];
               newChatArray.push(chatId);
               await client.hSet(`user:${user.userId}`, `chatList`, JSON.stringify(newChatArray));
@@ -352,7 +353,7 @@ export namespace Database {
 
     const chatArray = await client.hGet(`user:${userId}`, "chatList");
 
-    if(chatArray == undefined){
+    if(chatArray == null){
       return false;
     }
 
@@ -370,7 +371,7 @@ export namespace Database {
 
     const finalArray = await client.hGet(`user:${userId}`, "chatList");
 
-    if(finalArray != undefined){
+    if(finalArray != null){
       return finalArray;
     }
 
@@ -604,7 +605,7 @@ export namespace Database {
         if (await client.hSet(`chat:${chatId}:users`, `${userId}`, "member")) {
 
           let chatArray = await client.hGet(`user:${userId}`, `chatList`);
-          if(chatArray == undefined){
+          if(chatArray == null){
             let newChatArray: string[] = [];
             newChatArray.push(chatId);
             await client.hSet(`user:${userId}`, `chatList`, JSON.stringify(newChatArray));
@@ -644,8 +645,12 @@ export namespace Database {
       (await client.HEXISTS(`chat:${chatId}:users`, `${userId}`))
     ) {
       if (await client.hDel(`chat:${chatId}:users`, `${userId}`)) {
-        const chatArray = await client.hGet(`chat:${userId}`, "chatList");
-        if(chatArray != undefined){
+        const chatArray = await client.hGet(`user:${userId}`, "chatList");
+        console.log(chatArray);
+        
+        if(chatArray != null){
+          console.log("delete user from chat");
+          
           const parsedArray = JSON.parse(chatArray);
           const index = parsedArray.indexOf(chatId);
           if(index !== -1){
