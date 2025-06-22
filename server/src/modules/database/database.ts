@@ -2,6 +2,7 @@ import { RedisClientType, createClient } from "redis";
 import { randomUUID, UUID } from "crypto";
 import { Chat, User, ChatMessage, messageStructure, chatSettings, WsMessage, Action } from "@anocm/shared/dist";
 import { broadcastToChat } from "../message/message";
+import chat from "../../routes/v1/chat";
 const argon2 = require("argon2");
 
 export namespace Database {
@@ -78,6 +79,17 @@ export namespace Database {
             if ((await client.ttl(`user:${user.userId}`)) != -1) {
               await client.hExpire(`chat:${chatId}:users`, `${user.userId}`, (await client.ttl(`user:${user.userId}`)));
             }
+
+             let chatArray = await client.hGet(`user:${user.userId}`, `chatList`);
+             if(chatArray == null){
+              let newChatArray: string[] = [];
+              newChatArray.push(chatId);
+              await client.hSet(`user:${user.userId}`, `chatList`, JSON.stringify(newChatArray));
+             }else{
+              const newChatArray: string[] = JSON.parse(chatArray);
+              newChatArray.push(chatId);
+              await client.hSet(`user:${user.userId}`, `chatList`, JSON.stringify(newChatArray));
+             }
           }
         } else {
           for (const user of users) {
@@ -329,6 +341,43 @@ export namespace Database {
     return false;
   }
 
+
+  export async function getUserChatList (
+    userId: string,
+    userToken: string,
+  ): Promise<string | false>{
+
+    if(!(await verifyUser(userId, userToken))){
+      return false;
+    }
+
+    const chatArray = await client.hGet(`user:${userId}`, "chatList");
+
+    if(chatArray == null){
+      return false;
+    }
+
+    const parsedArray = JSON.parse(chatArray);
+
+    for(let chat in parsedArray){
+      if(!(await checkUserinChat(chat, userId))){
+        const index = parsedArray.indexOf(chat);
+          if(index !== -1){
+            parsedArray.splice(index, 1);
+          }
+        }
+      }
+    await client.hSet(`user:${userId}`, `chatList`, JSON.stringify(parsedArray));
+
+    const finalArray = await client.hGet(`user:${userId}`, "chatList");
+
+    if(finalArray != null){
+      return finalArray;
+    }
+
+    return false;
+  }
+
   /**
    * Creates User hashmap for an user with username and password
    * @param {string} username
@@ -554,6 +603,18 @@ export namespace Database {
         !(await client.HEXISTS(`chat:${chatId}:users`, `${userId}`))
       ) {
         if (await client.hSet(`chat:${chatId}:users`, `${userId}`, "member")) {
+
+          let chatArray = await client.hGet(`user:${userId}`, `chatList`);
+          if(chatArray == null){
+            let newChatArray: string[] = [];
+            newChatArray.push(chatId);
+            await client.hSet(`user:${userId}`, `chatList`, JSON.stringify(newChatArray));
+          }else{
+            const newChatArray: string[] = JSON.parse(chatArray);
+            newChatArray.push(chatId);
+            await client.hSet(`user:${userId}`, `chatList`, JSON.stringify(newChatArray));
+          }
+
           return true;
         }
       } else {
@@ -584,6 +645,19 @@ export namespace Database {
       (await client.HEXISTS(`chat:${chatId}:users`, `${userId}`))
     ) {
       if (await client.hDel(`chat:${chatId}:users`, `${userId}`)) {
+        const chatArray = await client.hGet(`user:${userId}`, "chatList");
+        console.log(chatArray);
+        
+        if(chatArray != null){
+          console.log("delete user from chat");
+          
+          const parsedArray = JSON.parse(chatArray);
+          const index = parsedArray.indexOf(chatId);
+          if(index !== -1){
+            parsedArray.splice(index, 1);
+            await client.hSet(`user:${userId}`, `chatList`, JSON.stringify(parsedArray));
+          }
+        }
         if (!(await client.exists(`chat:${chatId}:users`))) {
           await client.del(`chat:${chatId}:messages`);
           await client.del(`chat:${chatId}:settings`);

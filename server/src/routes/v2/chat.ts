@@ -215,6 +215,38 @@ export default () => {
             console.error("Error sending message: ", err);
         }
     });
+    
+    router.get("/getChatList", async (req: Request, res:Response) => {
+        const [userId, token] = req.body;
+        if (!token || !userId) {
+            return res.status(400).json({
+                success: false,
+                error: "Missing parameters in query.",
+            });
+        }
+        try{
+            await Database.getUserChatList(userId, token).then(chatList => {
+                if(chatList == false){
+                    const response: DatabaseResponse = {
+                        success: false
+                    };
+                    res.send(response);
+                }else{
+                    const response: DatabaseResponse = {
+                        success: true,
+                        userData: chatList,
+                    };
+                    res.send(response);
+                }
+            })
+        }catch(error: any){
+            const response: DatabaseResponse = {
+                success: false,
+                error: error,    
+            };
+            res.send(response);
+        }
+    })
 
     return router;
 };
