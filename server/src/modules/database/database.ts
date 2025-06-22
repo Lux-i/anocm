@@ -1,6 +1,14 @@
 import { RedisClientType, createClient } from "redis";
 import { randomUUID, UUID } from "crypto";
-import { Chat, User, ChatMessage, messageStructure, chatSettings, WsMessage, Action } from "@anocm/shared/dist";
+import {
+  Chat,
+  User,
+  ChatMessage,
+  messageStructure,
+  chatSettings,
+  WsMessage,
+  Action,
+} from "@anocm/shared/dist";
 import { broadcastToChat } from "../message/message";
 import chat from "../../routes/v1/chat";
 const argon2 = require("argon2");
@@ -62,12 +70,10 @@ export namespace Database {
     userId: UUID,
     token: UUID
   ): Promise<UUID | false> {
-
     if (await verifyUser(userId, token)) {
       if (users.length >= 2) {
         let chatId = randomUUID();
         for (const user of users) {
-
           if (!(await client.exists(`user:${user.userId}`))) {
             console.log("User not found");
             return false;
@@ -75,37 +81,63 @@ export namespace Database {
         }
         if (users.length == 2) {
           for (const user of users) {
-            await client.hSet(`chat:${chatId}:users`, `${user.userId}`, `admin`);
+            await client.hSet(
+              `chat:${chatId}:users`,
+              `${user.userId}`,
+              `admin`
+            );
             if ((await client.ttl(`user:${user.userId}`)) != -1) {
-              await client.hExpire(`chat:${chatId}:users`, `${user.userId}`, (await client.ttl(`user:${user.userId}`)));
+              await client.hExpire(
+                `chat:${chatId}:users`,
+                `${user.userId}`,
+                await client.ttl(`user:${user.userId}`)
+              );
             }
 
-             let chatArray = await client.hGet(`user:${user.userId}`, `chatList`);
-             if(chatArray == null){
+            let chatArray = await client.hGet(
+              `user:${user.userId}`,
+              `chatList`
+            );
+            if (chatArray == null) {
               let newChatArray: string[] = [];
               newChatArray.push(chatId);
-              await client.hSet(`user:${user.userId}`, `chatList`, JSON.stringify(newChatArray));
-             }else{
+              await client.hSet(
+                `user:${user.userId}`,
+                `chatList`,
+                JSON.stringify(newChatArray)
+              );
+            } else {
               const newChatArray: string[] = JSON.parse(chatArray);
               newChatArray.push(chatId);
-              await client.hSet(`user:${user.userId}`, `chatList`, JSON.stringify(newChatArray));
-             }
+              await client.hSet(
+                `user:${user.userId}`,
+                `chatList`,
+                JSON.stringify(newChatArray)
+              );
+            }
           }
         } else {
           for (const user of users) {
-            await client.hSet(`chat:${chatId}:users`, `${user.userId}`, `member`);
+            await client.hSet(
+              `chat:${chatId}:users`,
+              `${user.userId}`,
+              `member`
+            );
             if ((await client.ttl(`user:${user.userId}`)) != -1) {
-              await client.hExpire(`chat:${chatId}:users`, `${user.userId}`, (await client.ttl(`user:${user.userId}`)));
+              await client.hExpire(
+                `chat:${chatId}:users`,
+                `${user.userId}`,
+                await client.ttl(`user:${user.userId}`)
+              );
             }
           }
-          await client.hSet(`chat:${chatId}:users`, `${userId}`, `admin`)
+          await client.hSet(`chat:${chatId}:users`, `${userId}`, `admin`);
         }
-
 
         await client.hSet(`chat:${chatId}:settings`, {
           defaultMessageTTL: ttl,
           minMessageTTL: minTTL,
-          maxMessageTTL: maxTTL
+          maxMessageTTL: maxTTL,
         });
 
         return chatId;
@@ -123,17 +155,17 @@ export namespace Database {
   ) {
     if (newSettings.defaultTTL) {
       await client.hSet(`chat:${chatId}:settings`, {
-        defaultMessageTTL: newSettings.defaultTTL
+        defaultMessageTTL: newSettings.defaultTTL,
       });
     }
     if (newSettings.minTTL) {
       await client.hSet(`chat:${chatId}:settings`, {
-        minMessageTTL: newSettings.minTTL
+        minMessageTTL: newSettings.minTTL,
       });
     }
     if (newSettings.maxTTL) {
       await client.hSet(`chat:${chatId}:settings`, {
-        maxMessageTTL: newSettings.maxTTL
+        maxMessageTTL: newSettings.maxTTL,
       });
     }
   }
@@ -152,7 +184,7 @@ export namespace Database {
     }
 
     for (const newAdmin of newAdmins) {
-      if (await checkUserinChat(chatId, newAdmin.userId) == false) {
+      if ((await checkUserinChat(chatId, newAdmin.userId)) == false) {
         return;
       }
       await client.hSet(`chat:${chatId}:users`, `${newAdmin.userId}`, `admin`);
@@ -171,11 +203,10 @@ export namespace Database {
     if (!(await checkAdmin(adminId, adminToken, chatId))) {
       return;
     }
-    if (await checkUserinChat(chatId, userId) == false) {
+    if ((await checkUserinChat(chatId, userId)) == false) {
       return;
     }
     await client.hSet(`chat:${chatId}:users`, `${userId}`, `member`);
-
   }
 
   export async function checkUserinChat(
@@ -184,10 +215,14 @@ export namespace Database {
   ): Promise<boolean | -1> {
     try {
       if (typeof chatId !== "string" || typeof userId !== "string") {
-        throw new TypeError(`Invalid types: chatId=${typeof chatId}, userId=${typeof userId}`);
+        throw new TypeError(
+          `Invalid types: chatId=${typeof chatId}, userId=${typeof userId}`
+        );
       }
 
-      console.log(`Checking user in chat with chatId='${chatId}' and userId='${userId}'`);
+      console.log(
+        `Checking user in chat with chatId='${chatId}' and userId='${userId}'`
+      );
 
       let res = await client.hExists(`chat:${chatId}:users`, userId);
       return res;
@@ -210,27 +245,33 @@ export namespace Database {
     senderToken: string,
     message: string,
     timestamp: number,
-    ttl?: number,
+    ttl?: number
   ): Promise<boolean | any> {
     try {
-
       if (!(await checkUserinChat(chatId, senderId))) {
         console.log("not in chat");
 
         throw Error("Client doesnt exist in chat");
       }
 
-      const minTTLRes = await client.hGet(`chat:${chatId}:settings`, `minMessageTTL`);
-      const maxTTLRes = await client.hGet(`chat:${chatId}:settings`, `maxMessageTTL`);
-
+      const minTTLRes = await client.hGet(
+        `chat:${chatId}:settings`,
+        `minMessageTTL`
+      );
+      const maxTTLRes = await client.hGet(
+        `chat:${chatId}:settings`,
+        `maxMessageTTL`
+      );
 
       let minTTL = parseInt(minTTLRes ?? "0");
       let maxTTL = parseInt(maxTTLRes ?? "0");
 
       if (ttl === undefined) {
-        ttl = parseInt(await client.hGet(`chat:${chatId}:settings`, `defaultMessageTTL`) ?? "0");
+        ttl = parseInt(
+          (await client.hGet(`chat:${chatId}:settings`, `defaultMessageTTL`)) ??
+            "0"
+        );
       }
-
 
       const isPermanentMinTTL: boolean = minTTL === -1;
       const isPermanentMaxTTL: boolean = maxTTL === -1;
@@ -241,11 +282,14 @@ export namespace Database {
       const isPermanentTTL: boolean = ttl === -1;
       const isBroadcast: boolean = ttl === 0;
 
-      const minCheck: boolean = !isPermanentMinTTL && (!isBroadcast && !isPermanentTTL) && constTTLBelowMin;
+      const minCheck: boolean =
+        !isPermanentMinTTL &&
+        !isBroadcast &&
+        !isPermanentTTL &&
+        constTTLBelowMin;
       const maxCheck: boolean = !isPermanentMaxTTL && constTTLAboveMax;
 
       const permanentCheck: boolean = isPermanentTTL && maxTTL !== -1;
-
 
       if (minCheck || maxCheck || permanentCheck) {
         console.log("invalid");
@@ -256,16 +300,13 @@ export namespace Database {
           constTTLBelowMin: ${constTTLBelowMin}, constTTLAboveMax: ${constTTLAboveMax}, isPermanentTTL: ${isPermanentTTL}, 
           minCheck: ${minCheck}, maxCheck: ${maxCheck}, permanentCheck: ${permanentCheck}`);
 
-
-
-        throw RangeError("Time to live is invalid")
+        throw RangeError("Time to live is invalid");
       }
 
       const messageObj = {
         senderID: senderId,
         content: message,
       };
-
 
       if (ttl !== 0) {
         await client.hSet(
@@ -285,8 +326,8 @@ export namespace Database {
         senderID: senderId as UUID,
         senderToken: senderToken,
         chatID: chatId as UUID,
-        timestamp: Number(timestamp)
-      }
+        timestamp: Number(timestamp),
+      };
 
       broadcastToChat(msg);
       return true;
@@ -305,9 +346,12 @@ export namespace Database {
   export async function getChatMessages(
     chatId: string,
     userId: UUID,
-    userToken: string,
+    userToken: string
   ): Promise<messageStructure | false> {
-    if (!(await verifyUser(userId, userToken)) || !(await checkUserinChat(chatId, userId))) {
+    if (
+      !(await verifyUser(userId, userToken)) ||
+      !(await checkUserinChat(chatId, userId))
+    ) {
       console.log(userToken);
       console.log(userId);
       console.log("no no");
@@ -328,7 +372,7 @@ export namespace Database {
 
           const parsedMessage: ChatMessage = {
             senderId: rawMessage.senderID,
-            message: rawMessage.content
+            message: rawMessage.content,
           };
 
           convertedResponse[parsedKey] = parsedMessage;
@@ -341,37 +385,39 @@ export namespace Database {
     return false;
   }
 
-
-  export async function getUserChatList (
+  export async function getUserChatList(
     userId: string,
-    userToken: string,
-  ): Promise<string | false>{
-
-    if(!(await verifyUser(userId, userToken))){
+    userToken: string
+  ): Promise<string | false> {
+    if (!(await verifyUser(userId, userToken))) {
       return false;
     }
 
     const chatArray = await client.hGet(`user:${userId}`, "chatList");
 
-    if(chatArray == null){
+    if (chatArray == null) {
       return false;
     }
 
     const parsedArray = JSON.parse(chatArray);
 
-    for(let chat in parsedArray){
-      if(!(await checkUserinChat(chat, userId))){
+    for (let chat in parsedArray) {
+      if (!(await checkUserinChat(chat, userId))) {
         const index = parsedArray.indexOf(chat);
-          if(index !== -1){
-            parsedArray.splice(index, 1);
-          }
+        if (index !== -1) {
+          parsedArray.splice(index, 1);
         }
       }
-    await client.hSet(`user:${userId}`, `chatList`, JSON.stringify(parsedArray));
+    }
+    await client.hSet(
+      `user:${userId}`,
+      `chatList`,
+      JSON.stringify(parsedArray)
+    );
 
     const finalArray = await client.hGet(`user:${userId}`, "chatList");
 
-    if(finalArray != null){
+    if (finalArray != null) {
       return finalArray;
     }
 
@@ -418,7 +464,7 @@ export namespace Database {
         //Uses argon2id hashing
         let hashPW = await argon2.hash(password, {
           type: argon2.argon2id,
-          memoryCost: 2 ** 16,    // 64 MB
+          memoryCost: 2 ** 16, // 64 MB
           timeCost: 5,
           parallelism: 1,
         });
@@ -429,7 +475,6 @@ export namespace Database {
         });
 
         return userId;
-
       } catch (err) {
         console.error("Error creating user: ", err);
         return false;
@@ -438,10 +483,11 @@ export namespace Database {
     return false;
   }
 
-  export async function loginUser(userId_username: UUID | string, password?: string): Promise<string[] | false> {
-
+  export async function loginUser(
+    userId_username: UUID | string,
+    password?: string
+  ): Promise<string[] | false> {
     let token: UUID = randomUUID();
-
 
     if (typeof password == "undefined") {
       console.log(userId_username);
@@ -467,7 +513,7 @@ export namespace Database {
           const searchResult = await client.hGet(key, "username");
           if (searchResult == userId_username) {
             let hashPW = await client.hGet(key, "password");
-            if ((await verifyHash(hashPW!, password))) {
+            if (await verifyHash(hashPW!, password)) {
               await client.hSet(key, {
                 token: `${token}`,
               });
@@ -486,10 +532,10 @@ export namespace Database {
 
   /**
    * Creates an anonymous user hashmap entry
-   * @returns {Promise<string>} Client ID
+   * @returns {Promise<UUID>} Client ID
    */
-  export async function createAnoUser(): Promise<string> {
-    let userId: string = randomUUID();
+  export async function createAnoUser(): Promise<UUID> {
+    let userId: UUID = randomUUID();
     //let clientId: string = randomUUID();
     await client.hSet(`user:${userId}`, {
       UUID: `${userId}`,
@@ -511,7 +557,6 @@ export namespace Database {
     try {
       adminId = adminId.replace("user:", "");
       if (!(await checkAdmin(adminId, adminToken, chatIdInput))) {
-
         console.log("Not permitted!");
 
         throw Error("User is not permitted");
@@ -519,17 +564,19 @@ export namespace Database {
 
       const rawMessages = await client.hGetAll(`chat:${chatIdInput}:messages`);
 
-      const chatMessages = Object.entries(rawMessages).map(([timestamp, msgStr]) => {
-        try {
-          const parsedMsg = JSON.parse(msgStr);
-          return {
-            timestamp,
-            ...parsedMsg
-          };
-        } catch {
-          return null;
-        }
-      }).filter(Boolean);
+      const chatMessages = Object.entries(rawMessages)
+        .map(([timestamp, msgStr]) => {
+          try {
+            const parsedMsg = JSON.parse(msgStr);
+            return {
+              timestamp,
+              ...parsedMsg,
+            };
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
 
       const chat: Chat = {
         chatId: chatIdInput,
@@ -584,18 +631,17 @@ export namespace Database {
     }
   }
 
-
   /**
-  * Adds a user to an existing chat
-  * @param {UUID} chatId - Chat ID
-  * @param {UUID} userId - User ID to be added
-  * @returns {Promise<boolean>} True if added, false otherwise
-  */
+   * Adds a user to an existing chat
+   * @param {UUID} chatId - Chat ID
+   * @param {UUID} userId - User ID to be added
+   * @returns {Promise<boolean>} True if added, false otherwise
+   */
   export async function addUsertoChat(
     chatId: UUID,
     userId: UUID,
     adminId: UUID,
-    adminToken: UUID,
+    adminToken: UUID
   ): Promise<boolean> {
     if (await checkAdmin(adminId, adminToken, chatId)) {
       if (
@@ -603,16 +649,23 @@ export namespace Database {
         !(await client.HEXISTS(`chat:${chatId}:users`, `${userId}`))
       ) {
         if (await client.hSet(`chat:${chatId}:users`, `${userId}`, "member")) {
-
           let chatArray = await client.hGet(`user:${userId}`, `chatList`);
-          if(chatArray == null){
+          if (chatArray == null) {
             let newChatArray: string[] = [];
             newChatArray.push(chatId);
-            await client.hSet(`user:${userId}`, `chatList`, JSON.stringify(newChatArray));
-          }else{
+            await client.hSet(
+              `user:${userId}`,
+              `chatList`,
+              JSON.stringify(newChatArray)
+            );
+          } else {
             const newChatArray: string[] = JSON.parse(chatArray);
             newChatArray.push(chatId);
-            await client.hSet(`user:${userId}`, `chatList`, JSON.stringify(newChatArray));
+            await client.hSet(
+              `user:${userId}`,
+              `chatList`,
+              JSON.stringify(newChatArray)
+            );
           }
 
           return true;
@@ -626,11 +679,11 @@ export namespace Database {
   }
 
   /**
-  * Removes a user from a chat
-  * @param {UUID} chatId - Chat ID
-  * @param {UUID} userId - User ID to be removed
-  * @returns {Promise<boolean>} True if removed, false otherwise
-  */
+   * Removes a user from a chat
+   * @param {UUID} chatId - Chat ID
+   * @param {UUID} userId - User ID to be removed
+   * @returns {Promise<boolean>} True if removed, false otherwise
+   */
   export async function deleteUserFromChat(
     chatId: UUID,
     userId: UUID,
@@ -647,15 +700,19 @@ export namespace Database {
       if (await client.hDel(`chat:${chatId}:users`, `${userId}`)) {
         const chatArray = await client.hGet(`user:${userId}`, "chatList");
         console.log(chatArray);
-        
-        if(chatArray != null){
+
+        if (chatArray != null) {
           console.log("delete user from chat");
-          
+
           const parsedArray = JSON.parse(chatArray);
           const index = parsedArray.indexOf(chatId);
-          if(index !== -1){
+          if (index !== -1) {
             parsedArray.splice(index, 1);
-            await client.hSet(`user:${userId}`, `chatList`, JSON.stringify(parsedArray));
+            await client.hSet(
+              `user:${userId}`,
+              `chatList`,
+              JSON.stringify(parsedArray)
+            );
           }
         }
         if (!(await client.exists(`chat:${chatId}:users`))) {
@@ -671,15 +728,17 @@ export namespace Database {
   }
 
   /**
-  * Verifies a password against a hash using argon2id
-  * @param {string} hash - Hashed password
-  * @param {string} password - Plain password
-  * @returns {Promise<boolean>} True if match, false otherwise
-  */
-  export async function verifyHash(hash: string, password: string): Promise<boolean> {
+   * Verifies a password against a hash using argon2id
+   * @param {string} hash - Hashed password
+   * @param {string} password - Plain password
+   * @returns {Promise<boolean>} True if match, false otherwise
+   */
+  export async function verifyHash(
+    hash: string,
+    password: string
+  ): Promise<boolean> {
     try {
       if (!hash || typeof hash !== "string" || hash.trim() === "") {
-
         console.error("verifyHash: Hash is empty or undefined");
         return false;
       }
@@ -699,7 +758,10 @@ export namespace Database {
     }
   }
 
-  export async function verifyUser(userId: string, token: string): Promise<boolean> {
+  export async function verifyUser(
+    userId: string,
+    token: string
+  ): Promise<boolean> {
     const savedToken = await client.hGet(`user:${userId}`, "token");
     if (savedToken == token) {
       return true;
@@ -707,7 +769,11 @@ export namespace Database {
     return false;
   }
 
-  export async function checkAdmin(userId: string, token: string, chatId: string): Promise<boolean> {
+  export async function checkAdmin(
+    userId: string,
+    token: string,
+    chatId: string
+  ): Promise<boolean> {
     if (await verifyUser(userId, token)) {
       const userRole = await client.hGet(`chat:${chatId}:users`, `${userId}`);
       if (userRole) {
@@ -718,5 +784,29 @@ export namespace Database {
       }
     }
     return false;
+  }
+
+  export async function getAllNonAnoUsers(): Promise<User[]> {
+    const nonAnoUsers: User[] = [];
+
+    let cursor = 0;
+
+    do {
+      const { cursor: newCursor, keys } = await client.scan(cursor, {
+        MATCH: "user:*",
+        COUNT: 100,
+      });
+      cursor = Number(newCursor);
+
+      for (const key of keys) {
+        const isNotAno = await client.hExists(key, "username");
+        if (isNotAno) {
+          const username = await client.hGet(key, "username");
+          const userId = key.split(":")[1];
+          nonAnoUsers.push({ userId, username });
+        }
+      }
+    } while (cursor !== 0);
+    return nonAnoUsers;
   }
 }
