@@ -15,7 +15,7 @@ export interface Chat {
 export interface DatabaseResponse {
   success: boolean;
   error?: string;
-  id?: string;
+  id?: UUID;
   userData?: any;
 }
 
@@ -29,8 +29,7 @@ export type messageStructure = {
 };
 
 export interface chatSettings {
- defaultTTL: number,
- minTTL: number,
- maxTTL: number
+  defaultTTL: number;
+  minTTL: number;
+  maxTTL: number;
 }
-

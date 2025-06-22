@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 
-import { DatabaseResponse, User, Chat } from '@anocm/shared/dist';
-import type { WsMessage } from '@anocm/shared/dist';
+import { DatabaseResponse, User, Chat } from "@anocm/shared/dist";
+import type { WsMessage } from "@anocm/shared/dist";
 
 // for some reason this cannot be imported so idk what to do
 enum Action {
@@ -11,13 +11,7 @@ enum Action {
   MessageResponse = "MessageResponse",
 }
 
-
-
 import { UUID } from "crypto";
-import { NIL } from "uuid";
-
-
-const SYSTEM_UUID = "00000000-0000-0000-0000-000000000000" as UUID;
 
 // Erweiterter Message-Typ für Systemnachrichten
 interface TestMessage extends WsMessage {
@@ -25,59 +19,48 @@ interface TestMessage extends WsMessage {
 }
 
 const WebSocketTest = () => {
-  const API_BASE = 'http://localhost:8080/api/v2';
+  const API_BASE = "http://localhost:8080/api/v2";
 
   //auth states
-  const [userId, setUserId] = useState<UUID | string>(NIL);
-  const [token, setToken] = useState<UUID | string>(NIL);
+  const [userId, setUserId] = useState<UUID | null>(null);
+  const [token, setToken] = useState<UUID | null>(null);
 
   //registration states
-  const [createUsername, setCreateUsername] = useState<string>('');
-  const [createPassword, setCreatePassword] = useState<string>('');
+  const [createUsername, setCreateUsername] = useState<string>("");
+  const [createPassword, setCreatePassword] = useState<string>("");
 
   //login states
-  const [loginUsername, setLoginUsername] = useState<string>('');
-  const [loginPassword, setLoginPassword] = useState<string>('');
+  const [loginUsername, setLoginUsername] = useState<string>("");
+  const [loginPassword, setLoginPassword] = useState<string>("");
 
   //chat states
-  const [activeChatId, setActiveChatId] = useState<UUID | string>(NIL);
+  const [activeChatId, setActiveChatId] = useState<UUID | null>(null);
   const [chatUsers, setChatUsers] = useState<User[]>([]);
   const [chatMinTTL, setChatMinTTL] = useState<number>(-1);
   const [chatDefTTL, setChatDefTTL] = useState<number>(-1);
   const [chatMaxTTL, setChatMaxTTL] = useState<number>(345600);
-  const [newUserId, setNewUserId] = useState<string>('');
+  const [newUserId, setNewUserId] = useState<string>("");
   const [loadedChat, setLoadedChat] = useState<Chat | null>(null);
+  const [chatKey, setChatKey] = useState<CryptoKey | null>(null);
 
   //messages states
-  const [messageContent, setMessageContent] = useState<string>('');
+  const [messageContent, setMessageContent] = useState<string>("");
   const [messages, setMessages] = useState<TestMessage[]>([]);
   const [messageTTL, setMessageTTL] = useState<number>(-1);
 
   //status und error states
-  const [status, setStatus] = useState<string>('');
-  const [error, setError] = useState<string>('');
+  const [status, setStatus] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
   //websocket states
   const ws = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState<boolean>(false);
 
-
   const userIdRef = useRef(userId);
 
-  useEffect(() => {
-    userIdRef.current = userId;
-  }, [userId]);
-
-  //wenn userId gesetzt mit websocket verbinden
-  useEffect(() => {
-    if (userId && !connected) connectWebSocket();
-    return () => { ws.current?.close(); };
-  }, [userId]);
-
-
   const connectWebSocket = () => {
-    if (!userId) return setError('Bitte zuerst einen Benutzer erstellen');
+    if (!userId) return setError("Bitte zuerst einen Benutzer erstellen");
 
     // Bestehende Verbindung schließen
     if (ws.current) {
@@ -91,9 +74,9 @@ const WebSocketTest = () => {
       ws.current = new WebSocket(`ws://localhost:8080`);
 
       ws.current.onopen = () => {
-        console.log('[WS] Verbindung erfolgreich hergestellt');
+        console.log("[WS] Verbindung erfolgreich hergestellt");
         setConnected(true);
-        setStatus('WebSocket verbunden');
+        setStatus("WebSocket verbunden");
 
         // Initialisierungsnachricht senden
         setTimeout(() => {
@@ -104,14 +87,16 @@ const WebSocketTest = () => {
             chatID: userIdRef.current,
             timestamp: Date.now(),
           };
-          console.log(`[WS] Benutzer ${userIdRef.current} mit Server verknüpft`);
+          console.log(
+            `[WS] Benutzer ${userIdRef.current} mit Server verknüpft`
+          );
           if (ws.current && ws.current.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify(initMsg));
           }
         }, 100);
       };
 
-      ws.current.onmessage = ev => {
+      ws.current.onmessage = (ev) => {
         try {
           const msg = JSON.parse(ev.data);
           console.log("[WS] Nachricht empfangen:", ev.data);
@@ -119,40 +104,52 @@ const WebSocketTest = () => {
           if (msg.action === Action.BroadcastToChat) {
             console.log(`[WS] Chat-Nachricht empfangen in Chat: ${msg.chatID}`);
           } else if (msg.action === Action.MessageResponse) {
-            
             console.log(`[WS] Server-Antwort empfangen`);
           }
 
           if (msg.action === Action.BroadcastToChat) {
             console.log("Nachricht da");
             console.log("Empfangene Nachricht:", msg);
-            setMessages(prev => [...prev, msg]);
+            setMessages((prev) => [...prev, msg]);
           } else if (msg.action === Action.MessageResponse) {
             try {
               const content = JSON.parse(msg.content);
               const txt = content?.message || msg.content;
               setStatus(`Server: ${txt}`);
             } catch (e) {
+              console.log(e);
               setStatus(`Server: ${msg.content}`);
             }
           }
         } catch (err) {
-          console.error('[WS] Fehler bei Nachrichtenverarbeitung:', err);
+          console.error("[WS] Fehler bei Nachrichtenverarbeitung:", err);
         }
       };
 
       ws.current.onclose = () => {
-        console.log('[WS] Verbindung beendet');
+        console.log("[WS] Verbindung beendet");
         setConnected(false);
-        setStatus('WebSocket getrennt');
+        setStatus("WebSocket getrennt");
       };
 
-      ws.current.onerror = err => {
-        console.error('[WS] Verbindungsfehler:', err);
-        setError('WebSocket-Fehler');
+      ws.current.onerror = (err) => {
+        console.error("[WS] Verbindungsfehler:", err);
+        setError("WebSocket-Fehler");
       };
     }, 50);
   };
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
+
+  //wenn userId gesetzt mit websocket verbinden
+  useEffect(() => {
+    if (userId && !connected) connectWebSocket();
+    return () => {
+      ws.current?.close();
+    };
+  }, [userId, connected]);
 
   const sendMessage = async () => {
     if (!connected || !messageContent.trim()) return;
@@ -165,18 +162,21 @@ const WebSocketTest = () => {
       timestamp: Date.now(),
       ttl: messageTTL,
     };
-    const response = await fetch("http://localhost:8080/api/v2/chat/send_message", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(msg),
-    });
+    const response = await fetch(
+      "http://localhost:8080/api/v2/chat/send_message",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(msg),
+      }
+    );
     const data = await response.json();
     if (data.success) {
       console.log(data);
-      setMessageContent('');
-      setStatus('Nachricht gesendet');
+      setMessageContent("");
+      setStatus("Nachricht gesendet");
     } else {
       console.error(`There was an error: ${JSON.stringify(data.error)}`);
     }
@@ -191,41 +191,50 @@ const WebSocketTest = () => {
 
   //api funktionen
   const removeUserFromChat = async () => {
-    if (!newUserId.trim()) return setError('Bitte eine User-ID angeben');
-    if (!activeChatId) return setError('Keine Chat-ID angegeben');
-    console.log(`[API] Entferne Benutzer ${newUserId} aus Chat ${activeChatId}`);
+    if (!newUserId.trim()) return setError("Bitte eine User-ID angeben");
+    if (!activeChatId) return setError("Keine Chat-ID angegeben");
+    console.log(
+      `[API] Entferne Benutzer ${newUserId} aus Chat ${activeChatId}`
+    );
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const res = await fetch(`${API_BASE}/chat/remuser`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chatId: activeChatId,
           userId: newUserId,
           adminId: userId,
-          adminToken: token
-        })
+          adminToken: token,
+        }),
       });
       const data: DatabaseResponse = await res.json();
       if (data.success) {
-        console.log(`[API] Benutzer ${newUserId} aus aktiven Chat ${activeChatId} entfernt`);
+        console.log(
+          `[API] Benutzer ${newUserId} aus aktiven Chat ${activeChatId} entfernt`
+        );
         setStatus(`Benutzer ${newUserId} aus Chat ${activeChatId} entfernt`);
       }
     } catch (err) {
-      console.error(`[API] Fehler bei Entfernung von User ${newUserId} aus Chat ${activeChatId}:`, err);
-      setError(`Fehler beim Entfernen von User ${newUserId} aus Chat ${activeChatId}`);
+      console.error(
+        `[API] Fehler bei Entfernung von User ${newUserId} aus Chat ${activeChatId}:`,
+        err
+      );
+      setError(
+        `Fehler beim Entfernen von User ${newUserId} aus Chat ${activeChatId}`
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const createAnonymousUser = async () => {
-    console.log('[API] Anonymen Benutzer erstellen');
+    console.log("[API] Anonymen Benutzer erstellen");
     setLoading(true);
-    setError('');
+    setError("");
     try {
-      const res = await fetch(`${API_BASE}/user/newano`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/user/newano`, { method: "POST" });
       const data: DatabaseResponse = await res.json();
       if (data.success && data.id) {
         console.log(`[API] Anonymer Benutzer erstellt: ${data.id}`);
@@ -243,27 +252,33 @@ const WebSocketTest = () => {
         */
       } else throw new Error(data.error);
     } catch (err) {
-      console.error('[API] Fehler bei Anon-User-Erstellung:', err);
-      setError('Fehler beim Anlegen des anonymen Users');
+      console.error("[API] Fehler bei Anon-User-Erstellung:", err);
+      setError("Fehler beim Anlegen des anonymen Users");
     } finally {
       setLoading(false);
     }
   };
 
   const createUser = async () => {
-    if (!createUsername || !createPassword) return setError('Name & Passwort angeben');
-    console.log('[API] Benutzer registrieren');
+    if (!createUsername || !createPassword)
+      return setError("Name & Passwort angeben");
+    console.log("[API] Benutzer registrieren");
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const res = await fetch(`${API_BASE}/user/newuser`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: createUsername, password: createPassword }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: createUsername,
+          password: createPassword,
+        }),
       });
       const data: DatabaseResponse = await res.json();
       if (data.success && data.id) {
-        console.log(`[API] Benutzer '${createUsername}' erstellt mit ID: ${data.id}`);
+        console.log(
+          `[API] Benutzer '${createUsername}' erstellt mit ID: ${data.id}`
+        );
         //setUserId(data.id);
         setStatus(`User erstellt: ${createUsername}`);
         /*
@@ -278,28 +293,30 @@ const WebSocketTest = () => {
         */
       } else throw new Error(data.error);
     } catch (err) {
-      console.error('[API] Fehler bei Benutzer-Registrierung:', err);
-      setError('Fehler bei User-Erstellung');
+      console.error("[API] Fehler bei Benutzer-Registrierung:", err);
+      setError("Fehler bei User-Erstellung");
     } finally {
       setLoading(false);
     }
   };
 
   const loginAnonymousUser = async () => {
-    if (!loginUsername) return setError('ID angeben');
-    console.log('[API] Anonymen Benutzer einloggen');
+    if (!loginUsername) return setError("ID angeben");
+    console.log("[API] Anonymen Benutzer einloggen");
     setLoading(true);
-    setError('');
+    setError("");
     try {
-      const res = await fetch(`${API_BASE}/user/login`, { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId_username: loginUsername })
+      const res = await fetch(`${API_BASE}/user/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId_username: loginUsername }),
       });
       const data: DatabaseResponse = await res.json();
       if (data.success && data.id) {
-        console.log(`[API] Anonymer Benutzer ${loginUsername} eingeloggt mit token: ${data.userData}`);
-        setUserId(loginUsername);
+        console.log(
+          `[API] Anonymer Benutzer ${loginUsername} eingeloggt mit token: ${data.userData}`
+        );
+        setUserId(loginUsername as UUID);
         setToken(data.userData);
         setStatus(`Anon-User eingeloggt mit token: ${data.userData}`);
 
@@ -308,45 +325,47 @@ const WebSocketTest = () => {
         }
 
         setTimeout(() => {
-          console.log('[WS] Neue Verbindung nach Benutzer-Anmeldung');
+          console.log("[WS] Neue Verbindung nach Benutzer-Anmeldung");
           connectWebSocket();
         }, 100);
-
       } else throw new Error(data.error);
     } catch (err) {
-      console.error('[API] Fehler bei Anon-User-Anmeldung:', err);
-      setError('Fehler beim Anmelden des anonymen Users');
+      console.error("[API] Fehler bei Anon-User-Anmeldung:", err);
+      setError("Fehler beim Anmelden des anonymen Users");
     } finally {
       setLoading(false);
     }
   };
 
   const loginUser = async () => {
-    if (!loginUsername || !loginPassword) return setError('Name & Passwort angeben');
-    console.log('[API] Benutzer einloggen');
+    if (!loginUsername || !loginPassword)
+      return setError("Name & Passwort angeben");
+    console.log("[API] Benutzer einloggen");
     setLoading(true);
-    setError('');
+    setError("");
     const loginUser = {
       userId_username: loginUsername,
-      password: loginPassword
-    }
+      password: loginPassword,
+    };
     try {
       const res = await fetch(`${API_BASE}/user/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginUser)
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loginUser),
       });
 
       const data: DatabaseResponse = await res.json();
-      
+
       console.log(data);
-      
+
       if (data.success && data.id) {
-        console.log(`[API] Benutzer '${data.id}' eingeloggt mit UserData: ${data.userData}`);
+        console.log(
+          `[API] Benutzer '${data.id}' eingeloggt mit UserData: ${data.userData}`
+        );
         setUserId(data.id);
-        const newToken = data.userData as string;
+        const newToken = data.userData as UUID;
         setToken(newToken);
-        
+
         setStatus(`User eingeloggt: ${loginUsername}`);
 
         if (ws.current) {
@@ -354,23 +373,24 @@ const WebSocketTest = () => {
         }
 
         setTimeout(() => {
-          console.log('[WS] Neue Verbindung nach Benutzer-Erstellung');
+          console.log("[WS] Neue Verbindung nach Benutzer-Erstellung");
           connectWebSocket();
         }, 100);
-
       } else throw new Error(data.error);
     } catch (err) {
-      console.error('[API] Fehler bei Benutzer-Login:', err);
-      setError('Fehler bei User-Anmeldung');
+      console.error("[API] Fehler bei Benutzer-Login:", err);
+      setError("Fehler bei User-Anmeldung");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   //aktuelle chat user
   const renderChatUsersList = () => {
     if (chatUsers.length === 0) {
-      return <div className="text-gray-500 italic">Keine Benutzer hinzugefügt</div>;
+      return (
+        <div className="text-gray-500 italic">Keine Benutzer hinzugefügt</div>
+      );
     }
 
     return (
@@ -381,7 +401,9 @@ const WebSocketTest = () => {
             <li key={index}>
               {user.username || user.userId}
               <button
-                onClick={() => setChatUsers(chatUsers.filter((_, i) => i !== index))}
+                onClick={() =>
+                  setChatUsers(chatUsers.filter((_, i) => i !== index))
+                }
                 className="ml-4 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded"
               >
                 Entfernen
@@ -396,70 +418,72 @@ const WebSocketTest = () => {
   //user zur chat erstellung hinzufügen
   const addUserToChatCreation = () => {
     if (!newUserId.trim()) {
-      setError('Bitte eine User-ID eingeben');
+      setError("Bitte eine User-ID eingeben");
       return;
     }
 
     //schauen ob user bereits in liste
-    if (chatUsers.some(user => user.userId === newUserId)) {
-      setError('Dieser User ist bereits in der Liste');
+    if (chatUsers.some((user) => user.userId === newUserId)) {
+      setError("Dieser User ist bereits in der Liste");
       return;
     }
 
-    setChatUsers(prev => [...prev, { userId: newUserId }]);
-    setNewUserId('');
-    setError('');
+    setChatUsers((prev) => [...prev, { userId: newUserId }]);
+    setNewUserId("");
+    setError("");
     setStatus(`User ${newUserId} zur Chat-Erstellung hinzugefügt`);
   };
 
   //aktuellen benutzer zur chat erstellung hinzufügen
   const addCurrentUserToChatCreation = () => {
     if (!userId) {
-      setError('Kein Benutzer angemeldet');
+      setError("Kein Benutzer angemeldet");
       return;
     }
 
     //schauen ob user bereits in liste
-    if (chatUsers.some(user => user.userId === userId)) {
-      setError('Sie sind bereits in der Liste');
+    if (chatUsers.some((user) => user.userId === userId)) {
+      setError("Sie sind bereits in der Liste");
       return;
     }
 
     const newUser: User = {
       userId: userId,
-      username: loginUsername || undefined
+      username: loginUsername || undefined,
     };
 
-    setChatUsers(prev => [...prev, newUser]);
-    setStatus('Sie wurden zur Chat-Erstellung hinzugefügt');
+    setChatUsers((prev) => [...prev, newUser]);
+    setStatus("Sie wurden zur Chat-Erstellung hinzugefügt");
   };
 
   const createChat = async () => {
-    if (chatUsers.length < 2) return setError('Mind. 2 User nötig');
-    console.log('[API] Chat wird erstellt');
+    if (chatUsers.length < 2) return setError("Mind. 2 User nötig");
+    console.log("[API] Chat wird erstellt");
     setLoading(true);
-    setError('');
+    setError("");
     try {
-    const usersToSend = [
-      { userId: chatUsers[0].userId },
-      { userId: chatUsers[1].userId }
-    ];
+      const usersToSend = [
+        { userId: chatUsers[0].userId },
+        { userId: chatUsers[1].userId },
+      ];
 
-    const body = JSON.stringify({
-      userList: usersToSend,
-      minTTL: `${chatMinTTL}`,
-      ttl: `${chatDefTTL}`,
-      maxTTL: `${chatMaxTTL}`,
-      creatorId: userId,
-      creatorToken: token
-    });
+      const body = JSON.stringify({
+        userList: usersToSend,
+        minTTL: `${chatMinTTL}`,
+        ttl: `${chatDefTTL}`,
+        maxTTL: `${chatMaxTTL}`,
+        creatorId: userId,
+        creatorToken: token,
+      });
 
-      console.log(`[API] Chat mit Teilnehmern: ${usersToSend[0].userId}, ${usersToSend[1].userId}`);
+      console.log(
+        `[API] Chat mit Teilnehmern: ${usersToSend[0].userId}, ${usersToSend[1].userId}`
+      );
 
       const res = await fetch(`${API_BASE}/chat/newchat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
       });
 
       const data: DatabaseResponse = await res.json();
@@ -467,123 +491,143 @@ const WebSocketTest = () => {
       if (data.success && data.id) {
         console.log(`[API] Chat erfolgreich erstellt mit ID: ${data.id}`);
         setActiveChatId(data.id);
-        setMessages(prev => [
+        setMessages((prev) => [
           ...prev,
           {
             system: true,
             action: Action.BroadcastToChat,
             content: `Chat ${data.id} erstellt`,
-            senderID: 'system' as UUID,
+            senderID: "system" as UUID,
             senderToken: token,
             chatID: data.id as UUID,
             timestamp: Date.now(),
-          }
+          } as TestMessage,
         ]);
         setStatus(`Chat erstellt: ${data.id}`);
       } else {
-        throw new Error(data.error || 'Unbekannter Fehler bei Chat-Erstellung');
+        throw new Error(data.error || "Unbekannter Fehler bei Chat-Erstellung");
       }
     } catch (err) {
-      console.error('[API] Fehler bei Chat-Erstellung:', err);
-      setError(`Fehler beim Erstellen des Chats: ${err instanceof Error ? err.message : String(err)}`);
+      console.error("[API] Fehler bei Chat-Erstellung:", err);
+      setError(
+        `Fehler beim Erstellen des Chats: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const getChat = async () => {
-    if (!activeChatId) return setError('Chat-ID angeben');
+    if (!activeChatId) return setError("Chat-ID angeben");
     console.log(`[API] Chat ${activeChatId} wird geladen`);
     setLoading(true);
-    setError('');
+    setError("");
     try {
-      const res = await fetch(`${API_BASE}/chat/getchat?chatid=${activeChatId}&token=${token}&userid=${userId}`);
+      const res = await fetch(
+        `${API_BASE}/chat/getchat?chatid=${activeChatId}&token=${token}&userid=${userId}`
+      );
       const data: DatabaseResponse = await res.json();
       if (data.success && data.userData) {
         console.log(`[API] Chat ${activeChatId} erfolgreich geladen`);
         setLoadedChat(data.userData as Chat);
         console.log(data.userData.chatMessages);
-        
+
         const chatMessagesObj = data.userData.chatMessages || {};
-        
-        const parsedMessages = Object.entries(chatMessagesObj).map(([timeStamp, msgEntry]) => {
-          try {
-            const msg = typeof msgEntry === "string" ? JSON.parse(msgEntry) : msgEntry;
-            
-            return {
-              system: false,
-              action: Action.MessageResponse,
-              content: msg.content,
-              senderID: msg.senderID,
-              chatID: activeChatId as UUID,
-              timestamp: Number(msg.timestamp)
-            } as TestMessage;
-          } catch (e) {
-            return {
-              system: true,
-              action: Action.BroadcastToChat,
-              content: '[Fehler beim Parsen der Nachricht]',
-              senderID: 'system' as UUID,
-              senderToken: token,
-              chatID: activeChatId as UUID,
-              timestamp: Date.now(),
-            } as TestMessage;
+
+        const parsedMessages = Object.entries(chatMessagesObj).map(
+          ([timeStamp, msgEntry]) => {
+            try {
+              const msg =
+                typeof msgEntry === "string" ? JSON.parse(msgEntry) : msgEntry;
+
+              return {
+                system: false,
+                action: Action.MessageResponse,
+                content: msg.content,
+                senderID: msg.senderID,
+                chatID: activeChatId as UUID,
+                timestamp: Number(msg.timestamp),
+              } as TestMessage;
+            } catch (e) {
+              console.log(e);
+              return {
+                system: true,
+                action: Action.BroadcastToChat,
+                content: "[Fehler beim Parsen der Nachricht]",
+                senderID: "system" as UUID,
+                senderToken: token,
+                chatID: activeChatId as UUID,
+                timestamp: Date.now(),
+              } as TestMessage;
+            }
           }
-        });
-        setMessages([...parsedMessages,
+        );
+        setMessages([
+          ...parsedMessages,
           {
             system: true,
             action: Action.BroadcastToChat,
             content: `Chat ${activeChatId} geladen`,
-            senderID: 'system' as UUID,
-            senderToken: token,
+            senderID: "system" as UUID,
+            senderToken: token as string,
             chatID: activeChatId as UUID,
             timestamp: Date.now(),
-          }
+          },
         ]);
         setStatus(`Chat geladen: ${activeChatId}`);
       } else throw new Error(data.error);
     } catch (err) {
-      console.error('[API] Fehler beim Laden des Chats:', err);
-      setError('Fehler beim Chat-Laden');
+      console.error("[API] Fehler beim Laden des Chats:", err);
+      setError("Fehler beim Chat-Laden");
     } finally {
       setLoading(false);
     }
   };
 
   const addUserToChat = async () => {
-    if (!activeChatId || !newUserId) return setError('IDs angeben');
-    console.log(`[API] Füge Benutzer ${newUserId} zu Chat ${activeChatId} hinzu`);
+    if (!activeChatId || !newUserId) return setError("IDs angeben");
+    console.log(
+      `[API] Füge Benutzer ${newUserId} zu Chat ${activeChatId} hinzu`
+    );
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const res = await fetch(`${API_BASE}/chat/adduser`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chatId: activeChatId, userId: newUserId, adminId: userId, adminToken: token }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatId: activeChatId,
+          userId: newUserId,
+          adminId: userId,
+          adminToken: token,
+        }),
       });
       const data: DatabaseResponse = await res.json();
       if (data.success) {
-        console.log(`[API] Benutzer ${newUserId} erfolgreich zu Chat hinzugefügt`);
+        console.log(
+          `[API] Benutzer ${newUserId} erfolgreich zu Chat hinzugefügt`
+        );
         await getChat();
-        setMessages(prev => [
+        setMessages((prev) => [
           ...prev,
           {
             system: true,
             action: Action.BroadcastToChat,
             content: `User ${newUserId} hinzugefügt`,
-            senderID: 'system' as UUID,
+            senderID: "system" as UUID,
             chatID: activeChatId,
             timestamp: Date.now(),
-          } as TestMessage
+          } as TestMessage,
         ]);
       } else throw new Error(data.error);
     } catch (err) {
-      console.error('[API] Fehler beim Hinzufügen des Benutzers:', err);
-      setError('Fehler beim Hinzufügen des Users');
+      console.error("[API] Fehler beim Hinzufügen des Benutzers:", err);
+      setError("Fehler beim Hinzufügen des Users");
     } finally {
       setLoading(false);
-      setNewUserId('');
+      setNewUserId("");
     }
   };
 
@@ -591,14 +635,17 @@ const WebSocketTest = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 p-6 space-y-6">
-
       {/* status und error */}
       <div className="space-y-2">
         {status && (
-          <div className="bg-green-100 text-green-800 p-3 rounded shadow">{status}</div>
+          <div className="bg-green-100 text-green-800 p-3 rounded shadow">
+            {status}
+          </div>
         )}
         {error && (
-          <div className="bg-red-100 text-red-800 p-3 rounded shadow">{error}</div>
+          <div className="bg-red-100 text-red-800 p-3 rounded shadow">
+            {error}
+          </div>
         )}
       </div>
 
@@ -616,14 +663,14 @@ const WebSocketTest = () => {
           <input
             placeholder="User"
             value={createUsername}
-            onChange={e => setCreateUsername(e.target.value)}
+            onChange={(e) => setCreateUsername(e.target.value)}
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
           />
           <input
             type="password"
             placeholder="Passwort"
             value={createPassword}
-            onChange={e => setCreatePassword(e.target.value)}
+            onChange={(e) => setCreatePassword(e.target.value)}
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
           />
           <button
@@ -636,7 +683,8 @@ const WebSocketTest = () => {
         </div>
         {userId && (
           <div className="text-gray-600">
-            Angemeldet als <span className="font-mono text-blue-600">{userId}</span>
+            Angemeldet als{" "}
+            <span className="font-mono text-blue-600">{userId}</span>
           </div>
         )}
       </div>
@@ -656,14 +704,14 @@ const WebSocketTest = () => {
           <input
             placeholder="User"
             value={loginUsername}
-            onChange={e => setLoginUsername(e.target.value)}
+            onChange={(e) => setLoginUsername(e.target.value)}
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
           />
           <input
             type="password"
             placeholder="Passwort"
             value={loginPassword}
-            onChange={e => setLoginPassword(e.target.value)}
+            onChange={(e) => setLoginPassword(e.target.value)}
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
           />
           <button
@@ -676,7 +724,8 @@ const WebSocketTest = () => {
         </div>
         {userId && (
           <div className="text-gray-600">
-            Angemeldet als <span className="font-mono text-blue-600">{userId}</span>
+            Angemeldet als{" "}
+            <span className="font-mono text-blue-600">{userId}</span>
           </div>
         )}
       </div>
@@ -687,13 +736,15 @@ const WebSocketTest = () => {
 
         {/* chat erstellung */}
         <div className="border-b border-gray-200 pb-4">
-          <h3 className="text-lg font-medium text-gray-700 mb-2">Chat erstellen</h3>
+          <h3 className="text-lg font-medium text-gray-700 mb-2">
+            Chat erstellen
+          </h3>
           <div className="flex flex-col gap-3 mb-2">
             <div className="flex items-center gap-3">
               <input
                 placeholder="User-ID hinzufügen"
                 value={newUserId}
-                onChange={e => setNewUserId(e.target.value)}
+                onChange={(e) => setNewUserId(e.target.value)}
                 className="flex-auto px-3 py-2 border border-gray-300 rounded text-gray-900"
               />
               <button
@@ -715,7 +766,7 @@ const WebSocketTest = () => {
                 type="number"
                 placeholder="minTTL hinzufügen"
                 value={chatMinTTL}
-                onChange={e => setChatMinTTL(e.target.valueAsNumber)}
+                onChange={(e) => setChatMinTTL(e.target.valueAsNumber)}
                 className="flex-auto px-3 py-2 border border-gray-300 rounded text-gray-900"
               />
             </div>
@@ -731,7 +782,7 @@ const WebSocketTest = () => {
                 type="number"
                 placeholder="defTTL hinzufügen"
                 value={chatDefTTL}
-                onChange={e => setChatDefTTL(e.target.valueAsNumber)}
+                onChange={(e) => setChatDefTTL(e.target.valueAsNumber)}
                 className="flex-auto px-3 py-2 border border-gray-300 rounded text-gray-900"
               />
             </div>
@@ -747,7 +798,7 @@ const WebSocketTest = () => {
                 type="number"
                 placeholder="maxTTL hinzufügen"
                 value={chatMaxTTL}
-                onChange={e => setChatMaxTTL(e.target.valueAsNumber)}
+                onChange={(e) => setChatMaxTTL(e.target.valueAsNumber)}
                 className="flex-auto px-3 py-2 border border-gray-300 rounded text-gray-900"
               />
             </div>
@@ -758,10 +809,11 @@ const WebSocketTest = () => {
           <button
             onClick={createChat}
             disabled={loading || chatUsers.length < 2}
-            className={`mt-3 px-4 py-2 rounded ${chatUsers.length < 2
-              ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
-              }`}
+            className={`mt-3 px-4 py-2 rounded ${
+              chatUsers.length < 2
+                ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                : "bg-blue-500 hover:bg-blue-600 text-white"
+            }`}
           >
             Chat erstellen ({chatUsers.length}/2)
           </button>
@@ -769,12 +821,14 @@ const WebSocketTest = () => {
 
         {/* chat verwaltung*/}
         <div className="pt-2">
-          <h3 className="text-lg font-medium text-gray-700 mb-2">Chat verwalten</h3>
+          <h3 className="text-lg font-medium text-gray-700 mb-2">
+            Chat verwalten
+          </h3>
           <div className="flex flex-wrap gap-3">
             <input
               placeholder="Chat-ID"
-              value={activeChatId}
-              onChange={e => setActiveChatId(e.target.value)}
+              value={activeChatId as UUID}
+              onChange={(e) => setActiveChatId(e.target.value as UUID)}
               className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
             />
             <button
@@ -790,7 +844,7 @@ const WebSocketTest = () => {
             <input
               placeholder="User-ID"
               value={newUserId}
-              onChange={e => setNewUserId(e.target.value)}
+              onChange={(e) => setNewUserId(e.target.value)}
               className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
             />
             <button
@@ -813,13 +867,18 @@ const WebSocketTest = () => {
         <div className="text-gray-600 mt-3">
           <div className="font-semibold">Aktuelle Teilnehmer:</div>
           {loadedChat
-            ? Object.keys(loadedChat.chatUserList!).map(u => (
-              <span key={u} className="font-mono mx-1 bg-gray-100 px-2 py-1 rounded">
-                {u}
-                {u === userId && <span className="text-xs text-blue-600"> (Sie)</span>}
-              </span>
-            ))
-            : 'Kein Chat geladen'}
+            ? Object.keys(loadedChat.chatUserList!).map((u) => (
+                <span
+                  key={u}
+                  className="font-mono mx-1 bg-gray-100 px-2 py-1 rounded"
+                >
+                  {u}
+                  {u === userId && (
+                    <span className="text-xs text-blue-600"> (Sie)</span>
+                  )}
+                </span>
+              ))
+            : "Kein Chat geladen"}
         </div>
       </div>
 
@@ -831,7 +890,7 @@ const WebSocketTest = () => {
             type="text"
             placeholder="Nachrichteninhalt"
             value={messageContent}
-            onChange={e => setMessageContent(e.target.value)}
+            onChange={(e) => setMessageContent(e.target.value)}
             disabled={!connected || !activeChatId}
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
           />
@@ -839,7 +898,7 @@ const WebSocketTest = () => {
             type="number"
             placeholder="TTL"
             value={messageTTL}
-            onChange={e => setMessageTTL(e.target.valueAsNumber)}
+            onChange={(e) => setMessageTTL(e.target.valueAsNumber)}
             disabled={!connected || !activeChatId}
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-gray-900"
           />
@@ -858,20 +917,23 @@ const WebSocketTest = () => {
             .map((msg, i) => (
               <div
                 key={i}
-                className={`max-w-[70%] p-2 rounded-lg shadow ${msg.system
-                  ? 'bg-gray-200 italic self-center'
-                  : msg.senderID === userId
-                    ? 'bg-blue-100 self-end text-right'
-                    : 'bg-white self-start'
-                  }`}
+                className={`max-w-[70%] p-2 rounded-lg shadow ${
+                  msg.system
+                    ? "bg-gray-200 italic self-center"
+                    : msg.senderID === userId
+                    ? "bg-blue-100 self-end text-right"
+                    : "bg-white self-start"
+                }`}
               >
                 <div className="text-sm">{msg.content}</div>
                 <div className="text-xs text-gray-500 mt-1">
                   {formatTime(msg.timestamp)}
-                  {msg.system ? '' : ` | ${msg.senderID == userId ? 'Sie' : msg.senderID}`}
+                  {msg.system
+                    ? ""
+                    : ` | ${msg.senderID == userId ? "Sie" : msg.senderID}`}
                 </div>
               </div>
-          ))}
+            ))}
           <div />
         </div>
       </div>
