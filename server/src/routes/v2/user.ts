@@ -98,7 +98,7 @@ export default () => {
     }
   });
 
-  router.get("getUsers", async (req: Request, res: Response) => {
+  router.get("/getUsers", async (req: Request, res: Response) => {
     try {
       Database.getAllNonAnoUsers().then((users) => {
         const response: DatabaseResponse = {
