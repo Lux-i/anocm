@@ -59,9 +59,9 @@ export namespace UserManager {
       //get ws connection
       const conn = users.get(id);
       //send msg
-      
+
       conn?.send(JSON.stringify(message));
-      
+
       return true;
     } else {
       return false;
