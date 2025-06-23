@@ -48,6 +48,8 @@ const AnocmUI = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<UIMessage[]>([]);
 
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   // Helper Functions
   const formatTimestamp = (date: Date): string => {
     const now = new Date();
@@ -216,52 +218,37 @@ const AnocmUI = () => {
       }
     };
 
-    const createAnonymousUser = async (): Promise<{ success: boolean; userId?: string; token?: string; error?: string }> => {
+    const createAnonymousUser = async (): Promise<{ success: boolean; userId?: string; error?: string }> => {
       try {
-        //ano user erstellen - bekomme clientid
-        const createRes = await fetch(`${API_V2}/user/newano`, {
+        const res = await fetch(`${API_V2}/user/newano`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
-        const createData = await createRes.json() as DatabaseResponse;
+        const data = await res.json() as DatabaseResponse;
         
-        if (createData.success) {
-          const clientId = createData.id; //clientid
-          
-          // mit clientid einloggen ohne passwort
-          const loginRes = await fetch(`${API_V2}/user/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId_username: clientId }),
-          });
-          const loginData = await loginRes.json() as DatabaseResponse;
-          
-          if (loginData.success) {
-            return { 
-              success: true, 
-              userId: loginData.id,// öffentliche userId
-              token: loginData.userData
-            };
-          } else {
-            return { success: false, error: 'Login mit clientId fehlgeschlagen' };
-          }
+        if (data.success) {
+          return { success: true, userId: data.id }; // Das ist die clientId zum Einloggen
         } else {
-          return { success: false, error: createData.error };
+          return { success: false, error: data.error };
         }
       } catch (err) {
         console.error('Netzwerkfehler:', err);
         return { success: false, error: 'Netzwerkfehler' };
       }
-    };
+     };
   
     const loginUser = async (username: string, password: string): Promise<{ success: boolean; userId?: string; token?: string; error?: string }> => {
       try {
         const res = await fetch(`${API_V2}/user/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId_username: username, password }),
+          body: JSON.stringify({ 
+            userId_username: username, 
+            ...(password && { password }) 
+          }),
         });
         const data = await res.json() as DatabaseResponse;
+        console.log('Login Response:', data);
         if (data.success) {
           // v2 liefert entweder [userId, token] oder [token]
           if (Array.isArray(data.userData) && data.userData.length >= 2) {
@@ -317,51 +304,36 @@ const AnocmUI = () => {
   // Event Handlers
   const handleLogin = async (asAnonymous = false) => {
     console.log('Login startet...');
+    setAuthError(null);
     
     if (asAnonymous) {
       const result = await createAnonymousUser();
       
       if(result.success) {
-        const newUser = {
-          userId: result.userId,
-          username: undefined,
-          isOnline: true,
-          isAnonymous: true,
-          token: result.token!
-        };
-        
-        console.log('Setze beide States gleichzeitig...');
-        
-        
-        setCurrentUser(newUser);
-        setIsAuthenticated(true);
-        
-  
+        setAuthError(null);
+        setSuccessMessage(`Account erstellt! Login-ID: ${result.userId} - Jetzt einloggen (ohne Passwort)`);
       } else {
-        console.error('Anonymer Login fehlgeschlagen:', result.error);
+        setAuthError('Anonymous User-Erstellung fehlgeschlagen: ' + result.error);
       }
     } 
     else {
-      if (!loginForm.username || !loginForm.password) return;
+      if (!loginForm.username) return; // Nur Username erforderlich
       
       const result = await loginUser(loginForm.username, loginForm.password);
   
       if(result.success) {
         const newUser = {
-          userId: result.userId,
-          username: result.username,
+          userId: result.userId!,
+          username: loginForm.username,
           isOnline: true,
-          isAnonymous: false,
-          token: result.token
+          isAnonymous: !loginForm.password, // Anonym wenn kein Passwort
+          token: result.token!
         };
         
         console.log('🔄 Setze beide States gleichzeitig...');
         
-
         setCurrentUser(newUser);
         setIsAuthenticated(true);
-        
-  
       } else {
         console.error('Login fehlgeschlagen:', result.error);
         setAuthError('Login fehlgeschlagen: ' + result.error);
@@ -644,6 +616,19 @@ const AnocmUI = () => {
             <p className="text-gray-500">Anonymous Chat Messenger</p>
           </div>
 
+
+          {authError && (
+  <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm mb-4">
+    {authError}
+  </div>
+)}
+
+{successMessage && (
+  <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm mb-4">
+     {successMessage}
+  </div>
+)}
+
           {/*Tab switcher */}
 <div className="relative bg-gray-100 rounded-xl p-1 mb-6">
   <div className="flex relative">
@@ -693,7 +678,7 @@ const AnocmUI = () => {
 
   <button
     onClick={() => authMode === 'login' ? handleLogin(false) : handleRegister()}
-    disabled={!loginForm.username || !loginForm.password}
+    disabled={!loginForm.username}
     className="w-full bg-blue-500 text-white py-4 rounded-xl font-semibold disabled:bg-gray-300 transition-all duration-200 hover:bg-blue-600"
   >
     {authMode === 'login' ? 'Anmelden' : 'Registrieren'}
