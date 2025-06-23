@@ -506,14 +506,14 @@ export namespace Database {
    * Creates an anonymous user hashmap entry
    * @returns {Promise<string>} Client ID
    */
-  export async function createAnoUser(): Promise<string[]> {
+  export async function createAnoUser(): Promise<string> {
     let userId: string = randomUUID();
     let clientId: string = randomUUID();
     await client.hSet(`user:${userId}`, {
       UUID: `${clientId}`,
     });
     await client.expire(`user:${userId}`, 259200);
-    return [userId, clientId];
+    return clientId;
   }
 
   /**
