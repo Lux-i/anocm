@@ -216,17 +216,37 @@ const AnocmUI = () => {
       }
     };
 
-    const createAnonymousUser = async (): Promise<{ success: boolean; userId?: string; error?: string }> => {
+    const createAnonymousUser = async (): Promise<{ success: boolean; userId?: string; token?: string; error?: string }> => {
       try {
-        const res = await fetch(`${API_V2}/user/newano`, {
+        //ano user erstellen - bekomme clientid
+        const createRes = await fetch(`${API_V2}/user/newano`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
-        const data = await res.json() as DatabaseResponse;
-        if (data.success) {
-          return { success: true, userId: data.id };
+        const createData = await createRes.json() as DatabaseResponse;
+        
+        if (createData.success) {
+          const clientId = createData.id; //clientid
+          
+          // mit clientid einloggen ohne passwort
+          const loginRes = await fetch(`${API_V2}/user/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId_username: clientId }),
+          });
+          const loginData = await loginRes.json() as DatabaseResponse;
+          
+          if (loginData.success) {
+            return { 
+              success: true, 
+              userId: loginData.id,// öffentliche userId
+              token: loginData.userData
+            };
+          } else {
+            return { success: false, error: 'Login mit clientId fehlgeschlagen' };
+          }
         } else {
-          return { success: false, error: data.error };
+          return { success: false, error: createData.error };
         }
       } catch (err) {
         console.error('Netzwerkfehler:', err);
@@ -303,14 +323,14 @@ const AnocmUI = () => {
       
       if(result.success) {
         const newUser = {
-          userId: result.user,
+          userId: result.userId,
           username: undefined,
           isOnline: true,
           isAnonymous: true,
-          token: ''
+          token: result.token!
         };
         
-        console.log('🔄 Setze beide States gleichzeitig...');
+        console.log('Setze beide States gleichzeitig...');
         
         
         setCurrentUser(newUser);
@@ -1122,6 +1142,17 @@ const AnocmUI = () => {
               <div className="text-sm">
                 <div className="text-gray-500">Benutzer</div>
                 <div className="font-medium">{currentUser?.username}</div>
+              </div>
+              <div className="text-sm">
+                <div className="text-gray-500">Deine User ID</div>
+                <div className="font-mono text-xs bg-gray-100 p-2 rounded border break-all">
+                  {currentUser?.userId}
+                </div>
+                {currentUser?.isAnonymous && (
+                  <div className="text-xs text-blue-600 mt-1">
+                    Teile diese ID, damit andere dich zu Chats hinzufügen können
+                  </div>
+                )}
               </div>
               <div className="text-sm">
                 <div className="text-gray-500">Status</div>
