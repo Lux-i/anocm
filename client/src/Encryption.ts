@@ -16,6 +16,11 @@ export namespace Encryption {
     }
   }
 
+  /**
+   *
+   * @param keyName The chatId of the chat the key is for
+   * @param key The base64 string representation of the chatkey
+   */
   export async function storeKey(keyName: string, key: CryptoKey) {
     const raw = await crypto.subtle.exportKey("raw", key);
     const base64Key = bufferToBase64(raw);
@@ -29,7 +34,7 @@ export namespace Encryption {
     const raw = base64ToBuffer(base64Key);
     return await crypto.subtle.importKey(
       "raw",
-      raw,
+      raw as Uint8Array,
       { name: "AES-GCM" },
       true,
       ["encrypt", "decrypt"]
@@ -61,7 +66,7 @@ export namespace Encryption {
     const raw = base64ToBuffer(base64);
     return await crypto.subtle.importKey(
       "raw",
-      raw,
+      raw as Uint8Array,
       { name: "ECDH", namedCurve: "P-256" },
       true,
       []
@@ -109,13 +114,13 @@ export namespace Encryption {
     sharedKey: CryptoKey
   ): Promise<CryptoKey> {
     const combined = base64ToBuffer(combinedBase64);
-    const iv = combined.slice(0, 12);
-    const ciphertext = combined.slice(12);
+    const iv = combined?.slice(0, 12);
+    const ciphertext = combined?.slice(12);
 
     const decrypted = await crypto.subtle.decrypt(
       { name: "AES-GCM", iv },
       sharedKey,
-      ciphertext
+      ciphertext!
     );
 
     return await crypto.subtle.importKey(
@@ -152,13 +157,13 @@ export namespace Encryption {
   ): Promise<string> {
     try {
       const combined = base64ToBuffer(combinedString);
-      const iv = combined.slice(0, 12);
-      const ciphertext = combined.slice(12);
+      const iv = combined?.slice(0, 12);
+      const ciphertext = combined?.slice(12);
 
       const decrypted = await crypto.subtle.decrypt(
         { name: "AES-GCM", iv },
         chatKey,
-        ciphertext
+        ciphertext!
       );
       return new TextDecoder().decode(decrypted);
     } catch (e: any) {
