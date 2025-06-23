@@ -217,7 +217,7 @@ export default () => {
     });
     
     router.get("/getChatList", async (req: Request, res:Response) => {
-        const [userId, token] = req.body;
+        const [userId, token] = req.query;
         if (!token || !userId) {
             return res.status(400).json({
                 success: false,
