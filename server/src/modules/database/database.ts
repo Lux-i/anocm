@@ -308,8 +308,6 @@ export namespace Database {
     userToken: string,
   ): Promise<messageStructure | false> {
     if (!(await verifyUser(userId, userToken)) || !(await checkUserinChat(chatId, userId))) {
-      console.log(userToken);
-      console.log(userId);
       console.log("no no");
 
       return false;
