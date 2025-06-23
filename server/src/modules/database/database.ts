@@ -308,8 +308,6 @@ export namespace Database {
     userToken: string,
   ): Promise<messageStructure | false> {
     if (!(await verifyUser(userId, userToken)) || !(await checkUserinChat(chatId, userId))) {
-      console.log(userToken);
-      console.log(userId);
       console.log("no no");
 
       return false;
@@ -445,12 +443,31 @@ export namespace Database {
 
     if (typeof password == "undefined") {
       console.log(userId_username);
+      let cursor = 0;
+      do {
+        const scanResult = await client.scan(cursor, {
+          MATCH: "user:*",
+          COUNT: 100,
+        });
 
-      await client.hSet(`user:${userId_username}`, {
-        token: `${token}`,
-      });
-      await client.hExpire(`user:${userId_username}`, `token`, 345600);
-      return [token];
+        cursor = Number(scanResult.cursor);
+        const keys = scanResult.keys;
+
+        for (const key of keys) {
+          const searchResult = await client.hGet(key, "UUID");
+          if (searchResult == userId_username) {
+              await client.hSet(key, {
+                token: `${token}`,
+              });
+              await client.hExpire(key, `token`, 86400);
+              let userId = key.replace("user:", "");
+              
+              return [userId, token];
+            }
+          }
+      } while (cursor !== 0);
+
+
     } else {
       let cursor = 0;
 
@@ -471,7 +488,7 @@ export namespace Database {
               await client.hSet(key, {
                 token: `${token}`,
               });
-              console.log(await client.hExpire(key, `token`, 345600));
+              console.log(await client.hExpire(key, `token`, 86400));
               let userId = key.replace("user:", "");
               return [userId, token];
             }
@@ -490,12 +507,13 @@ export namespace Database {
    */
   export async function createAnoUser(): Promise<string> {
     let userId: string = randomUUID();
-    //let clientId: string = randomUUID();
+    let clientId: string = randomUUID();
+    
     await client.hSet(`user:${userId}`, {
-      UUID: `${userId}`,
+      UUID: `${clientId}`,
     });
     await client.expire(`user:${userId}`, 259200);
-    return userId;
+    return clientId;
   }
 
   /**
