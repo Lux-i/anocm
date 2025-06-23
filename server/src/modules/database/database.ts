@@ -502,7 +502,7 @@ export namespace Database {
         const keys = scanResult.keys;
 
         for (const key of keys) {
-          const searchResult = await client.hGet(key, "username");
+          const searchResult = await client.hGet(key, "UUID");
           if (searchResult == userId_username) {
               await client.hSet(key, {
                 token: `${token}`,
