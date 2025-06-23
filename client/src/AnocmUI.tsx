@@ -492,6 +492,10 @@ const AnocmUI = () => {
 
       if (data.success) {
         console.log("Chat erfolgreich erstellt:", data.id);
+        await Encryption.storeKey(
+          data.id as string,
+          await Encryption.generateChatKey()
+        );
 
         //lokal in  State einfügen
         const newChat: Chat = {

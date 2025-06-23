@@ -16,6 +16,11 @@ export namespace Encryption {
     }
   }
 
+  /**
+   *
+   * @param keyName The chatId of the chat the key is for
+   * @param key The base64 string representation of the chatkey
+   */
   export async function storeKey(keyName: string, key: CryptoKey) {
     const raw = await crypto.subtle.exportKey("raw", key);
     const base64Key = bufferToBase64(raw);
