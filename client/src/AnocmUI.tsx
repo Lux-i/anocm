@@ -210,6 +210,14 @@ const AnocmUI = () => {
           ? JSON.parse(data.userData)
           : data.userData ?? [];
 
+      // doppelte Chat-IDs entfernen
+      chatIds.forEach((id, index) => {
+        if (chatIds.indexOf(id) !== index) {
+          console.warn(`Doppelte Chat-ID gefunden: ${id}`);
+          chatIds.splice(index, 1);
+        }
+      })
+
       // für jede Chat-ID ein Chat-Objekt
       const chatList: Chat[] = chatIds.map((id) => ({
         chatId: id,
