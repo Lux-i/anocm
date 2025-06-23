@@ -459,8 +459,9 @@ export namespace Database {
               await client.hSet(key, {
                 token: `${token}`,
               });
-              await client.hExpire(key, `token`, 345600);
+              await client.hExpire(key, `token`, 86400);
               let userId = key.replace("user:", "");
+              
               return [userId, token];
             }
           }
@@ -487,7 +488,7 @@ export namespace Database {
               await client.hSet(key, {
                 token: `${token}`,
               });
-              console.log(await client.hExpire(key, `token`, 345600));
+              console.log(await client.hExpire(key, `token`, 86400));
               let userId = key.replace("user:", "");
               return [userId, token];
             }
@@ -507,6 +508,7 @@ export namespace Database {
   export async function createAnoUser(): Promise<string> {
     let userId: string = randomUUID();
     let clientId: string = randomUUID();
+    
     await client.hSet(`user:${userId}`, {
       UUID: `${clientId}`,
     });
