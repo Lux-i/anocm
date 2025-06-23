@@ -15,7 +15,7 @@ import { UUID } from "crypto";
 
 export function routeMessageAction(message: WsMessage, ws: WebSocketType) {
   switch (message.action) {
-    case Action.BroadcastToChat:
+    case Action.BroadcastToChat || Action.CK_REQ:
       broadcastToChat(message);
       break;
     case Action.Init:
