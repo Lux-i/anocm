@@ -603,6 +603,7 @@ const AnocmUI = () => {
       if (selectedChatId && currentUser) {
         console.log('📥 Lade Nachrichten für Chat:', selectedChatId);
         const chatMessages = await getChatMessages(selectedChatId, currentUser.userId, currentUser.token);
+        chatMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         setMessages(chatMessages);
       } else {
         setMessages([]);
