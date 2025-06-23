@@ -141,43 +141,47 @@ const AnocmUI = () => {
 
     const refreshChats = async () => {
       if (!currentUser) {
+        // Es gibt keinen angemeldeten Nutzer, deshalb keine Chats laden
         return;
       }
     
       try {
-        console.log('Refreshing chats für User:', currentUser.userId);
-    
-        // Baue die URL mit Query-Parametern
+       
         const url = `${API_V2}/chat/getChatList?userId=${encodeURIComponent(currentUser.userId)}&token=${encodeURIComponent(currentUser.token)}`;
-        
-        // GET-Request an den v2-Endpoint
-        const response = await fetch(url, {
+    
+       
+        const res = await fetch(url, {
           method: 'GET',
           headers: { 'Accept': 'application/json' }
         });
     
-        if (!response.ok) {
-          console.error(`Chat-API Fehler: ${response.status}`);
-          return;
-        }
     
-        const data = await response.json();
-      
-    
-        if (!data.success || !data.userData) {
-          console.error('Keine gültigen Daten erhalten');
+        if (!res.ok) {
+          console.error(`Chat-API Fehler: ${res.status}`);
           setChats([]);
           return;
         }
     
-        // userData kann JSON-String oder direkt ein Array sein
+        // JSON-Antwort auslesen
+        const data = await res.json() as {
+          success: boolean;
+          userData?: string[] | string;
+          error?: string;
+        };
+        console.log('API Response:', data);
+    
+        // Wenn success false leere Liste anzeigen
+        if (!data.success) {
+          setChats([]);
+          return;
+        }
+    
+        
         const chatIds: string[] = typeof data.userData === 'string'
           ? JSON.parse(data.userData)
-          : data.userData;
+          : data.userData ?? [];
     
-        console.log('Chat IDs:', chatIds);
-    
-        // Erzeuge aus jeder ID ein Chat-Objekt
+        // für jede Chat-ID ein Chat-Objekt
         const chatList: Chat[] = chatIds.map(id => ({
           chatId: id,
           name: `Chat ${id.slice(0, 8)}...`,
@@ -187,13 +191,14 @@ const AnocmUI = () => {
           unreadCount: 0,
         }));
     
+        // State aktualisieren
         setChats(chatList);
-        console.log('Chats erfolgreich aktualisiert:', chatList.length, 'Chats');
       } catch (err) {
-        console.error("Fehler beim Laden der Chats:", err);
+        console.error('Fehler beim Laden der Chats:', err);
         setChats([]);
       }
     };
+    
     
     
 
@@ -436,7 +441,7 @@ const AnocmUI = () => {
       if (data.success) {
         console.log("Chat erfolgreich erstellt:", data.id);
       
-        //  Sofort lokal in  State einfügen
+        //lokal in  State einfügen
         const newChat: Chat = {
           chatId: data.id,
           name: `Chat ${data.id.slice(0, 8)}...`,
@@ -451,7 +456,7 @@ const AnocmUI = () => {
         };
         setChats(prev => [newChat, ...prev]);
       
-        //  Modal schließen und chat öffnen
+        //Modal schließen und chat öffnen
         setShowCreateChat(false);
         setSelectedChatId(data.id);
         setNewChatUserId('');
@@ -572,7 +577,7 @@ const AnocmUI = () => {
   }, [isAuthenticated, currentUser?.userId, selectedChatId]);
   
 
-  // Nachrichten laden wenn Chat ausgewählt wird
+  // Nachrichten laden wenn Chat ausgewählt
   useEffect(() => {
     const loadMessages = async () => {
       if (selectedChatId && currentUser) {
@@ -1077,7 +1082,7 @@ const AnocmUI = () => {
 
               <input
                 type="text"
-                placeholder="User ID eingeben (z.B. aus Test-App)"
+                placeholder="User ID"
                 value={newChatUserId}
                 onChange={(e) => setNewChatUserId(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
@@ -1168,4 +1173,3 @@ const AnocmUI = () => {
 };
 
 export default AnocmUI;
-
