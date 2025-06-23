@@ -73,15 +73,57 @@ export async function initWebsocketWithUserManager(
   ws: WebSocketType
 ) {
   if (!isUUID(message.senderID)) {
-    ws.send(
-      JSON.stringify(
-        messageResponse(message.senderID, {
-          success: false,
-          message: `Invalid UUID "${message.senderID}"`,
-        })
-      )
-    );
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify(
+          messageResponse(message.senderID, {
+            success: false,
+            message: `Invalid UUID "${message.senderID}"`,
+          })
+        )
+      );
+    }
+
+    return;
   }
+
+  if (
+    message.senderToken === undefined ||
+    isUUID(message.senderToken) === false
+  ) {
+
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify(
+          messageResponse(message.senderID, {
+            success: false,
+            message: `No sender token provided`,
+          })
+        )
+      );
+    }
+
+    return;
+  }
+
+  let res = await Database.verifyUser(
+    message.senderID, message.senderToken);
+
+  if (res === false) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify(
+          messageResponse(message.senderID, {
+            success: false,
+            message: `Could not initialize websocket for account "${message.senderID}": invalid user or token`,
+          })
+        )
+      );
+    }
+
+    return;
+  }
+
 
   UserManager.setUser(message.senderID, ws);
 
