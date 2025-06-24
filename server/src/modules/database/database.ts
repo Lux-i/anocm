@@ -348,26 +348,15 @@ export namespace Database {
   }
 
   function isValidTLL(ttl: number, min: number, max: number): Boolean {
-    const isPermanentMinTTL: boolean = min === -1;
-    const isPermanentMaxTTL: boolean = max === -1;
 
-    const constTTLBelowMin: boolean = ttl < min;
-    const constTTLAboveMax: boolean = ttl > max;
+    if (ttl === -1 && max === -1) {
+      return true;
+    }
 
-    const isPermanentTTL: boolean = ttl === -1;
-    const isBroadcast: boolean = ttl === 0;
+    if (ttl < min) return false;
+    if (ttl > max) return false;
 
-    const minCheck: boolean =
-      !isPermanentMinTTL &&
-      !isBroadcast &&
-      !isPermanentTTL &&
-      constTTLBelowMin;
-    const maxCheck: boolean = !isPermanentMaxTTL && constTTLAboveMax;
-
-    const permanentCheck: boolean = isPermanentTTL && max !== -1;
-
-
-    return !(minCheck || maxCheck || permanentCheck);
+    return true;
   }
 
   function validMinAndMax(min: number, max: number): Boolean {
@@ -866,17 +855,17 @@ export namespace Database {
     return nonAnoUsers;
   }
 
-  export async function getUsername(searchUserId:string, userId: string, token: string): Promise<string | false> {
-    if(!(await verifyUser(userId, token))){
+  export async function getUsername(searchUserId: string, userId: string, token: string): Promise<string | false> {
+    if (!(await verifyUser(userId, token))) {
       return false;
     }
 
     const username = await client.hGet(`user:${searchUserId}`, "username");
     console.log(username);
-    if(username != undefined){
+    if (username != undefined) {
       return username;
     }
-    
+
     return false;
   }
 }
