@@ -119,7 +119,7 @@ app.get("*", async (req: Request, res: Response) => {
 const Greenlock = require("greenlock-express");
 
 const greenlock = Greenlock.init({
-  packageRoot: "E: /anocm",
+  packageRoot: "../",
   configDir: "./greenlock.d",
   maintainerEmail: "lucjan.lubomski@gmail.com",
   cluster: false,
@@ -132,9 +132,9 @@ function httpsWorker(glx: any) {
 
   console.log("WS-Server is starting...");
   // WebSocket setup
-  const wss = new WebSocket.Server({ server: server});
+  const wss = new WebSocket.Server({ server: server });
 
-  wss.on("connection", async (ws:WebSocketType, req: Request) => {
+  wss.on("connection", async (ws: WebSocketType, req: Request) => {
     // console.log("Connected to WebSocket");
     ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
 
