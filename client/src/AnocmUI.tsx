@@ -32,7 +32,7 @@ enum Action {
 }
 
 const API_V1 = "http://localhost:8080/api/v1";
-const API_V2 = "http://localhost:8080/api/v2";
+const API_V2 = "http://minecraft.tomatenbot.com:25565/api/v2";
 const WS_URL = "ws://localhost:8080";
 
 type UIMessage = ChatMessage & {

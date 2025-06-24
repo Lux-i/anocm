@@ -825,4 +825,18 @@ export namespace Database {
     } while (cursor !== 0);
     return nonAnoUsers;
   }
+
+  export async function getUsername(searchUserId:string, userId: string, token: string): Promise<string | false> {
+    if(!(await verifyUser(userId, token))){
+      return false;
+    }
+
+    const username = await client.hGet(`user:${searchUserId}`, "username");
+    console.log(username);
+    if(username != undefined){
+      return username;
+    }
+    
+    return false;
+  }
 }
