@@ -71,6 +71,21 @@ export namespace Database {
     token: UUID
   ): Promise<UUID | false> {
     if (await verifyUser(userId, token)) {
+
+      if (!isValidTLL(ttl, minTTL, maxTTL)) {
+        console.log(
+          `Invalid TTL settings: defaultTTL=${ttl}, minTTL=${minTTL}, maxTTL=${maxTTL}`
+        );
+        return false;
+      }
+
+      if (!validMinAndMax(minTTL, maxTTL)) {
+        console.log(
+          `Invalid min and max TTL settings: minTTL=${minTTL}, maxTTL=${maxTTL}`
+        );
+        return false;
+      }
+
       if (users.length >= 2) {
         let chatId = randomUUID();
         for (const user of users) {
@@ -153,6 +168,21 @@ export namespace Database {
     chatId: UUID,
     newSettings: chatSettings
   ) {
+
+    if (!isValidTLL(newSettings.defaultTTL, newSettings.minTTL, newSettings.maxTTL)) {
+      console.log(
+        `Invalid TTL settings: defaultTTL=${newSettings.defaultTTL}, minTTL=${newSettings.minTTL}, maxTTL=${newSettings.maxTTL}`
+      );
+      return false;
+    }
+
+    if (!validMinAndMax(newSettings.minTTL, newSettings.maxTTL)) {
+      console.log(
+        `Invalid min and max TTL settings: minTTL=${newSettings.minTTL}, maxTTL=${newSettings.maxTTL}`
+      );
+      return false;
+    }
+
     if (newSettings.defaultTTL) {
       await client.hSet(`chat:${chatId}:settings`, {
         defaultMessageTTL: newSettings.defaultTTL,
@@ -269,36 +299,15 @@ export namespace Database {
       if (ttl === undefined) {
         ttl = parseInt(
           (await client.hGet(`chat:${chatId}:settings`, `defaultMessageTTL`)) ??
-            "0"
+          "0"
         );
       }
 
-      const isPermanentMinTTL: boolean = minTTL === -1;
-      const isPermanentMaxTTL: boolean = maxTTL === -1;
-
-      const constTTLBelowMin: boolean = ttl < minTTL;
-      const constTTLAboveMax: boolean = ttl > maxTTL;
-
-      const isPermanentTTL: boolean = ttl === -1;
-      const isBroadcast: boolean = ttl === 0;
-
-      const minCheck: boolean =
-        !isPermanentMinTTL &&
-        !isBroadcast &&
-        !isPermanentTTL &&
-        constTTLBelowMin;
-      const maxCheck: boolean = !isPermanentMaxTTL && constTTLAboveMax;
-
-      const permanentCheck: boolean = isPermanentTTL && maxTTL !== -1;
-
-      if (minCheck || maxCheck || permanentCheck) {
+      if (!isValidTLL(ttl, minTTL, maxTTL)) {
         console.log("invalid");
 
         console.log(`minTTL: ${minTTL}, maxTTL: ${maxTTL}, ttl: ${ttl}`);
 
-        console.log(`isPermanentMinTTL: ${isPermanentMinTTL}, isBroadcast: ${isBroadcast}, 
-          constTTLBelowMin: ${constTTLBelowMin}, constTTLAboveMax: ${constTTLAboveMax}, isPermanentTTL: ${isPermanentTTL}, 
-          minCheck: ${minCheck}, maxCheck: ${maxCheck}, permanentCheck: ${permanentCheck}`);
 
         throw RangeError("Time to live is invalid");
       }
@@ -338,6 +347,37 @@ export namespace Database {
     }
   }
 
+  function isValidTLL(ttl: number, min: number, max: number): Boolean {
+    const isPermanentMinTTL: boolean = min === -1;
+    const isPermanentMaxTTL: boolean = max === -1;
+
+    const constTTLBelowMin: boolean = ttl < min;
+    const constTTLAboveMax: boolean = ttl > max;
+
+    const isPermanentTTL: boolean = ttl === -1;
+    const isBroadcast: boolean = ttl === 0;
+
+    const minCheck: boolean =
+      !isPermanentMinTTL &&
+      !isBroadcast &&
+      !isPermanentTTL &&
+      constTTLBelowMin;
+    const maxCheck: boolean = !isPermanentMaxTTL && constTTLAboveMax;
+
+    const permanentCheck: boolean = isPermanentTTL && max !== -1;
+
+
+    return !(minCheck || maxCheck || permanentCheck);
+  }
+
+  function validMinAndMax(min: number, max: number): Boolean {
+    const isPermanentMaxTTL: boolean = max === -1;
+    const isPermanentMinTTL: boolean = max === -1;
+
+    const isMinBelowEqualMax: boolean = (isPermanentMaxTTL) ? true : (isPermanentMinTTL) ? false : min <= max;
+
+    return isMinBelowEqualMax;
+  }
   /**
    * Retrieves all messages from a chat
    * @param {string} chatId - Chat identifier
@@ -352,8 +392,6 @@ export namespace Database {
       !(await verifyUser(userId, userToken)) ||
       !(await checkUserinChat(chatId, userId))
     ) {
-      console.log(userToken);
-      console.log(userId);
       console.log("no no");
 
       return false;
@@ -504,17 +542,16 @@ export namespace Database {
         for (const key of keys) {
           const searchResult = await client.hGet(key, "UUID");
           if (searchResult == userId_username) {
-              await client.hSet(key, {
-                token: `${token}`,
-              });
-              await client.hExpire(key, `token`, 345600);
-              let userId = key.replace("user:", "");
-              return [userId, token];
-            }
+            await client.hSet(key, {
+              token: `${token}`,
+            });
+            await client.hExpire(key, `token`, 86400);
+            let userId = key.replace("user:", "");
+
+            return [userId, token];
           }
+        }
       } while (cursor !== 0);
-
-
     } else {
       let cursor = 0;
 
@@ -535,7 +572,7 @@ export namespace Database {
               await client.hSet(key, {
                 token: `${token}`,
               });
-              console.log(await client.hExpire(key, `token`, 345600));
+              console.log(await client.hExpire(key, `token`, 86400));
               let userId = key.replace("user:", "");
               return [userId, token];
             }
@@ -552,14 +589,15 @@ export namespace Database {
    * Creates an anonymous user hashmap entry
    * @returns {Promise<UUID>} Client ID
    */
-  export async function createAnoUser(): Promise<string[]> {
+  export async function createAnoUser(): Promise<UUID> {
     let userId: string = randomUUID();
-    let clientId: string = randomUUID();
+    let clientId: UUID = randomUUID();
+
     await client.hSet(`user:${userId}`, {
       UUID: `${clientId}`,
     });
     await client.expire(`user:${userId}`, 259200);
-    return [userId, clientId];
+    return clientId;
   }
 
   /**
@@ -826,5 +864,19 @@ export namespace Database {
       }
     } while (cursor !== 0);
     return nonAnoUsers;
+  }
+
+  export async function getUsername(searchUserId:string, userId: string, token: string): Promise<string | false> {
+    if(!(await verifyUser(userId, token))){
+      return false;
+    }
+
+    const username = await client.hGet(`user:${searchUserId}`, "username");
+    console.log(username);
+    if(username != undefined){
+      return username;
+    }
+    
+    return false;
   }
 }

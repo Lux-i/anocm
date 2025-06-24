@@ -5,7 +5,7 @@ import { WsMessage } from "@anocm/shared/dist";
 import { WebSocket } from "ws";
 
 export namespace UserManager {
-  export const users: Map<UUID, WebSocket> = new Map();
+  const users: Map<UUID, WebSocket> = new Map();
 
   /**
    * Sets the given websocket to be the one associated to the given user UUID in the map

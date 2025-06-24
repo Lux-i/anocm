@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Database } from "../../modules/database/database";
-import { DatabaseResponse, Chat } from "@anocm/shared/dist";
+import { DatabaseResponse, Chat, messageStructure } from "@anocm/shared/dist";
 
 const express = require("express");
 const router = express.Router();
@@ -60,29 +60,66 @@ export default () => {
         });
       }
 
-      Database.getChat(chatId, userId, token).then((chat: Chat | any) => {
-        if (instanceOfChat(chat)) {
-          const response: DatabaseResponse = {
-            success: true,
-            userData: chat,
-          };
-          res.send(response);
-        } else {
-          const response: DatabaseResponse = {
-            success: false,
-            userData: chat,
-          };
-          res.send(response);
+            Database.getChat(chatId, userId, token).then((chat: Chat | any) => {
+                if(instanceOfChat(chat)){
+                    const response: DatabaseResponse = {
+                        success: true,
+                        userData: chat,
+                    };
+                    res.send(response);
+                }else{
+                    const response: DatabaseResponse = {
+                        success: false,
+                        userData: chat,
+                    };
+                    res.send(response);
+                }
+            });
+        } catch (err: any) {
+            const response: DatabaseResponse = {
+                success: false,
+                error: err,
+            };
+            res.send(response);
         }
-      });
-    } catch (err: any) {
-      const response: DatabaseResponse = {
-        success: false,
-        error: err,
-      };
-      res.send(response);
-    }
-  });
+    });
+
+    router.get("/getChatMessages", async (req: Request, res: Response) => {
+        try {
+            const chatId = req.query.chatid as string;
+            const token = req.query.token as string;
+            const userId = req.query.userid as UUID;
+
+            if (!chatId || !token || !userId) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Missing parameters in query.",
+                });
+            }
+
+            Database.getChatMessages(chatId, userId, token).then((chatMessages: messageStructure | false) => {
+                if(instanceOfChat(chatMessages)){
+                    const response: DatabaseResponse = {
+                        success: true,
+                        userData: chatMessages,
+                    };
+                    res.send(response);
+                }else{
+                    const response: DatabaseResponse = {
+                        success: false,
+                        userData: chatMessages,
+                    };
+                    res.send(response);
+                }
+            });
+        } catch (err: any) {
+            const response: DatabaseResponse = {
+                success: false,
+                error: err,
+            };
+            res.send(response);
+        }
+    });
 
   router.get("/getChatSettings", async (req: Request, res: Response) => {
     try {
@@ -195,81 +232,74 @@ export default () => {
     ttl?: number;
   }
 
-  router.post("/send_message", async (req: Request, res: Response) => {
-    console.log("send message");
-    try {
-      const data: Message = req.body;
-      if (await Database.checkUserinChat(data.chatID, data.senderID)) {
-        Database.sendMessageToChat(
-          data.chatID,
-          data.senderID,
-          data.senderToken,
-          data.content,
-          parseInt(data.timestamp),
-          data.ttl
-        ).then((databaseResponse) => {
-          if (databaseResponse == true) {
+    router.post("/send_message", async (req: Request, res: Response) =>{
+        console.log("send message");
+        try{
+            const data: Message = req.body;
+            if(await Database.checkUserinChat(data.chatID, data.senderID)){
+                Database.sendMessageToChat(data.chatID, data.senderID, data.senderToken,data.content, parseInt(data.timestamp), data.ttl).then(databaseResponse => {
+                    if(databaseResponse == true){
+                        const response: DatabaseResponse = {
+                            success: true,
+                        };
+                        res.send(response);
+                    }else{
+                        const response: DatabaseResponse = {
+                            success: false,
+                            error: databaseResponse,
+                        };
+                        res.send(response);
+                    }
+                });
+            }else{
+                const response: DatabaseResponse = {
+                    success: false,
+                    error: `Sender is not in Chat!`,
+                };
+                res.send(response);
+            }
+        }catch(err: any){
             const response: DatabaseResponse = {
-              success: true,
+                success: false,
+                error: err,
             };
             res.send(response);
-          } else {
-            const response: DatabaseResponse = {
-              success: false,
-              error: databaseResponse,
-            };
-            res.send(response);
-          }
-        });
-      } else {
-        const response: DatabaseResponse = {
-          success: false,
-          error: `Sender is not in Chat!`,
-        };
-        res.send(response);
-      }
-    } catch (err: any) {
-      const response: DatabaseResponse = {
-        success: false,
-        error: err,
-      };
-      res.send(response);
-      console.error("Error sending message: ", err);
-    }
-  });
-
-  router.get("/getChatList", async (req: Request, res: Response) => {
-    const userId = req.query.userId as string;
-    const token = req.query.token as string;
-    if (!token || !userId) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing parameters in query.",
-      });
-    }
-    try {
-      await Database.getUserChatList(userId, token).then((chatList) => {
-        if (chatList == false) {
-          const response: DatabaseResponse = {
-            success: false,
-          };
-          res.send(response);
-        } else {
-          const response: DatabaseResponse = {
-            success: true,
-            userData: chatList,
-          };
-          res.send(response);
+            console.error("Error sending message: ", err);
         }
-      });
-    } catch (error: any) {
-      const response: DatabaseResponse = {
-        success: false,
-        error: error,
-      };
-      res.send(response);
-    }
-  });
+    });
+    
+    router.get("/getChatList", async (req: Request, res:Response) => {
+        const userId = req.query.userId as UUID;
+        const token  = req.query.token as UUID;
+        if (!token || !userId) {
+            return res.status(400).json({
+                success: false,
+                error: "Missing parameters in query.",
+            });
+        }
+        try{
+            await Database.getUserChatList(userId, token).then(chatList => {
+                if(chatList == false){
+                    const response: DatabaseResponse = {
+                        success: false
+                    };
+                    res.send(response);
+                }else{
+                    const response: DatabaseResponse = {
+                        success: true,
+                        userData: chatList,
+                    };
+                    res.send(response);
+                }
+            })
+        }catch(error: any){
+            const response: DatabaseResponse = {
+                success: false,
+                error: error,    
+            };
+            res.send(response);
+        }
+    })
 
   return router;
 };

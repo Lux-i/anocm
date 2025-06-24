@@ -116,5 +116,31 @@ export default () => {
     }
   });
 
+    router.get("getUsername", async (req: Request, res: Response) => {
+    try {
+      const [searchUserId, userId, token] = req.body as string;
+      Database.getUsername(searchUserId, userId, token).then((username) => {
+        if(username != false){
+          const response: DatabaseResponse = {
+            success: true,
+            userData: username,
+          };
+          res.send(response);
+        }else{
+          const response: DatabaseResponse = {
+            success: false,
+          };
+          res.send(response);
+        }
+      });
+    } catch (err: any) {
+      const response: DatabaseResponse = {
+        success: false,
+        error: err,
+      };
+      res.send(response);
+    }
+  });
+
   return router;
 };
