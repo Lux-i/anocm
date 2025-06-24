@@ -15,19 +15,13 @@ import {
   X,
 } from "lucide-react";
 import { DatabaseResponse, User, Chat, ChatMessage } from "@anocm/shared/dist";
-import type { WsMessage } from "@anocm/shared/dist";
+import { WsMessage, Action } from "@anocm/shared/dist";
 import { Encryption } from "./Encryption";
+import { UUID } from "crypto";
 
 const API_V1 = "http://localhost:8080/api/v1";
 const API_V2 = "http://localhost:8080/api/v2";
 const WS_URL = "ws://localhost:8080";
-
-enum Action {
-  None = "",
-  BroadcastToChat = "BroadcastToChat",
-  Init = "Init",
-  MessageResponse = "MessageResponse",
-}
 
 type UIMessage = ChatMessage & {
   id: string;
@@ -44,6 +38,13 @@ const TTL_PRESETS = {
 const AnocmUI = () => {
   const wsRef = useRef<WebSocket | null>(null);
   const [wsActive, setWsActive] = useState(false);
+
+  // KEY EXCHANGE
+  const [isRequestingKey, setIsRequestingKey] = useState(false);
+  const [isSendingKey, setIsSendingKey] = useState(false);
+  const [activeKeyExchange, setActiveKeyExchange] = useState("");
+  const [DHKeyPair, setDHKeyPair] = useState<CryptoKeyPair | null>(null);
+  const [sharedKey, setSharedKey] = useState<CryptoKey | null>(null);
 
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -838,6 +839,99 @@ const AnocmUI = () => {
                 : chat
             )
           );
+        } else if (data.action === Action.CK_REQ) {
+          if (isRequestingKey || isSendingKey) return;
+
+          Encryption.importPublicKey(data.content).then((dhpubl) => {
+            if (!dhpubl) return;
+            Encryption.loadKey(data.chatID).then((chatKey) => {
+              if (!chatKey) return;
+              setIsSendingKey(true);
+              setActiveKeyExchange(data.chatID + data.senderID);
+              Encryption.generateDHKeyPair().then((keyPair) => {
+                if (!keyPair) return;
+                setDHKeyPair(keyPair);
+                Encryption.deriveSharedKey(keyPair.privateKey, dhpubl).then(
+                  (sharedKey) => {
+                    if (!sharedKey) return;
+                    console.log("[WS] Sende DH_PUBLIC");
+                    Encryption.exportPublicKey(keyPair.publicKey).then(
+                      (pubKey) => {
+                        const ackMsg: WsMessage = {
+                          action: Action.DH_PUBLIC_EX,
+                          content: pubKey,
+                          senderID: currentUser.userId as UUID,
+                          chatID: data.senderID,
+                          timestamp: Date.now(),
+                        };
+                        ws.send(JSON.stringify(ackMsg));
+                        setTimeout(() => {
+                          console.log("[WS] Sende Chat Key");
+                          Encryption.exportAndEncryptChatKey(
+                            chatKey,
+                            sharedKey
+                          ).then((encryptedKey) => {
+                            const keyMsg: WsMessage = {
+                              action: Action.CK_EX,
+                              content: encryptedKey,
+                              senderID: currentUser.userId as UUID,
+                              chatID: data.senderID,
+                              timestamp: Date.now(),
+                            };
+                            ws.send(JSON.stringify(keyMsg));
+                            console.log("[WS] Chat Key gesendet");
+                            setSharedKey(null);
+                            setDHKeyPair(null);
+                            setActiveKeyExchange("");
+                            setIsSendingKey(false);
+                          });
+                        }, 1000);
+                      }
+                    );
+                  }
+                );
+              });
+            });
+          });
+        } else if (data.action === Action.DH_PUBLIC_EX) {
+          if (isRequestingKey) {
+            if (activeKeyExchange === "") {
+              console.log("[WS] Erhalte DH_PUBLIC_EX von:", data.senderID);
+              setActiveKeyExchange(data.chatID + data.senderID);
+              Encryption.importPublicKey(data.content).then((dhPublic) => {
+                if (!dhPublic) return;
+                Encryption.deriveSharedKey(
+                  DHKeyPair!.privateKey,
+                  dhPublic
+                ).then((sharedKey) => {
+                  if (!sharedKey) return;
+                  setSharedKey(sharedKey);
+                  console.log("[WS] Shared Key abgeleitet");
+                  setIsRequestingKey(false);
+                });
+              });
+            }
+          }
+        } else if (data.action === Action.CK_EX) {
+          if (
+            isRequestingKey &&
+            activeKeyExchange === data.chatID + data.senderID
+          ) {
+            console.log("[WS] Erhalte CK_EX von:", data.senderID);
+            Encryption.decryptChatKey(data.content, sharedKey!).then(
+              (chatKey) => {
+                if (!chatKey) return;
+                console.log("[WS] Chat Key importiert");
+                Encryption.storeKey(data.chatID, chatKey).then(() => {
+                  setIsRequestingKey(false);
+                  setSharedKey(null);
+                  setDHKeyPair(null);
+                  setActiveKeyExchange("");
+                  console.log("[WS] Chat Key gespeichert:", data.chatID);
+                });
+              }
+            );
+          }
         } else {
           console.log("[WS] Andere Aktion erhalten:", data.action, data);
         }
@@ -859,7 +953,6 @@ const AnocmUI = () => {
   }, [isAuthenticated, currentUser?.userId, selectedChatId]);
 
   // Nachrichten laden wenn Chat ausgewählt
-  // Nachrichten laden wenn Chat ausgewählt
   useEffect(() => {
     const loadMessages = async () => {
       if (selectedChatId && currentUser) {
@@ -875,6 +968,29 @@ const AnocmUI = () => {
         const chatkey = await Encryption.loadKey(selectedChatId);
         if (!chatkey) {
           setMessages(chatMessages);
+
+          //also start requesting key
+          if (!isRequestingKey && !isSendingKey) {
+            console.log("🔑 Starte Key Exchange für Chat:", selectedChatId);
+            setIsRequestingKey(true);
+            const dhKeyPair = await Encryption.generateDHKeyPair();
+            if (dhKeyPair) {
+              setDHKeyPair(dhKeyPair);
+              const dhPublic = await Encryption.exportPublicKey(
+                dhKeyPair.publicKey
+              );
+              if (dhPublic) {
+                const requestMsg: WsMessage = {
+                  action: Action.CK_REQ,
+                  content: dhPublic,
+                  senderID: currentUser.userId as UUID,
+                  chatID: selectedChatId as UUID,
+                  timestamp: Date.now(),
+                };
+                wsRef.current?.send(JSON.stringify(requestMsg));
+              }
+            }
+          }
         } else {
           console.log(chatMessages);
           const decryptPromises = chatMessages.map(async (message) => {
