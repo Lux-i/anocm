@@ -612,7 +612,7 @@ export namespace Database {
   ): Promise<Chat | any> {
     try {
       adminId = adminId.replace("user:", "");
-      if (!(await checkAdmin(adminId, adminToken, chatIdInput))) {
+      if (!(await checkUserinChat(chatIdInput, adminId) || !(await verifyUser(adminId, adminToken)))) {
         console.log("Not permitted!");
 
         throw Error("User is not permitted");
