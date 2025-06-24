@@ -497,7 +497,9 @@ const AnocmUI = () => {
       return true;
     }
 
-    if (ttl < min) return false;
+    if ((min === -1 && max === -1) && ttl != -1) return false
+
+    if (ttl < min && min !== -1) return false;
     if (ttl > max && max !== -1) return false;
 
     return true;
