@@ -668,11 +668,8 @@ const AnocmUI = () => {
       return;
     }
     // Aktuelle TTL-Auswahl für diesen Chat holen
-    const selectedTTL =
-      chatMessageTTLs[selectedChatId] === undefined ||
-      chatMessageTTLs[selectedChatId] === null
-        ? null
-        : chatMessageTTLs[selectedChatId];
+
+    const selectedTTL = (messageTTL == undefined ? null : messageTTL);
 
     const result = await sendMessage(
       selectedChatId,
@@ -1832,7 +1829,7 @@ const AnocmUI = () => {
 
             {/* Message Input */}
             <div className="bg-white border-t border-gray-200 px-4 py-4">
-              <div className="flex  align-items-center space-x-2">
+              <div className="flex align-items-center space-x-2">
                 <div className="flex-1">
                   <textarea
                     value={messageInput}
@@ -1844,6 +1841,15 @@ const AnocmUI = () => {
                     style={{ minHeight: "36px", maxHeight: "100px" }}
                   />
                 </div>
+                  <textarea
+                    value={messageTTL}
+                    onChange={(e) => {setMessageTTL(e.target.value); console.log(e.target.value);}}
+                    onKeyPress={handleKeyPress}
+                    placeholder="TTL (in seconds)"
+                    className="w-35 px-3 py-2 border border-gray-300 rounded-full resize-none focus:outline-none focus:border-blue-500 text-sm"
+                    rows={1}
+                    style={{ minHeight: "36px", maxHeight: "100px" }}
+                  />
                 <button
                   onClick={handleSendMessage}
                   disabled={!messageInput.trim()}
