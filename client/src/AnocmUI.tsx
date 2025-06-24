@@ -81,6 +81,13 @@ const AnocmUI = () => {
     "chats"
   );
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+
+  const selectedChatIdRef = useRef(selectedChatId);
+
+  useEffect(() => {
+    selectedChatIdRef.current = selectedChatId;
+  }, [selectedChatId]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [messageInput, setMessageInput] = useState("");
   const [decryptedLastMessages, setDecryptedLastMessages] = useState<{
@@ -926,7 +933,7 @@ const AnocmUI = () => {
             isOwn: data.senderID === currentUser.userId,
           };
 
-          if (data.chatID === selectedChatId) {
+          if (data.chatID === selectedChatIdRef.current) {
             console.log("Nachricht für aktuellen Chat, füge zu messages hinzu");
             setMessages((prev) => [...prev, newMessage]);
           }
@@ -1068,7 +1075,7 @@ const AnocmUI = () => {
       ws.close();
       setWsActive(false);
     };
-  }, [isAuthenticated, currentUser?.userId, selectedChatId]);
+  }, [isAuthenticated, currentUser?.userId]);
 
   // Nachrichten laden wenn Chat ausgewählt
   useEffect(() => {
