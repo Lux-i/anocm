@@ -628,7 +628,7 @@ const AnocmUI = () => {
     if (loginResult.success) {
       const newUser = {
         userId: loginResult.userId,
-        username: loginResult.username,
+        username: loginForm.username,
         isOnline: true,
         isAnonymous: false,
         token: loginResult.token,
