@@ -250,10 +250,6 @@ export namespace Database {
         );
       }
 
-      console.log(
-        `Checking user in chat with chatId='${chatId}' and userId='${userId}'`
-      );
-
       let res = await client.hExists(`chat:${chatId}:users`, userId);
       return res;
     } catch (err: any) {
@@ -279,8 +275,6 @@ export namespace Database {
   ): Promise<boolean | any> {
     try {
       if (!(await checkUserinChat(chatId, senderId))) {
-        console.log("not in chat");
-
         throw Error("Client doesnt exist in chat");
       }
 
@@ -304,10 +298,7 @@ export namespace Database {
       }
 
       if (!isValidTLL(ttl, minTTL, maxTTL)) {
-        console.log("invalid");
-
         console.log(`minTTL: ${minTTL}, maxTTL: ${maxTTL}, ttl: ${ttl}`);
-
 
         throw RangeError("Time to live is invalid");
       }
@@ -324,7 +315,7 @@ export namespace Database {
           JSON.stringify(messageObj)
         );
 
-        if (ttl !== -1) {
+        if (ttl != -1) {
           await client.hExpire(`chat:${chatId}:messages`, `${timestamp}`, ttl);
         }
       }
@@ -518,7 +509,6 @@ export namespace Database {
     let token: UUID = randomUUID();
 
     if (typeof password == "undefined") {
-      console.log(userId_username);
       let cursor = 0;
       do {
         const scanResult = await client.scan(cursor, {
@@ -562,7 +552,7 @@ export namespace Database {
               await client.hSet(key, {
                 token: `${token}`,
               });
-              console.log(await client.hExpire(key, `token`, 86400));
+              //console.log(await client.hExpire(key, `token`, 86400));
               let userId = key.replace("user:", "");
               return [userId, token];
             }
@@ -745,7 +735,7 @@ export namespace Database {
     ) {
       if (await client.hDel(`chat:${chatId}:users`, `${userId}`)) {
         const chatArray = await client.hGet(`user:${userId}`, "chatList");
-        console.log(chatArray);
+        //console.log(chatArray);
 
         if (chatArray != null) {
           console.log("delete user from chat");
@@ -862,7 +852,7 @@ export namespace Database {
     }
 
     const username = await client.hGet(`user:${searchUserId}`, "username");
-    console.log(username);
+    //console.log(username);
     if (username != undefined) {
       return username;
     }
