@@ -32,9 +32,9 @@ enum Action {
   CK_REQ = "chatkeyreq", //Chat key request
 }
 
-const API_V1 = "http://minecraft.tomatenbot.com/api/v1";
-const API_V2 = "http://minecraft.tomatenbot.com/api/v2";
-const WS_URL = "ws://minecraft.tomatenbot.com";
+const API_V1 = "https://minecraft.tomatenbot.com/api/v1";
+const API_V2 = "https://minecraft.tomatenbot.com/api/v2";
+const WS_URL = "wss://minecraft.tomatenbot.com";
 
 type UIMessage = ChatMessage & {
   id: string;
@@ -83,8 +83,9 @@ const AnocmUI = () => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [messageInput, setMessageInput] = useState("");
-  const [decryptedLastMessages, setDecryptedLastMessages] = useState<{ [chatId: string]: string }>({});
-
+  const [decryptedLastMessages, setDecryptedLastMessages] = useState<{
+    [chatId: string]: string;
+  }>({});
 
   // Modal States
   const [showCreateChat, setShowCreateChat] = useState(false);
@@ -1142,7 +1143,6 @@ const AnocmUI = () => {
     return () => clearInterval(interval);
   }, [wsActive, selectedChatId]);
 
-
   useEffect(() => {
     const decryptLastMessages = async () => {
       const entries = await Promise.all(
@@ -1151,7 +1151,10 @@ const AnocmUI = () => {
             const chatkey = await Encryption.loadKey(chat.chatId);
             if (chatkey) {
               try {
-                const decrypted = await Encryption.decryptMessage(chatkey, chat.lastMessage.content);
+                const decrypted = await Encryption.decryptMessage(
+                  chatkey,
+                  chat.lastMessage.content
+                );
                 return [chat.chatId, decrypted];
               } catch {
                 return [chat.chatId, "Verschlüsselte Nachricht"];
@@ -1165,11 +1168,9 @@ const AnocmUI = () => {
       );
       setDecryptedLastMessages(Object.fromEntries(entries));
     };
-  
+
     decryptLastMessages();
   }, [chats]);
-  
-
 
   // Filtered Data
   const selectedChat = chats.find((chat) => chat.chatId === selectedChatId);
@@ -1460,7 +1461,8 @@ const AnocmUI = () => {
                         </div>
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-gray-600 truncate">
-                            {decryptedLastMessages[chat.chatId] || "Keine Nachrichten"}
+                            {decryptedLastMessages[chat.chatId] ||
+                              "Keine Nachrichten"}
                           </p>
                           {chat.unreadCount > 0 && (
                             <span className="inline-flex items-center justify-center min-w-5 h-5 px-1 text-xs font-medium text-white bg-blue-500 rounded-full ml-2">
@@ -1541,7 +1543,9 @@ const AnocmUI = () => {
 
       {/* Main Chat Area*/}
       <div
-        className={`${selectedChatId ? "flex" : "hidden md:flex"} flex-1 flex-col pb-16 md:pb-0 w-full overflow-x-hidden`}>
+        className={`${
+          selectedChatId ? "flex" : "hidden md:flex"
+        } flex-1 flex-col pb-16 md:pb-0 w-full overflow-x-hidden`}>
         {selectedChat ? (
           <>
             {/* Chat Header */}
@@ -1761,19 +1765,24 @@ const AnocmUI = () => {
                 {messages?.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex w-full ${message.isOwn ? "justify-end" : "justify-start"}`}>
+                    className={`flex w-full ${
+                      message.isOwn ? "justify-end" : "justify-start"
+                    }`}>
                     <div
                       className={`
                         max-w-[45%] px-3 py-2 rounded-2xl text-sm break-words whitespace-pre-wrap
-                        ${message.senderId === "system"
-                          ? "bg-gray-200 text-gray-600 text-center mx-auto"
-                          : message.isOwn
+                        ${
+                          message.senderId === "system"
+                            ? "bg-gray-200 text-gray-600 text-center mx-auto"
+                            : message.isOwn
                             ? "bg-blue-500 text-white"
                             : "bg-white text-gray-900 border"
                         }`}>
                       <div>{message.content}</div>
                       <div
-                        className={`text-xs mt-1 ${message.isOwn ? "text-blue-100" : "text-gray-500"}`}>
+                        className={`text-xs mt-1 ${
+                          message.isOwn ? "text-blue-100" : "text-gray-500"
+                        }`}>
                         {formatTimestamp(message.timestamp)}
                       </div>
                     </div>
@@ -1781,7 +1790,6 @@ const AnocmUI = () => {
                 ))}
               </div>
             </div>
-
 
             {/* Message Input */}
             <div className="bg-white border-t border-gray-200 px-4 py-4">
