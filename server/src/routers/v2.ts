@@ -2,7 +2,6 @@
 import { Router } from "express";
 import userRouter from "../routes/v2/user";
 import chatRouter from "../routes/v2/chat";
-import { createUserLimiter } from "../index";
 const router = Router();
 
 router.use("/user", userRouter());

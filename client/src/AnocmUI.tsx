@@ -975,7 +975,7 @@ const AnocmUI = () => {
                             setActiveKeyExchange("");
                             setIsSendingKey(false);
                           });
-                        }, 1000);
+                        }, 5000);
                       }
                     );
                   }
@@ -997,7 +997,6 @@ const AnocmUI = () => {
                   if (!sharedKey) return;
                   setSharedKey(sharedKey);
                   console.log("[WS] Shared Key abgeleitet");
-                  setIsRequestingKey(false);
                 });
               });
             }
