@@ -32,9 +32,9 @@ enum Action {
   CK_REQ = "chatkeyreq", //Chat key request
 }
 
-const API_V1 = "http://localhost:8080/api/v1";
-const API_V2 = "http://localhost:8080/api/v2";
-const WS_URL = "ws://localhost:8080";
+const API_V1 = "http://minecraft.tomatenbot.com/api/v1";
+const API_V2 = "http://minecraft.tomatenbot.com/api/v2";
+const WS_URL = "ws://minecraft.tomatenbot.com";
 
 type UIMessage = ChatMessage & {
   id: string;
