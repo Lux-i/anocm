@@ -337,6 +337,7 @@ const AnocmUI = () => {
   ) => {
     const chatkey = await Encryption.loadKey(chatId);
     if (!chatkey) {
+      alert("No chat key found for this chat, exchange might be in progress.");
       return { success: false, error: "No chat key" };
     }
     const message = await Encryption.encryptMessage(chatkey, content);
