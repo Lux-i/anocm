@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, MessageCircle, Users, Menu, Edit, Send, Settings, Plus, LogOut, UserPlus, ArrowLeft, Clock, X } from 'lucide-react';
+import { Search, MessageCircle, Users, Menu, Edit, Send, Settings, Plus, LogOut, UserPlus, ArrowLeft, Clock, X, RefreshCcw } from 'lucide-react';
 import { DatabaseResponse, User, Chat, ChatMessage } from '@anocm/shared/dist';
 import type { WsMessage } from '@anocm/shared/dist';
 import { Encryption } from "./Encryption";
@@ -1057,7 +1057,7 @@ useEffect(() => {
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 title="Chats aktualisieren"
               >
-                🔄
+                <RefreshCcw className="w-5 h-5 text-gray-600" />
               </button>
               
               <button
