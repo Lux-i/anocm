@@ -290,7 +290,7 @@ export namespace Database {
       let minTTL = parseInt(minTTLRes ?? "0");
       let maxTTL = parseInt(maxTTLRes ?? "0");
 
-      if (ttl === undefined) {
+      if (ttl == undefined || ttl == null || isNaN(ttl)) {
         ttl = parseInt(
           (await client.hGet(`chat:${chatId}:settings`, `defaultMessageTTL`)) ??
           "0"
