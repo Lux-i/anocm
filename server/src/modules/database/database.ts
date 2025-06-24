@@ -348,13 +348,12 @@ export namespace Database {
   }
 
   function isValidTLL(ttl: number, min: number, max: number): Boolean {
-
     if (ttl === -1 && max === -1) {
       return true;
     }
 
     if (ttl < min) return false;
-    if (ttl > max) return false;
+    if (ttl > max && max !== -1) return false;
 
     return true;
   }

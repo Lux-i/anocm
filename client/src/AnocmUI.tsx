@@ -493,13 +493,12 @@ const AnocmUI = () => {
   };
 
   function checkIfTTLIsValid(ttl: number, min: number, max: number): Boolean {
-
     if (ttl === -1 && max === -1) {
       return true;
     }
 
     if (ttl < min) return false;
-    if (ttl > max) return false;
+    if (ttl > max && max !== -1) return false;
 
     return true;
   }
@@ -1366,8 +1365,8 @@ const AnocmUI = () => {
         <button
           onClick={() => setActiveSection("chats")}
           className={`p-3 rounded-full transition-colors ${activeSection === "chats"
-              ? "bg-blue-500 text-white"
-              : "hover:bg-gray-100 text-gray-500"
+            ? "bg-blue-500 text-white"
+            : "hover:bg-gray-100 text-gray-500"
             }`}>
           <MessageCircle className="w-5 h-5" />
         </button>
@@ -1375,8 +1374,8 @@ const AnocmUI = () => {
         <button
           onClick={() => setActiveSection("users")}
           className={`p-3 rounded-full transition-colors ${activeSection === "users"
-              ? "bg-blue-500 text-white"
-              : "hover:bg-gray-100 text-gray-500"
+            ? "bg-blue-500 text-white"
+            : "hover:bg-gray-100 text-gray-500"
             }`}>
           <Users className="w-5 h-5" />
         </button>
