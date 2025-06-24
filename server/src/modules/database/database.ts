@@ -653,7 +653,7 @@ export namespace Database {
     adminToken: UUID
   ): Promise<Chat | false> {
     try {
-      if (!(await checkAdmin(adminId, adminToken, chatIdInput))) {
+      if (!(await checkUserinChat(chatIdInput, adminId))) {
         throw Error("User is not permitted");
       }
       const chat: Chat = {
