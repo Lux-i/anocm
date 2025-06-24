@@ -13,11 +13,13 @@ import { WsMessage } from "@anocm/shared/dist";
 import { routeMessageAction } from "./modules/action_router/actionRouter";
 import { Database } from "./modules/database/database";
 import { UserManager } from "./modules/userManager/userManager";
+import cluster from "cluster";
 const express = require("express");
 const cors = require("cors");
 const app = express();
 const server = require("http").createServer(app);
 
+// Connect to database
 Database.connectClient().then((succeeded: boolean) => {
   if (!succeeded) {
     console.log("Could not connect to Database");
@@ -25,6 +27,7 @@ Database.connectClient().then((succeeded: boolean) => {
   }
 });
 
+// Load port from config or arguments
 let configPort;
 try {
   const { Port } = require("./config.json");
@@ -40,7 +43,7 @@ const UsedPort = portArg || configPort || 8080;
 //Rate limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 Minutes
-  limit: 1000,
+  limit: 10000,
   standardHeaders: "draft-8",
   message: { error: "Too many requests!" },
 });
@@ -57,7 +60,10 @@ app.use(limiter);
 //#region middleware
 app.use(
   cors({
-    origin: /^http:\/\/localhost(:[0-9]{1,4})?$/,
+    origin: [
+      /^http:\/\/localhost(:[0-9]{1,4})?$/,
+      "https://minecraft.tomatenbot.com",
+    ],
   })
 );
 
@@ -109,15 +115,52 @@ app.get("*", async (req: Request, res: Response) => {
 
 //#endregion
 
-//Use Only when using Greenlock / etc.
-//module.exports = app;
+// Export for Greenlock
+const Greenlock = require("greenlock-express");
 
+const greenlock = Greenlock.init({
+  packageRoot: "E: /anocm",
+  configDir: "./greenlock.d",
+  maintainerEmail: "lucjan.lubomski@gmail.com",
+  cluster: false,
+  // Add debug for verbose logs
+  debug: true,
+}).ready(httpsWorker);
+
+function httpsWorker(glx: any) {
+  const server = glx.httpsServer();
+
+  console.log("WS-Server is starting...");
+  // WebSocket setup
+  const wss = new WebSocket.Server({ server: server});
+
+  wss.on("connection", async (ws:WebSocketType, req: Request) => {
+    // console.log("Connected to WebSocket");
+    ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
+
+    ws.on("message", async (data: WebSocket.RawData) => {
+      const message: WsMessage = JSON.parse(data.toString());
+      routeMessageAction(message, ws);
+
+      console.log(`Received message: ${message.content}`);
+    });
+
+    ws.on("close", async () => {
+      console.log("Disconnected");
+    });
+  });
+
+  glx.serveApp(app);
+}
+
+/*
 server.listen(UsedPort, () => {
   console.log(`Started webserver. Listening on port ${UsedPort}`);
 });
-
+*/
 //#region WebSocket
 
+/* OBSOLETE CODE
 const wss = new WebSocket.Server({ server: server });
 
 wss.on("connection", async (ws: WebSocketType, req: Request) => {
@@ -135,5 +178,6 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
     console.log("Disconnected");
   });
 });
+*/
 
 //#endregion
