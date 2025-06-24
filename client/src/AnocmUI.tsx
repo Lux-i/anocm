@@ -871,7 +871,7 @@ const AnocmUI = () => {
       }, 500);
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = async (event) => {
       try {
         const data: WsMessage = JSON.parse(event.data);
         console.log("[WS] Parsed message:", data);
@@ -882,9 +882,21 @@ const AnocmUI = () => {
               ? data.content
               : JSON.stringify(data.content);
 
+
+          const chatkey = await Encryption.loadKey(data.chatID);
+
+          let decryptedText = null;
+
+          if (chatkey) {
+            decryptedText = await Encryption.decryptMessage(
+              chatkey,
+              contentText
+            );
+          }
+
           const newMessage: UIMessage = {
             id: `msg-${Date.now()}`,
-            content: contentText,
+            content: decryptedText ?? "Verschlüsselte Nachricht",
             senderId: data.senderID,
             timestamp: new Date(data.timestamp),
             isOwn: data.senderID === currentUser.userId,
