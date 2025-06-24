@@ -20,4 +20,7 @@ export enum Action {
   BroadcastToChat = "BroadcastToChat",
   Init = "Init",
   MessageResponse = "MessageResponse",
+  DH_PUBLIC_EX = "dhpublic", //Diffie-Hellman public key exchange
+  CK_EX = "chatkey", //Chat key exchange
+  CK_REQ = "chatkeyreq", //Chat key request
 }
