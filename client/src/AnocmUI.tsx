@@ -83,6 +83,8 @@ const AnocmUI = () => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [messageInput, setMessageInput] = useState("");
+  const [decryptedLastMessages, setDecryptedLastMessages] = useState<{ [chatId: string]: string }>({});
+
 
   // Modal States
   const [showCreateChat, setShowCreateChat] = useState(false);
@@ -1140,6 +1142,35 @@ const AnocmUI = () => {
     return () => clearInterval(interval);
   }, [wsActive, selectedChatId]);
 
+
+  useEffect(() => {
+    const decryptLastMessages = async () => {
+      const entries = await Promise.all(
+        chats.map(async (chat) => {
+          if (chat.lastMessage?.content && chat.chatId) {
+            const chatkey = await Encryption.loadKey(chat.chatId);
+            if (chatkey) {
+              try {
+                const decrypted = await Encryption.decryptMessage(chatkey, chat.lastMessage.content);
+                return [chat.chatId, decrypted];
+              } catch {
+                return [chat.chatId, "Verschlüsselte Nachricht"];
+              }
+            } else {
+              return [chat.chatId, "Verschlüsselte Nachricht"];
+            }
+          }
+          return [chat.chatId, "Keine Nachrichten"];
+        })
+      );
+      setDecryptedLastMessages(Object.fromEntries(entries));
+    };
+  
+    decryptLastMessages();
+  }, [chats]);
+  
+
+
   // Filtered Data
   const selectedChat = chats.find((chat) => chat.chatId === selectedChatId);
   const filteredChats = chats.filter(
@@ -1429,7 +1460,7 @@ const AnocmUI = () => {
                         </div>
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-gray-600 truncate">
-                            {chat.lastMessage?.content || "Keine Nachrichten"}
+                            {decryptedLastMessages[chat.chatId] || "Keine Nachrichten"}
                           </p>
                           {chat.unreadCount > 0 && (
                             <span className="inline-flex items-center justify-center min-w-5 h-5 px-1 text-xs font-medium text-white bg-blue-500 rounded-full ml-2">
@@ -1510,9 +1541,7 @@ const AnocmUI = () => {
 
       {/* Main Chat Area*/}
       <div
-        className={`${
-          selectedChatId ? "flex" : "hidden md:flex"
-        } flex-1 flex-col pb-16 md:pb-0`}>
+        className={`${selectedChatId ? "flex" : "hidden md:flex"} flex-1 flex-col pb-16 md:pb-0 w-full overflow-x-hidden`}>
         {selectedChat ? (
           <>
             {/* Chat Header */}
@@ -1727,27 +1756,24 @@ const AnocmUI = () => {
             )}
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 bg-gray-50 w-full">
               <div className="space-y-2">
                 {messages?.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${
-                      message.isOwn ? "justify-end" : "justify-start"
-                    }`}>
+                    className={`flex w-full ${message.isOwn ? "justify-end" : "justify-start"}`}>
                     <div
-                      className={`max-w-xs px-3 py-2 rounded-2xl text-sm ${
-                        message.senderId === "system"
+                      className={`
+                        max-w-[45%] px-3 py-2 rounded-2xl text-sm break-words whitespace-pre-wrap
+                        ${message.senderId === "system"
                           ? "bg-gray-200 text-gray-600 text-center mx-auto"
                           : message.isOwn
-                          ? "bg-blue-500 text-white"
-                          : "bg-white text-gray-900 border"
-                      }`}>
+                            ? "bg-blue-500 text-white"
+                            : "bg-white text-gray-900 border"
+                        }`}>
                       <div>{message.content}</div>
                       <div
-                        className={`text-xs mt-1 ${
-                          message.isOwn ? "text-blue-100" : "text-gray-500"
-                        }`}>
+                        className={`text-xs mt-1 ${message.isOwn ? "text-blue-100" : "text-gray-500"}`}>
                         {formatTimestamp(message.timestamp)}
                       </div>
                     </div>
@@ -1755,6 +1781,7 @@ const AnocmUI = () => {
                 ))}
               </div>
             </div>
+
 
             {/* Message Input */}
             <div className="bg-white border-t border-gray-200 px-4 py-4">

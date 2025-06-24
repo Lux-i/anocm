@@ -116,7 +116,7 @@ export default () => {
     }
   });
 
-    router.get("getUsername", async (req: Request, res: Response) => {
+    router.get("/getUsername", async (req: Request, res: Response) => {
     try {
       const [searchUserId, userId, token] = req.body as string;
       Database.getUsername(searchUserId, userId, token).then((username) => {
