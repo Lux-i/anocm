@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   Clock,
   X,
+  RefreshCcw,
 } from "lucide-react";
 import { DatabaseResponse, User, Chat, ChatMessage } from "@anocm/shared/dist";
 import { WsMessage, Action } from "@anocm/shared/dist";
@@ -1279,8 +1280,9 @@ const AnocmUI = () => {
                   refreshChats();
                 }}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                title="Chats aktualisieren">
-                🔄
+                title="Chats aktualisieren"
+              >
+                <RefreshCcw className="w-5 h-5 text-gray-600" />
               </button>
 
               <button
