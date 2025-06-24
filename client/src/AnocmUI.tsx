@@ -372,9 +372,9 @@ const AnocmUI = () => {
           )
         );
         return {
-          minTTL: cleanTTL(chat.minMessageTTL),
-          defaultTTL: cleanTTL(chat.defaultMessageTTL),
-          maxTTL: cleanTTL(chat.maxMessageTTL),
+          minTTL: cleanTTL(chat.chatSettings?.minMessageTTL, 3600),
+          defaultTTL: cleanTTL(chat.chatSettings?.defaultMessageTTL, 86400),
+          maxTTL: cleanTTL(chat.chatSettings?.maxMessageTTL, 604800),
         };
       }
       return null;
@@ -490,13 +490,26 @@ const AnocmUI = () => {
     content: string,
     senderId: string,
     token: string,
-    ttl?: number | null
+    ttl?: number | null,
+    settings?: { minTTL: number; defaultTTL: number; maxTTL: number } | null
   ) => {
     const chatkey = await Encryption.loadKey(chatId);
     if (!chatkey) {
       alert("No chat key found for this chat, exchange might be in progress.");
       return { success: false, error: "No chat key" };
     }
+
+    // TTL validieren gegen Chat-Settings
+    if (ttl !== null && ttl !== undefined && chatSettings) {
+      if (ttl < chatSettings.minTTL || ttl > chatSettings.maxTTL) {
+        console.error(`TTL ${ttl} außerhalb erlaubter Grenzen: ${chatSettings.minTTL}-${chatSettings.maxTTL}`);
+        return {
+          success: false,
+          error: `TTL muss zwischen ${formatTTL(chatSettings.minTTL)} und ${formatTTL(chatSettings.maxTTL)} liegen`
+        };
+      }
+    }
+
     const message = await Encryption.encryptMessage(chatkey, content);
 
     try {
@@ -625,14 +638,17 @@ const AnocmUI = () => {
       return;
     }
     // Aktuelle TTL-Auswahl für diesen Chat holen
-    const selectedTTL = chatMessageTTLs[selectedChatId] ?? null;
+    const selectedTTL = chatMessageTTLs[selectedChatId] === undefined || chatMessageTTLs[selectedChatId] === null
+      ? null
+      : chatMessageTTLs[selectedChatId];
 
     const result = await sendMessage(
       selectedChatId,
       messageInput,
       currentUser.userId,
       currentUser.token,
-      selectedTTL
+      selectedTTL,
+      chatSettings
     );
 
     if (result.success) {
@@ -643,6 +659,8 @@ const AnocmUI = () => {
         console.log(
           `[SEND] Nachricht gesendet mit TTL: ${selectedTTL} Sekunden`
         );
+      } else {
+        console.log(`[SEND] Nachricht gesendet mit Standard-TTL (Chat-Default)`);
       }
     } else {
       console.error("Fehler beim Senden:", result.error);
@@ -681,6 +699,8 @@ const AnocmUI = () => {
 
       if (data.success) {
         console.log("Chat erfolgreich erstellt:", data.id);
+        console.log("Backend response:", data);
+
         await Encryption.storeKey(
           data.id as string,
           await Encryption.generateChatKey()
@@ -1529,6 +1549,9 @@ const AnocmUI = () => {
                                 ...prev,
                                 [selectedChatId!]: ttlValue,
                               }));
+
+                              console.log(`[TTL] TTL für Chat ${selectedChatId} gesetzt auf:`, ttlValue === null ? 'Standard (Chat-Default)' : `${ttlValue} Sekunden`);
+
                             }}
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm">
                             {/* Standard-Option */}
