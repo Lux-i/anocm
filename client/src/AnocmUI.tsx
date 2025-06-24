@@ -41,11 +41,15 @@ type UIMessage = ChatMessage & {
   isOwn: boolean;
 };
 
-const TTL_PRESETS = {
-  1: { min: 300, default: 3600, max: 21600 }, // Schnell: 5min - 1h -6h
-  2: { min: 3600, default: 86400, max: 604800 }, // Normal: 1h - 1Tag - 1Woche
-  3: { min: 86400, default: 604800, max: 2592000 }, // Langsam: 1Tag - 1Woche - 1Monat
-};
+const DROPDOWN_TTL_PRESETS = [{
+  value: 0, text: "Broadcast"
+}, { value: 300, text: "5 Minuten" },
+{ value: 1800, text: "30 Minuten" },
+{ value: 3600, text: "1 Stunde" },
+{ value: 86400, text: "1 Tag" },
+{ value: 604800, text: "1 Woche" },
+{ value: 2592000, text: "1 Monat" },
+{ value: -1, text: "Permanent" }];
 
 const AnocmUI = () => {
   const wsRef = useRef<WebSocket | null>(null);
@@ -95,8 +99,11 @@ const AnocmUI = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<UIMessage[]>([]);
 
-  // TTL Preset für Chat-Erstellung
-  const [selectedTTLPreset, setSelectedTTLPreset] = useState(2); // Standard: Normal
+  // TTL für Chat-Erstellung
+  const [selectedMinTTL, setSelectedMinTTL] = useState(0); // Standard: Broadcast minTTL
+  const [selectedDefaultTTL, setSelectedDefaultTTL] = useState(3600); // Standard: 1h
+  const [selectedMaxTTL, setSelectedMaxTTL] = useState(-1); // Standard: Permanent TTL
+
   // TTL für einzelne Nachrichten
   const [messageTTL, setMessageTTL] = useState<number | null>(null); // null = defaultTTL verwenden
 
@@ -151,15 +158,19 @@ const AnocmUI = () => {
   };
 
   const formatTTL = (seconds: number): string => {
+    if (seconds < 0) return "Permanent";
+    if (seconds === 0) return "Broadcast";
     if (seconds < 60) return `${seconds}s`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
     return `${Math.floor(seconds / 86400)}d`;
   };
 
-  const cleanTTL = (val, fallback) => {
+  const cleanTTL = (val) => {
+    console.log(`val: ${val}`);
+
     const n = Number(val);
-    return Number.isFinite(n) && n > 0 ? n : fallback;
+    return n;
   };
 
   //API Functions
@@ -230,10 +241,10 @@ const AnocmUI = () => {
           prev.map((c) =>
             c.chatId === chatId
               ? {
-                  ...c,
-                  chatUserList: chat.chatUserList || {},
-                  name: chat.name || c.name,
-                }
+                ...c,
+                chatUserList: chat.chatUserList || {},
+                name: chat.name || c.name,
+              }
               : c
           )
         );
@@ -342,26 +353,28 @@ const AnocmUI = () => {
       const res = await fetch(
         `${API_V2}/chat/getChatSettings?chatid=${chatId}&userid=${currentUser.userId}&token=${currentUser.token}`
       );
+
       const data = (await res.json()) as DatabaseResponse;
       if (data.success && data.userData) {
         const chat = data.userData as Chat;
+
 
         //teilnehmerliste in chats
         setChats((prev) =>
           prev.map((c) =>
             c.chatId === chatId
               ? {
-                  ...c,
-                  chatUserList: chat.chatUserList || {},
-                  name: chat.name ?? c.name,
-                }
+                ...c,
+                chatUserList: chat.chatUserList || {},
+                name: chat.name ?? c.name,
+              }
               : c
           )
         );
         return {
-          minTTL: cleanTTL(chat.minTTL, 3600),
-          defaultTTL: cleanTTL(chat.defaultTTL, 86400),
-          maxTTL: cleanTTL(chat.maxTTL, 604800),
+          minTTL: cleanTTL(chat.chatSettings?.minMessageTTL, 3600),
+          defaultTTL: cleanTTL(chat.chatSettings?.defaultMessageTTL, 86400),
+          maxTTL: cleanTTL(chat.chatSettings?.maxMessageTTL, 604800),
         };
       }
       return null;
@@ -472,18 +485,55 @@ const AnocmUI = () => {
     }
   };
 
+  const checkIfTTLIsValid = (ttl: number, min: number, max: number) => {
+    const isPermanentMinTTL: boolean = min === -1;
+    const isPermanentMaxTTL: boolean = max === -1;
+
+    const constTTLBelowMin: boolean = ttl < min;
+    const constTTLAboveMax: boolean = ttl > max;
+
+    const isPermanentTTL: boolean = ttl === -1;
+    const isBroadcast: boolean = ttl === 0;
+
+    const minCheck: boolean =
+      !isPermanentMinTTL &&
+      !isBroadcast &&
+      !isPermanentTTL &&
+      constTTLBelowMin;
+    const maxCheck: boolean = !isPermanentMaxTTL && constTTLAboveMax;
+
+    const permanentCheck: boolean = isPermanentTTL && max !== -1;
+
+
+    return !(minCheck || maxCheck || permanentCheck);
+  }
+
   const sendMessage = async (
     chatId: string,
     content: string,
     senderId: string,
     token: string,
-    ttl?: number | null
+    ttl?: number | null,
+    settings?: { minTTL: number; defaultTTL: number; maxTTL: number } | null
   ) => {
     const chatkey = await Encryption.loadKey(chatId);
     if (!chatkey) {
       alert("No chat key found for this chat, exchange might be in progress.");
       return { success: false, error: "No chat key" };
     }
+
+    // TTL validieren gegen Chat-Settings
+    if (ttl !== null && ttl !== undefined && chatSettings) {
+
+      if (!checkIfTTLIsValid(ttl, chatSettings.minTTL, chatSettings.maxTTL)) {
+        console.error(`TTL ${ttl} außerhalb erlaubter Grenzen: ${chatSettings.minTTL}-${chatSettings.maxTTL}`);
+        return {
+          success: false,
+          error: `TTL muss zwischen ${formatTTL(chatSettings.minTTL)} und ${formatTTL(chatSettings.maxTTL)} liegen`
+        };
+      }
+    }
+
     const message = await Encryption.encryptMessage(chatkey, content);
 
     try {
@@ -612,14 +662,17 @@ const AnocmUI = () => {
       return;
     }
     // Aktuelle TTL-Auswahl für diesen Chat holen
-    const selectedTTL = chatMessageTTLs[selectedChatId] ?? null;
+    const selectedTTL = chatMessageTTLs[selectedChatId] === undefined || chatMessageTTLs[selectedChatId] === null
+      ? null
+      : chatMessageTTLs[selectedChatId];
 
     const result = await sendMessage(
       selectedChatId,
       messageInput,
       currentUser.userId,
       currentUser.token,
-      selectedTTL
+      selectedTTL,
+      chatSettings
     );
 
     if (result.success) {
@@ -630,6 +683,8 @@ const AnocmUI = () => {
         console.log(
           `[SEND] Nachricht gesendet mit TTL: ${selectedTTL} Sekunden`
         );
+      } else {
+        console.log(`[SEND] Nachricht gesendet mit Standard-TTL (Chat-Default)`);
       }
     } else {
       console.error("Fehler beim Senden:", result.error);
@@ -648,10 +703,9 @@ const AnocmUI = () => {
     if (!newChatUserId || !currentUser) return;
 
     try {
-      const preset = TTL_PRESETS[selectedTTLPreset] || TTL_PRESETS[2];
-      const ttl = preset.default;
-      const minTTL = preset.min;
-      const maxTTL = preset.max;
+      const ttl = selectedDefaultTTL;
+      const minTTL = selectedMinTTL;
+      const maxTTL = selectedMaxTTL;
 
       const res = await fetch(`${API_V2}/chat/newchat`, {
         method: "POST",
@@ -669,6 +723,8 @@ const AnocmUI = () => {
 
       if (data.success) {
         console.log("Chat erfolgreich erstellt:", data.id);
+        console.log("Backend response:", data);
+
         await Encryption.storeKey(
           data.id as string,
           await Encryption.generateChatKey()
@@ -806,6 +862,7 @@ const AnocmUI = () => {
         senderID: currentUser.userId,
         chatID: currentUser.userId,
         timestamp: Date.now(),
+        senderToken: currentUser.token,
       };
       ws.send(JSON.stringify(initMsg));
       setTimeout(() => {
@@ -842,12 +899,12 @@ const AnocmUI = () => {
             prev.map((chat) =>
               chat.chatId === data.chatID
                 ? {
-                    ...chat,
-                    lastMessage: {
-                      content: contentText,
-                      timestamp: new Date(data.timestamp),
-                    },
-                  }
+                  ...chat,
+                  lastMessage: {
+                    content: contentText,
+                    timestamp: new Date(data.timestamp),
+                  },
+                }
                 : chat
             )
           );
@@ -1157,23 +1214,20 @@ const AnocmUI = () => {
           <div className="relative bg-gray-100 rounded-xl p-1 mb-6">
             <div className="flex relative">
               <div
-                className={`absolute top-1 bottom-1 w-1/2 bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out ${
-                  authMode === "register" ? "transform translate-x-full" : ""
-                }`}
+                className={`absolute top-1 bottom-1 w-1/2 bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out ${authMode === "register" ? "transform translate-x-full" : ""
+                  }`}
               />
 
               <button
                 onClick={() => setAuthMode("login")}
-                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${
-                  authMode === "login" ? "text-gray-900" : "text-gray-500"
-                }`}>
+                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${authMode === "login" ? "text-gray-900" : "text-gray-500"
+                  }`}>
                 Anmelden
               </button>
               <button
                 onClick={() => setAuthMode("register")}
-                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${
-                  authMode === "register" ? "text-gray-900" : "text-gray-500"
-                }`}>
+                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${authMode === "register" ? "text-gray-900" : "text-gray-500"
+                  }`}>
                 Registrieren
               </button>
             </div>
@@ -1232,21 +1286,19 @@ const AnocmUI = () => {
       <div className="hidden md:flex w-16 bg-white border-r border-gray-200 flex-col items-center py-4 space-y-2">
         <button
           onClick={() => setActiveSection("chats")}
-          className={`p-3 rounded-full transition-colors ${
-            activeSection === "chats"
-              ? "bg-blue-500 text-white"
-              : "hover:bg-gray-100 text-gray-500"
-          }`}>
+          className={`p-3 rounded-full transition-colors ${activeSection === "chats"
+            ? "bg-blue-500 text-white"
+            : "hover:bg-gray-100 text-gray-500"
+            }`}>
           <MessageCircle className="w-5 h-5" />
         </button>
 
         <button
           onClick={() => setActiveSection("users")}
-          className={`p-3 rounded-full transition-colors ${
-            activeSection === "users"
-              ? "bg-blue-500 text-white"
-              : "hover:bg-gray-100 text-gray-500"
-          }`}>
+          className={`p-3 rounded-full transition-colors ${activeSection === "users"
+            ? "bg-blue-500 text-white"
+            : "hover:bg-gray-100 text-gray-500"
+            }`}>
           <Users className="w-5 h-5" />
         </button>
 
@@ -1267,9 +1319,8 @@ const AnocmUI = () => {
 
       {/* Chat/Users List */}
       <div
-        className={`${
-          selectedChatId ? "hidden md:flex" : "flex"
-        } w-full md:w-80 bg-white border-r border-gray-200 flex-col pb-16 md:pb-0`}>
+        className={`${selectedChatId ? "hidden md:flex" : "flex"
+          } w-full md:w-80 bg-white border-r border-gray-200 flex-col pb-16 md:pb-0`}>
         {/* Header */}
         <div className="px-4 py-3 border-b border-gray-200 bg-white">
           <div className="flex items-center justify-between">
@@ -1327,9 +1378,8 @@ const AnocmUI = () => {
                   <div
                     key={chat.chatId}
                     onClick={() => setSelectedChatId(chat.chatId)}
-                    className={`px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-                      selectedChatId === chat.chatId ? "bg-blue-50" : ""
-                    } ${index > 0 ? "border-t border-gray-100" : ""}`}>
+                    className={`px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${selectedChatId === chat.chatId ? "bg-blue-50" : ""
+                      } ${index > 0 ? "border-t border-gray-100" : ""}`}>
                     <div className="flex items-center space-x-3">
                       {/* Avatar */}
                       <div
@@ -1379,9 +1429,8 @@ const AnocmUI = () => {
                 filteredUsers.map((user, index) => (
                   <div
                     key={user.userId}
-                    className={`px-4 py-3 hover:bg-gray-50 transition-colors ${
-                      index > 0 ? "border-t border-gray-100" : ""
-                    }`}>
+                    className={`px-4 py-3 hover:bg-gray-50 transition-colors ${index > 0 ? "border-t border-gray-100" : ""
+                      }`}>
                     <div className="flex items-center space-x-3">
                       {/* Avatar */}
                       <div className="relative">
@@ -1435,9 +1484,8 @@ const AnocmUI = () => {
 
       {/* Main Chat Area*/}
       <div
-        className={`${
-          selectedChatId ? "flex" : "hidden md:flex"
-        } flex-1 flex-col pb-16 md:pb-0`}>
+        className={`${selectedChatId ? "flex" : "hidden md:flex"
+          } flex-1 flex-col pb-16 md:pb-0`}>
         {selectedChat ? (
           <>
             {/* Chat Header */}
@@ -1512,7 +1560,7 @@ const AnocmUI = () => {
                           <select
                             value={
                               chatMessageTTLs[selectedChatId!] === undefined ||
-                              chatMessageTTLs[selectedChatId!] === null
+                                chatMessageTTLs[selectedChatId!] === null
                                 ? ""
                                 : chatMessageTTLs[selectedChatId!]
                             }
@@ -1525,6 +1573,9 @@ const AnocmUI = () => {
                                 ...prev,
                                 [selectedChatId!]: ttlValue,
                               }));
+
+                              console.log(`[TTL] TTL für Chat ${selectedChatId} gesetzt auf:`, ttlValue === null ? 'Standard (Chat-Default)' : `${ttlValue} Sekunden`);
+
                             }}
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm">
                             {/* Standard-Option */}
@@ -1574,7 +1625,7 @@ const AnocmUI = () => {
                         {/* Teilnehmer Liste */}
                         <div className="space-y-2 max-h-40 overflow-y-auto">
                           {selectedChat?.chatUserList &&
-                          Object.entries(selectedChat.chatUserList).length >
+                            Object.entries(selectedChat.chatUserList).length >
                             0 ? (
                             Object.entries(selectedChat.chatUserList).map(
                               ([userId, username]) => (
@@ -1650,22 +1701,19 @@ const AnocmUI = () => {
                 {messages?.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${
-                      message.isOwn ? "justify-end" : "justify-start"
-                    }`}>
+                    className={`flex ${message.isOwn ? "justify-end" : "justify-start"
+                      }`}>
                     <div
-                      className={`max-w-xs px-3 py-2 rounded-2xl text-sm ${
-                        message.senderId === "system"
-                          ? "bg-gray-200 text-gray-600 text-center mx-auto"
-                          : message.isOwn
+                      className={`max-w-xs px-3 py-2 rounded-2xl text-sm ${message.senderId === "system"
+                        ? "bg-gray-200 text-gray-600 text-center mx-auto"
+                        : message.isOwn
                           ? "bg-blue-500 text-white"
                           : "bg-white text-gray-900 border"
-                      }`}>
+                        }`}>
                       <div>{message.content}</div>
                       <div
-                        className={`text-xs mt-1 ${
-                          message.isOwn ? "text-blue-100" : "text-gray-500"
-                        }`}>
+                        className={`text-xs mt-1 ${message.isOwn ? "text-blue-100" : "text-gray-500"
+                          }`}>
                         {formatTimestamp(message.timestamp)}
                       </div>
                     </div>
@@ -1779,9 +1827,8 @@ const AnocmUI = () => {
               setActiveSection("chats");
               setSelectedChatId(null);
             }}
-            className={`relative flex flex-col items-center px-4 py-2 ${
-              activeSection === "chats" ? "text-blue-500" : "text-gray-500"
-            }`}>
+            className={`relative flex flex-col items-center px-4 py-2 ${activeSection === "chats" ? "text-blue-500" : "text-gray-500"
+              }`}>
             <MessageCircle className="w-6 h-6 mb-1" />
             <span className="text-xs">Chats</span>
             {chats.reduce((total, chat) => total + chat.unreadCount, 0) > 0 && (
@@ -1798,9 +1845,8 @@ const AnocmUI = () => {
               setActiveSection("users");
               setSelectedChatId(null);
             }}
-            className={`flex flex-col items-center px-4 py-2 ${
-              activeSection === "users" ? "text-blue-500" : "text-gray-500"
-            }`}>
+            className={`flex flex-col items-center px-4 py-2 ${activeSection === "users" ? "text-blue-500" : "text-gray-500"
+              }`}>
             <Users className="w-6 h-6 mb-1" />
             <span className="text-xs">Kontakte</span>
           </button>
@@ -1853,23 +1899,65 @@ const AnocmUI = () => {
                 <label className="text-sm font-medium text-gray-700">
                   🕐 Verschwindende Nachrichten:
                 </label>
-                <select
-                  value={selectedTTLPreset}
-                  onChange={(e) =>
-                    setSelectedTTLPreset(parseInt(e.target.value))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
-                  <option value={1}>Schnell (5min - 1h - 6h)</option>
-                  <option value={2}>Normal (1h - 1Tag - 1Woche)</option>
-                  <option value={3}>Langsam (1Tag - 1Woche - 1Monat)</option>
-                </select>
-                <div className="text-xs text-gray-500 mt-1">
-                  {selectedTTLPreset === 1 &&
-                    "Min: 5min, Standard: 1h, Max: 6h"}
-                  {selectedTTLPreset === 2 &&
-                    "Min: 1h, Standard: 1Tag, Max: 1Woche"}
-                  {selectedTTLPreset === 3 &&
-                    "Min: 1Tag, Standard: 1Woche, Max: 1Monat"}
+
+                <div>
+                  <label htmlFor="minTTL" className="text-sm font-medium text-gray-700">
+                    Min:
+                  </label>
+
+                  <select id="minTTL"
+                    value={selectedMinTTL}
+                    onChange={(e) =>
+                      setSelectedMinTTL(parseInt(e.target.value))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
+
+                    {DROPDOWN_TTL_PRESETS.map((preset) => (
+                      <option key={preset.value} value={preset.value}>
+                        {preset.text}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="maxTTL" className="text-sm font-medium text-gray-700">
+                    Max:
+                  </label>
+
+                  <select id="maxTTL"
+                    value={selectedMaxTTL}
+                    onChange={(e) =>
+                      setSelectedMaxTTL(parseInt(e.target.value))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
+
+                    {DROPDOWN_TTL_PRESETS.map((preset) => (
+                      <option key={preset.value} value={preset.value}>
+                        {preset.text}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="defaultTTL" className="text-sm font-medium text-gray-700">
+                    Standard:
+                  </label>
+
+                  <select id="defaultTTL"
+                    value={selectedDefaultTTL}
+                    onChange={(e) =>
+                      setSelectedDefaultTTL(parseInt(e.target.value))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
+
+                    {DROPDOWN_TTL_PRESETS.map((preset) => (
+                      <option key={preset.value} value={preset.value}>
+                        {preset.text}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
