@@ -669,12 +669,14 @@ const AnocmUI = () => {
     }
     // Aktuelle TTL-Auswahl für diesen Chat holen
 
+    const selectedTTL = (messageTTL == undefined ? null : messageTTL);
+
     const result = await sendMessage(
       selectedChatId,
       messageInput,
       currentUser.userId,
       currentUser.token,
-      messageTTL,
+      selectedTTL,
       chatSettings
     );
 
