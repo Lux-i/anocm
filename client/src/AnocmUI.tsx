@@ -233,6 +233,14 @@ const refreshChats = async (): Promise<string[]> => {
       ? JSON.parse(data.userData)
       : (data.userData ?? []);
 
+    // doppelte Chat-IDs entfernen - NICHT ENTFERNEN
+    chatIds.forEach((id, index) => {
+      if (chatIds.indexOf(id) !== index) {
+        console.warn(`Doppelte Chat-ID gefunden und entfernt: ${id}`);
+        chatIds.splice(index, 1);
+      }
+    });
+
     // State übernehmen
     setChats(chatIds.map(id => {
       const old = chats.find(c => c.chatId === id);
