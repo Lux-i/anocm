@@ -40,7 +40,7 @@ const UsedPort = portArg || configPort || 8080;
 //Rate limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 Minutes
-  limit: 100,
+  limit: 1000,
   standardHeaders: "draft-8",
   message: { error: "Too many requests!" },
 });

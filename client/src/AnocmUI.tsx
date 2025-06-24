@@ -1666,7 +1666,7 @@ const AnocmUI = () => {
                                       </span>
                                     </div>
                                   </div>
-                                  {userId !== currentUser?.userId && (
+                                  {(
                                     <button
                                       onClick={() =>
                                         handleRemoveUserFromChat(userId)
