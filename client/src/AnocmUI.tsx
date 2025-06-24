@@ -485,6 +485,29 @@ const AnocmUI = () => {
     }
   };
 
+  const checkIfTTLIsValid = (ttl: number, min: number, max: number) => {
+    const isPermanentMinTTL: boolean = min === -1;
+    const isPermanentMaxTTL: boolean = max === -1;
+
+    const constTTLBelowMin: boolean = ttl < min;
+    const constTTLAboveMax: boolean = ttl > max;
+
+    const isPermanentTTL: boolean = ttl === -1;
+    const isBroadcast: boolean = ttl === 0;
+
+    const minCheck: boolean =
+      !isPermanentMinTTL &&
+      !isBroadcast &&
+      !isPermanentTTL &&
+      constTTLBelowMin;
+    const maxCheck: boolean = !isPermanentMaxTTL && constTTLAboveMax;
+
+    const permanentCheck: boolean = isPermanentTTL && max !== -1;
+
+
+    return !(minCheck || maxCheck || permanentCheck);
+  }
+
   const sendMessage = async (
     chatId: string,
     content: string,
@@ -502,27 +525,7 @@ const AnocmUI = () => {
     // TTL validieren gegen Chat-Settings
     if (ttl !== null && ttl !== undefined && chatSettings) {
 
-
-      const isPermanentMinTTL: boolean = chatSettings.minTTL === -1;
-      const isPermanentMaxTTL: boolean = chatSettings.maxTTL === -1;
-
-      const constTTLBelowMin: boolean = ttl < chatSettings.minTTL;
-      const constTTLAboveMax: boolean = ttl > chatSettings.maxTTL;
-
-      const isPermanentTTL: boolean = ttl === -1;
-      const isBroadcast: boolean = ttl === 0;
-
-      const minCheck: boolean =
-        !isPermanentMinTTL &&
-        !isBroadcast &&
-        !isPermanentTTL &&
-        constTTLBelowMin;
-      const maxCheck: boolean = !isPermanentMaxTTL && constTTLAboveMax;
-
-      const permanentCheck: boolean = isPermanentTTL && chatSettings.maxTTL !== -1;
-
-
-      if (minCheck || maxCheck || permanentCheck) {
+      if (!checkIfTTLIsValid(ttl, chatSettings.minTTL, chatSettings.maxTTL)) {
         console.error(`TTL ${ttl} außerhalb erlaubter Grenzen: ${chatSettings.minTTL}-${chatSettings.maxTTL}`);
         return {
           success: false,
