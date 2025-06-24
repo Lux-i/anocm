@@ -501,7 +501,28 @@ const AnocmUI = () => {
 
     // TTL validieren gegen Chat-Settings
     if (ttl !== null && ttl !== undefined && chatSettings) {
-      if (ttl < chatSettings.minTTL || ttl > chatSettings.maxTTL) {
+
+
+      const isPermanentMinTTL: boolean = chatSettings.minTTL === -1;
+      const isPermanentMaxTTL: boolean = chatSettings.maxTTL === -1;
+
+      const constTTLBelowMin: boolean = ttl < chatSettings.minTTL;
+      const constTTLAboveMax: boolean = ttl > chatSettings.maxTTL;
+
+      const isPermanentTTL: boolean = ttl === -1;
+      const isBroadcast: boolean = ttl === 0;
+
+      const minCheck: boolean =
+        !isPermanentMinTTL &&
+        !isBroadcast &&
+        !isPermanentTTL &&
+        constTTLBelowMin;
+      const maxCheck: boolean = !isPermanentMaxTTL && constTTLAboveMax;
+
+      const permanentCheck: boolean = isPermanentTTL && chatSettings.maxTTL !== -1;
+
+
+      if (minCheck || maxCheck || permanentCheck) {
         console.error(`TTL ${ttl} außerhalb erlaubter Grenzen: ${chatSettings.minTTL}-${chatSettings.maxTTL}`);
         return {
           success: false,
