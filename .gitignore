@@ -5,6 +5,10 @@ server/**/*.js
 
 .env
 
+public
+
+greenlock.d
+
 # Logs
 logs
 *.log
