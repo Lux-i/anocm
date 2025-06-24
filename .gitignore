@@ -5,6 +5,8 @@ server/**/*.js
 
 .env
 
+public
+
 # Logs
 logs
 *.log
