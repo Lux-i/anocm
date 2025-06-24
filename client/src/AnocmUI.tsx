@@ -853,6 +853,30 @@ const AnocmUI = () => {
     }
   };
 
+  const isRequestingRef = useRef(isRequestingKey);
+
+  useEffect(() => {
+    isRequestingRef.current = isRequestingKey;
+  }, [isRequestingKey]);
+
+  const activeKeyExchangeRef = useRef(activeKeyExchange);
+
+  useEffect(() => {
+    activeKeyExchangeRef.current = activeKeyExchange;
+  }, [activeKeyExchange]);
+
+  const DHKeyPairRef = useRef(DHKeyPair);
+
+  useEffect(() => {
+    DHKeyPairRef.current = DHKeyPair;
+  }, [DHKeyPair]);
+
+  const sharedKeyRef = useRef(sharedKey);
+
+  useEffect(() => {
+    sharedKeyRef.current = sharedKey;
+  }, [sharedKey]);
+
   useEffect(() => {
     // nur wenn eingeloggt
     if (!isAuthenticated || !currentUser?.userId) {
@@ -930,7 +954,7 @@ const AnocmUI = () => {
             )
           );
         } else if (data.action === Action.CK_REQ) {
-          if (isRequestingKey || isSendingKey) return;
+          if (isRequestingRef.current || isSendingKey) return;
 
           Encryption.importPublicKey(data.content).then((dhpubl) => {
             if (!dhpubl) return;
@@ -949,7 +973,7 @@ const AnocmUI = () => {
                       (pubKey) => {
                         const ackMsg: WsMessage = {
                           action: Action.DH_PUBLIC_EX,
-                          content: pubKey,
+                          content: `${data.chatID},${pubKey}`,
                           senderID: currentUser.userId as UUID,
                           chatID: data.senderID,
                           timestamp: Date.now(),
@@ -963,7 +987,7 @@ const AnocmUI = () => {
                           ).then((encryptedKey) => {
                             const keyMsg: WsMessage = {
                               action: Action.CK_EX,
-                              content: encryptedKey,
+                              content: `${data.chatID},${encryptedKey}`,
                               senderID: currentUser.userId as UUID,
                               chatID: data.senderID,
                               timestamp: Date.now(),
@@ -984,14 +1008,24 @@ const AnocmUI = () => {
             });
           });
         } else if (data.action === Action.DH_PUBLIC_EX) {
-          if (isRequestingKey) {
-            if (activeKeyExchange === "") {
+          console.log(`requestingKey: ${isRequestingRef.current}`);
+          if (isRequestingRef.current) {
+            console.log(`activeKeyExchange: ${activeKeyExchangeRef.current}`);
+            if (activeKeyExchangeRef.current === "") {
               console.log("[WS] Erhalte DH_PUBLIC_EX von:", data.senderID);
-              setActiveKeyExchange(data.chatID + data.senderID);
-              Encryption.importPublicKey(data.content).then((dhPublic) => {
+              const tokends = data.content.split(",");
+              const chatId = tokends[0];
+              const dhPublicExported = tokends[1];
+              console.log(
+                "[WS] DH_PUBLIC_EX Inhalt:",
+                chatId,
+                dhPublicExported
+              );
+              setActiveKeyExchange(chatId + data.senderID);
+              Encryption.importPublicKey(dhPublicExported).then((dhPublic) => {
                 if (!dhPublic) return;
                 Encryption.deriveSharedKey(
-                  DHKeyPair!.privateKey,
+                  DHKeyPairRef.current!.privateKey,
                   dhPublic
                 ).then((sharedKey) => {
                   if (!sharedKey) return;
@@ -1002,17 +1036,21 @@ const AnocmUI = () => {
             }
           }
         } else if (data.action === Action.CK_EX) {
+          const tokens = data.content.split(",");
+          const chatId = tokens[0];
+          const chatKeyEE = tokens[1];
           if (
-            isRequestingKey &&
-            activeKeyExchange === data.chatID + data.senderID
+            isRequestingRef.current &&
+            activeKeyExchangeRef.current === chatId + data.senderID
           ) {
             console.log("[WS] Erhalte CK_EX von:", data.senderID);
-            Encryption.decryptChatKey(data.content, sharedKey!).then(
+            Encryption.decryptChatKey(chatKeyEE, sharedKeyRef.current!).then(
               (chatKey) => {
                 if (!chatKey) return;
                 console.log("[WS] Chat Key importiert");
-                Encryption.storeKey(data.chatID, chatKey).then(() => {
+                Encryption.storeKey(chatId, chatKey).then(() => {
                   setIsRequestingKey(false);
+                  setIsSendingKey(false);
                   setSharedKey(null);
                   setDHKeyPair(null);
                   setActiveKeyExchange("");
@@ -1104,7 +1142,7 @@ const AnocmUI = () => {
     };
 
     loadMessages();
-  }, [selectedChatId, currentUser]);
+  }, [selectedChatId, currentUser, isRequestingKey]);
 
   useEffect(() => {
     const loadChatSettings = async () => {
