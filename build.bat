@@ -7,7 +7,7 @@ set "SERVER_DIR=E:\anocm\server"
 set "SRC_DIST=%CLIENT_DIR%\dist"
 set "DST_DIR=%SERVER_DIR%\dist"
 set "SRC_ASSETS=%SERVER_DIR%\dist\assets"
-set "DST_ASSETS=%SERVER_DIR%\public"
+set "DST_ASSETS=%SERVER_DIR%\public\assets"
 
 REM Step 1: Build server TypeScript
 echo Running tsc in server...

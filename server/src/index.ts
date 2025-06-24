@@ -68,13 +68,13 @@ app.use(
 );
 
 //content security policy for websocket to work when developing
-app.use((req: Request, res: Response, next: NextFunction) => {
+/*app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader(
     "Content-Security-Policy",
     `default-src 'self'; connect-src 'self' ws://localhost:${UsedPort};`
   );
   next();
-});
+});*/
 
 //json and special json-error-handling middleware
 app.use(
