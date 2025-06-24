@@ -15,19 +15,19 @@ import { UUID } from "crypto";
 
 export function routeMessageAction(message: WsMessage, ws: WebSocketType) {
   switch (message.action) {
-    case Action.BroadcastToChat || Action.CK_REQ:
+    case Action.BroadcastToChat:
+    case Action.CK_REQ:
       broadcastToChat(message);
       break;
     case Action.Init:
       initWebsocketWithUserManager(message, ws);
       break;
-    case Action.DH_PUBLIC_EX || Action.CK_EX:
+    case Action.DH_PUBLIC_EX:
+    case Action.CK_EX:
       //this action uses the chatID as the user ID and encapsulates the chatID into the content
       UserManager.sendMessage(message.chatID, message);
       break;
-    case Action.None:
-    case Action.MessageResponse:
     default:
-      return false;
+      console.log("unrouted message: ", message);
   }
 }

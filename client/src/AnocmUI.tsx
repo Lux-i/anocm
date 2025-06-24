@@ -1076,8 +1076,10 @@ const AnocmUI = () => {
                   senderID: currentUser.userId as UUID,
                   chatID: selectedChatId as UUID,
                   timestamp: Date.now(),
+                  senderToken: currentUser.token,
                 };
                 wsRef.current?.send(JSON.stringify(requestMsg));
+                console.log(requestMsg);
               }
             }
           }

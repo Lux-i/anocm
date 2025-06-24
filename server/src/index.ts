@@ -125,20 +125,10 @@ wss.on("connection", async (ws: WebSocketType, req: Request) => {
   ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
 
   ws.on("message", async (data: WebSocket.RawData) => {
-    
-    const message: WsMessage = JSON.parse(data.toString());  
-    let res = routeMessageAction(message, ws);
+    const message: WsMessage = JSON.parse(data.toString());
+    routeMessageAction(message, ws);
 
     console.log(`Received message: ${message.content}`);
-
-    //Broadcast to all connected
-    if (res === false) {
-      wss.clients.forEach((client: WebSocket) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify(message.content));
-        }
-      });
-    }
   });
 
   ws.on("close", async () => {
