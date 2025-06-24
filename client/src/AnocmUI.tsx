@@ -1475,8 +1475,8 @@ useEffect(() => {
             onClick={handleLogout}
             className="flex flex-col items-center px-4 py-2 text-gray-500"
           >
-            <Settings className="w-6 h-6 mb-1" />
-            <span className="text-xs">Mehr</span>
+            <LogOut className="w-6 h-6 mb-1" />
+            <span className="text-xs">Ausloggen</span>
           </button>
         </div>
       </div>
