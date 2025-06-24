@@ -11,6 +11,8 @@ import {
   LogOut,
   UserPlus,
   ArrowLeft,
+  Clock,
+  X,
 } from "lucide-react";
 import { DatabaseResponse, User, Chat, ChatMessage } from "@anocm/shared/dist";
 import type { WsMessage } from "@anocm/shared/dist";
@@ -33,6 +35,12 @@ type UIMessage = ChatMessage & {
   isOwn: boolean;
 };
 
+const TTL_PRESETS = {
+  1: { min: 300, default: 3600, max: 21600 }, // Schnell: 5min - 1h -6h
+  2: { min: 3600, default: 86400, max: 604800 }, // Normal: 1h - 1Tag - 1Woche
+  3: { min: 86400, default: 604800, max: 2592000 }, // Langsam: 1Tag - 1Woche - 1Monat
+};
+
 const AnocmUI = () => {
   const wsRef = useRef<WebSocket | null>(null);
   const [wsActive, setWsActive] = useState(false);
@@ -43,6 +51,8 @@ const AnocmUI = () => {
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [authMode, setAuthMode] = useState("login");
   const [authError, setAuthError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
 
   // UI States
   const [activeSection, setActiveSection] = useState<"chats" | "users">(
@@ -56,13 +66,26 @@ const AnocmUI = () => {
   const [showCreateChat, setShowCreateChat] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [newChatUserId, setNewChatUserId] = useState("");
+  const [showChatMenu, setShowChatMenu] = useState(false);
+  const [chatSettings, setChatSettings] = useState<{
+    minTTL: number;
+    defaultTTL: number;
+    maxTTL: number;
+  } | null>(null);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [chatMessageTTLs, setChatMessageTTLs] = useState<{
+    [chatId: string]: number | null;
+  }>({});
 
   // Data States
   const [chats, setChats] = useState<Chat[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<UIMessage[]>([]);
 
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // TTL Preset für Chat-Erstellung
+  const [selectedTTLPreset, setSelectedTTLPreset] = useState(2); // Standard: Normal
+  // TTL für einzelne Nachrichten
+  const [messageTTL, setMessageTTL] = useState<number | null>(null); // null = defaultTTL verwenden
 
   // Helper Functions
   const formatTimestamp = (date: Date): string => {
@@ -94,7 +117,7 @@ const AnocmUI = () => {
       return "bg-purple-500";
     }
 
-    // Fallback falls name undefined/null/leer ist
+    // Fallback
     if (!name || name.length === 0) {
       return "bg-gray-500";
     }
@@ -112,6 +135,18 @@ const AnocmUI = () => {
 
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
+  };
+
+  const formatTTL = (seconds: number): string => {
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+    return `${Math.floor(seconds / 86400)}d`;
+  };
+
+  const cleanTTL = (val, fallback) => {
+    const n = Number(val);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
   };
 
   //API Functions
@@ -137,6 +172,28 @@ const AnocmUI = () => {
     }
   };
 
+  const addUserToChat = async (
+    chatId: string,
+    userId: string,
+    adminId: string,
+    adminToken: string
+  ) => {
+    try {
+      const res = await fetch(`${API_V2}/chat/adduser`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId, userId, adminId, adminToken }),
+      });
+      const data = (await res.json()) as DatabaseResponse;
+      return data.success
+        ? { success: true }
+        : { success: false, error: data.error };
+    } catch (err) {
+      console.error("Fehler beim Hinzufügen:", err);
+      return { success: false, error: "Netzwerkfehler" };
+    }
+  };
+
   const getChatMessages = async (
     chatId: string,
     userId: string,
@@ -146,21 +203,41 @@ const AnocmUI = () => {
       const res = await fetch(
         `${API_V2}/chat/getchat?chatid=${chatId}&userid=${userId}&token=${token}`
       );
-      const data = (await res.json()) as DatabaseResponse & {
-        userData?: { chatMessages: Record<string, any> };
-      };
-      if (data.success && data.userData?.chatMessages) {
-        return Object.entries(data.userData.chatMessages).map(([ts, entry]) => {
-          const msg = typeof entry === "string" ? JSON.parse(entry) : entry;
+      const data = (await res.json()) as DatabaseResponse & { userData?: Chat };
 
-          return {
-            id: msg.id ?? `msg-${ts}`,
-            content: msg.content,
-            senderId: msg.senderID,
-            isOwn: msg.senderID === userId,
-            timestamp: new Date(Number(msg.timestamp)),
-          } as UIMessage;
-        });
+      console.log("🔍 Chat data from /getchat:", data); // DEBUG
+
+      if (data.success && data.userData) {
+        const chat = data.userData as Chat;
+
+        console.log("🔍 chatUserList from backend:", chat.chatUserList); // DEBUG
+
+        //Chat-Details im State aktualisieren für chatUserList
+        setChats((prev) =>
+          prev.map((c) =>
+            c.chatId === chatId
+              ? {
+                  ...c,
+                  chatUserList: chat.chatUserList || {},
+                  name: chat.name || c.name,
+                }
+              : c
+          )
+        );
+
+        // Nachrichten extrahieren
+        if (chat.chatMessages) {
+          return Object.entries(chat.chatMessages).map(([ts, entry]) => {
+            const msg = typeof entry === "string" ? JSON.parse(entry) : entry;
+            return {
+              id: msg.id ?? `msg-${ts}`,
+              content: msg.content,
+              senderId: msg.senderID,
+              isOwn: msg.senderID === userId,
+              timestamp: new Date(Number(msg.timestamp)),
+            } as UIMessage;
+          });
+        }
       }
       return [];
     } catch (err) {
@@ -169,40 +246,43 @@ const AnocmUI = () => {
     }
   };
 
-  const refreshChats = async () => {
-    if (!currentUser) {
-      // Es gibt keinen angemeldeten Nutzer, deshalb keine Chats laden
-      return;
-    }
+  function getTtlOptions(min: number, def: number, max: number) {
+    const presets = [
+      min,
+      def,
+      max,
+      300,
+      900,
+      3600,
+      21600,
+      86400,
+      604800,
+      2592000,
+    ];
+    return Array.from(
+      new Set(presets.filter((x) => x >= min && x <= max))
+    ).sort((a, b) => a - b);
+  }
 
+  //Rückgabe: Array der aktuellen ChatIds
+  const refreshChats = async (): Promise<string[]> => {
+    if (!currentUser) return [];
     try {
       const url = `${API_V2}/chat/getChatList?userId=${encodeURIComponent(
         currentUser.userId
       )}&token=${encodeURIComponent(currentUser.token)}`;
-
       const res = await fetch(url, {
         method: "GET",
         headers: { Accept: "application/json" },
       });
-
-      if (!res.ok) {
-        console.error(`Chat-API Fehler: ${res.status}`);
-        setChats([]);
-        return;
-      }
-
-      // JSON-Antwort auslesen
+      if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = (await res.json()) as {
         success: boolean;
         userData?: string[] | string;
-        error?: string;
       };
-      console.log("API Response:", data);
-
-      // Wenn success false leere Liste anzeigen
       if (!data.success) {
         setChats([]);
-        return;
+        return [];
       }
 
       const chatIds: string[] =
@@ -210,21 +290,71 @@ const AnocmUI = () => {
           ? JSON.parse(data.userData)
           : data.userData ?? [];
 
-      // für jede Chat-ID ein Chat-Objekt
-      const chatList: Chat[] = chatIds.map((id) => ({
-        chatId: id,
-        name: `Chat ${id.slice(0, 8)}...`,
-        chatUserList: {},
-        messages: [],
-        lastMessage: null,
-        unreadCount: 0,
-      }));
+      // doppelte Chat-IDs entfernen - NICHT ENTFERNEN
+      chatIds.forEach((id, index) => {
+        if (chatIds.indexOf(id) !== index) {
+          console.warn(`Doppelte Chat-ID gefunden und entfernt: ${id}`);
+          chatIds.splice(index, 1);
+        }
+      });
 
-      // State aktualisieren
-      setChats(chatList);
+      // State übernehmen
+      setChats(
+        chatIds.map((id) => {
+          const old = chats.find((c) => c.chatId === id);
+          return {
+            chatId: id,
+            name: old?.name ?? `Chat ${id.slice(0, 8)}...`,
+            chatUserList: old?.chatUserList ?? {},
+            messages: old?.messages ?? [],
+            lastMessage: old?.lastMessage ?? null,
+            unreadCount: old?.unreadCount ?? 0,
+          } as Chat;
+        })
+      );
+
+      return chatIds;
     } catch (err) {
       console.error("Fehler beim Laden der Chats:", err);
       setChats([]);
+      return [];
+    }
+  };
+
+  const getChatSettings = async (
+    chatId: string
+  ): Promise<{ minTTL: number; defaultTTL: number; maxTTL: number } | null> => {
+    if (!currentUser) return null;
+    try {
+      const res = await fetch(
+        `${API_V2}/chat/getChatSettings?chatid=${chatId}&userid=${currentUser.userId}&token=${currentUser.token}`
+      );
+      const data = (await res.json()) as DatabaseResponse;
+      if (data.success && data.userData) {
+        const chat = data.userData as Chat;
+
+        //teilnehmerliste in chats
+        setChats((prev) =>
+          prev.map((c) =>
+            c.chatId === chatId
+              ? {
+                  ...c,
+                  chatUserList: chat.chatUserList || {},
+                  name: chat.name ?? c.name,
+                }
+              : c
+          )
+        );
+        return {
+          minTTL: cleanTTL(chat.minTTL, 3600),
+          defaultTTL: cleanTTL(chat.defaultTTL, 86400),
+          maxTTL: cleanTTL(chat.maxTTL, 604800),
+        };
+      }
+      return null;
+    } catch (err) {
+      console.error("Fehler beim Laden der Chat-Settings:", err);
+      return null;
     }
   };
 
@@ -333,7 +463,8 @@ const AnocmUI = () => {
     chatId: string,
     content: string,
     senderId: string,
-    token: string
+    token: string,
+    ttl?: number | null
   ) => {
     const chatkey = await Encryption.loadKey(chatId);
     if (!chatkey) {
@@ -341,6 +472,7 @@ const AnocmUI = () => {
       return { success: false, error: "No chat key" };
     }
     const message = await Encryption.encryptMessage(chatkey, content);
+
     try {
       const res = await fetch(`${API_V2}/chat/send_message`, {
         method: "POST",
@@ -351,7 +483,8 @@ const AnocmUI = () => {
           senderToken: token,
           content: message,
           timestamp: Date.now().toString(),
-          ttl: 86400,
+          // TTL nur mitsende wenn nicht null od undefined
+          ...(ttl !== null && ttl !== undefined ? { ttl } : {}),
         }),
       });
       const data = (await res.json()) as DatabaseResponse;
@@ -436,6 +569,22 @@ const AnocmUI = () => {
     }
   };
 
+  const handleOpenChatMenu = async () => {
+    if (selectedChatId && currentUser) {
+      try {
+        // holt komplette Chat details
+        await getChatMessages(
+          selectedChatId,
+          currentUser.userId,
+          currentUser.token
+        );
+      } catch (e) {
+        console.error("Fehler beim Nachladen des Chats:", e);
+      }
+    }
+    setShowChatMenu(true);
+  };
+
   const handleLogout = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
@@ -449,17 +598,26 @@ const AnocmUI = () => {
     if (!messageInput.trim() || !selectedChatId || !currentUser) {
       return;
     }
+    // Aktuelle TTL-Auswahl für diesen Chat holen
+    const selectedTTL = chatMessageTTLs[selectedChatId] ?? null;
 
     const result = await sendMessage(
       selectedChatId,
       messageInput,
       currentUser.userId,
-      currentUser.token
+      currentUser.token,
+      selectedTTL
     );
 
     if (result.success) {
       setMessageInput("");
       console.log("Nachricht gesendet");
+
+      if (selectedTTL != null) {
+        console.log(
+          `[SEND] Nachricht gesendet mit TTL: ${selectedTTL} Sekunden`
+        );
+      }
     } else {
       console.error("Fehler beim Senden:", result.error);
     }
@@ -477,14 +635,19 @@ const AnocmUI = () => {
     if (!newChatUserId || !currentUser) return;
 
     try {
+      const preset = TTL_PRESETS[selectedTTLPreset] || TTL_PRESETS[2];
+      const ttl = preset.default;
+      const minTTL = preset.min;
+      const maxTTL = preset.max;
+
       const res = await fetch(`${API_V2}/chat/newchat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userList: [{ userId: currentUser.userId }, { userId: newChatUserId }],
-          ttl: "86400", // 1 Tag
-          minTTL: "60",
-          maxTTL: "345600", // 7 Tage
+          ttl: ttl,
+          minTTL: minTTL,
+          maxTTL: maxTTL,
           creatorId: currentUser.userId,
           creatorToken: currentUser.token,
         }),
@@ -504,9 +667,7 @@ const AnocmUI = () => {
           name: `Chat ${data.id.slice(0, 8)}...`,
           chatUserList: {
             [currentUser!.userId]: currentUser!.username || "Anonym",
-            [newChatUserId]:
-              users.find((u) => u.userId === newChatUserId)?.username ||
-              `User ${newChatUserId.slice(0, 8)}`,
+            [newChatUserId]: `User ${newChatUserId.slice(0, 8)}`,
           },
           messages: [],
           lastMessage: null,
@@ -527,6 +688,71 @@ const AnocmUI = () => {
     } catch (err) {
       console.error("Netzwerkfehler beim Erstellen des Chats:", err);
       setAuthError("Netzwerkfehler beim Erstellen des Chats");
+    }
+  };
+
+  const handleAddUserToChat = async () => {
+    if (!newChatUserId.trim() || !selectedChatId || !currentUser) return;
+
+    const result = await addUserToChat(
+      selectedChatId,
+      newChatUserId.trim(),
+      currentUser.userId,
+      currentUser.token
+    );
+
+    if (result.success) {
+      console.log("User hinzugefügt");
+      setNewChatUserId("");
+      setShowAddUser(false);
+      setShowChatMenu(false);
+
+      // Chat-Details neu laden
+      await refreshChats();
+
+      // Chat-Messages auch neu laden um Updates zu sehen
+      if (selectedChatId && currentUser) {
+        const chatMessages = await getChatMessages(
+          selectedChatId,
+          currentUser.userId,
+          currentUser.token
+        );
+        chatMessages.sort(
+          (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+        );
+        setMessages(chatMessages);
+      }
+    } else {
+      setAuthError(`Fehler: ${result.error}`);
+    }
+  };
+
+  const handleRemoveUserFromChat = async (userIdToRemove: string) => {
+    if (!selectedChatId || !currentUser) return;
+    if (!confirm("User wirklich entfernen?")) return;
+
+    //  Backend call
+    const { success, error } = await removeUserFromChat(
+      selectedChatId,
+      userIdToRemove,
+      currentUser.userId,
+      currentUser.token
+    );
+    if (!success) {
+      setAuthError(`Fehler: ${error}`);
+      return;
+    }
+    setShowChatMenu(false);
+
+    // Chats neu laden und neue IDs abfragen
+    const newChatIds = await refreshChats();
+
+    //Wenn Chat weg ist, aus dem UI schmeissen
+    if (!newChatIds.includes(selectedChatId)) {
+      // sofort aus dem local State entfernen
+      setChats((prev) => prev.filter((c) => c.chatId !== selectedChatId));
+      setStatus("Chat beendet oder Du wurdest entfernt.");
+      setSelectedChatId(null);
     }
   };
 
@@ -633,6 +859,7 @@ const AnocmUI = () => {
   }, [isAuthenticated, currentUser?.userId, selectedChatId]);
 
   // Nachrichten laden wenn Chat ausgewählt
+  // Nachrichten laden wenn Chat ausgewählt
   useEffect(() => {
     const loadMessages = async () => {
       if (selectedChatId && currentUser) {
@@ -671,6 +898,44 @@ const AnocmUI = () => {
 
     loadMessages();
   }, [selectedChatId, currentUser]);
+
+  useEffect(() => {
+    const loadChatSettings = async () => {
+      if (selectedChatId) {
+        const settings = await getChatSettings(selectedChatId);
+        setChatSettings(settings);
+      } else {
+        setChatSettings(null);
+      }
+    };
+
+    loadChatSettings();
+  }, [selectedChatId, currentUser]);
+
+  //automatisches polling
+  useEffect(() => {
+    if (!wsActive || !selectedChatId) return;
+
+    // einmalig prüfen
+    (async () => {
+      const ids = await refreshChats();
+      if (!ids.includes(selectedChatId)) {
+        setStatus("Chat beendet oder Du wurdest entfernt.");
+        setSelectedChatId(null);
+      }
+    })();
+
+    const interval = setInterval(async () => {
+      const ids = await refreshChats();
+      if (!ids.includes(selectedChatId)) {
+        setStatus("Chat beendet oder Du wurdest entfernt.");
+        setSelectedChatId(null);
+        clearInterval(interval);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [wsActive, selectedChatId]);
 
   // Filtered Data
   const selectedChat = chats.find((chat) => chat.chatId === selectedChatId);
@@ -1049,31 +1314,207 @@ const AnocmUI = () => {
           <>
             {/* Chat Header */}
             <div className="px-4 py-3 bg-white border-b border-gray-200">
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => setSelectedChatId(null)}
-                  className="md:hidden p-2 hover:bg-gray-100 rounded-full transition-colors">
-                  <ArrowLeft className="w-5 h-5 text-gray-600" />
-                </button>
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-sm ${getAvatarColor(
-                    selectedChat.name,
-                    selectedChat.isAnonymous
-                  )}`}>
-                  {getInitials(selectedChat.name)}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => setSelectedChatId(null)}
+                    className="md:hidden p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <ArrowLeft className="w-5 h-5 text-gray-600" />
+                  </button>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-sm ${getAvatarColor(
+                      selectedChat.name,
+                      selectedChat.isAnonymous
+                    )}`}>
+                    {getInitials(selectedChat.name)}
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-medium text-gray-900">
+                      {selectedChat.name}
+                    </h2>
+                    <p className="text-xs text-gray-500">
+                      {selectedChat.isAnonymous
+                        ? "Anonymer Chat"
+                        : "Zuletzt aktiv vor kurzem"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-sm font-medium text-gray-900">
-                    {selectedChat.name}
-                  </h2>
-                  <p className="text-xs text-gray-500">
-                    {selectedChat.isAnonymous
-                      ? "Anonymer Chat"
-                      : "Zuletzt aktiv vor kurzem"}
-                  </p>
+
+                {/* 3-Punkte-Menü */}
+                <div className="relative">
+                  <button
+                    onClick={handleOpenChatMenu}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <div className="flex flex-col space-y-1">
+                      <div className="w-1 h-1 bg-gray-600 rounded-full" />
+                      <div className="w-1 h-1 bg-gray-600 rounded-full" />
+                      <div className="w-1 h-1 bg-gray-600 rounded-full" />
+                    </div>
+                  </button>
+
+                  {showChatMenu && (
+                    <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-64 z-10">
+                      <div className="text-xs text-gray-500 mb-3 px-1 font-medium">
+                        Chat-Verwaltung
+                      </div>
+
+                      {/* Chat TTL Info */}
+                      <div className="px-3 py-2 bg-gray-50 rounded-lg mb-3">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Clock className="w-4 h-4 text-gray-600" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {chatSettings
+                              ? `TTL: ${formatTTL(chatSettings.defaultTTL)}`
+                              : "TTL: Standard"}
+                          </span>
+                        </div>
+                        {chatSettings && (
+                          <div className="text-xs text-gray-500">
+                            Min: {formatTTL(chatSettings.minTTL)} - Max:{" "}
+                            {formatTTL(chatSettings.maxTTL)}
+                          </div>
+                        )}
+                      </div>
+
+                      {chatSettings && (
+                        <div className="mb-4">
+                          <label className="text-xs text-gray-500 font-medium block mb-1">
+                            Standard Selbstzerstörungszeit für neue Nachrichten
+                          </label>
+                          <select
+                            value={
+                              chatMessageTTLs[selectedChatId!] === undefined ||
+                              chatMessageTTLs[selectedChatId!] === null
+                                ? ""
+                                : chatMessageTTLs[selectedChatId!]
+                            }
+                            onChange={(e) => {
+                              const ttlValue =
+                                e.target.value === ""
+                                  ? null
+                                  : Number(e.target.value);
+                              setChatMessageTTLs((prev) => ({
+                                ...prev,
+                                [selectedChatId!]: ttlValue,
+                              }));
+                            }}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                            {/* Standard-Option */}
+                            <option value="">
+                              Standard ({formatTTL(chatSettings.defaultTTL)})
+                            </option>
+                            {/* Dynamische Optionen von Backend */}
+                            {getTtlOptions(
+                              chatSettings.minTTL,
+                              chatSettings.defaultTTL,
+                              chatSettings.maxTTL
+                            )
+                              .filter((ttl) => ttl !== chatSettings.defaultTTL) // Standard nicht doppelt
+                              .map((ttl) => (
+                                <option key={ttl} value={ttl}>
+                                  {formatTTL(ttl)}
+                                </option>
+                              ))}
+                          </select>
+                          <div className="text-xs text-gray-400 mt-1">
+                            Gilt für alle neuen Nachrichten, bis du es änderst.
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Teilnehmer Verwaltung */}
+                      <div className="border-t pt-3">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-700">
+                            👥 Teilnehmer (
+                            {selectedChat?.chatUserList
+                              ? Object.keys(selectedChat.chatUserList).length
+                              : 0}
+                            )
+                          </span>
+                          <button
+                            onClick={() => {
+                              setShowAddUser(true);
+                              setShowChatMenu(false);
+                            }}
+                            className="flex items-center space-x-1 px-2 py-1 text-blue-500 hover:bg-blue-50 rounded transition-colors text-xs">
+                            <UserPlus className="w-3 h-3" />
+                            <span>Hinzufügen</span>
+                          </button>
+                        </div>
+
+                        {/* Teilnehmer Liste */}
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                          {selectedChat?.chatUserList &&
+                          Object.entries(selectedChat.chatUserList).length >
+                            0 ? (
+                            Object.entries(selectedChat.chatUserList).map(
+                              ([userId, username]) => (
+                                <div
+                                  key={userId}
+                                  className="flex items-center justify-between py-2 px-2 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors">
+                                  <div className="flex items-center space-x-2">
+                                    <div
+                                      className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium ${getAvatarColor(
+                                        username,
+                                        false
+                                      )}`}>
+                                      {getInitials(username)}
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-sm font-medium text-gray-700">
+                                        {username}
+                                        {userId === currentUser?.userId && (
+                                          <span className="text-blue-600 text-xs ml-1">
+                                            (Du)
+                                          </span>
+                                        )}
+                                      </span>
+                                      <span className="text-xs text-gray-500">
+                                        {userId.slice(0, 8)}...
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {userId !== currentUser?.userId && (
+                                    <button
+                                      onClick={() =>
+                                        handleRemoveUserFromChat(userId)
+                                      }
+                                      className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                                      title="User entfernen">
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              )
+                            )
+                          ) : (
+                            <div className="text-gray-500 text-sm italic py-4 text-center">
+                              Keine Teilnehmer gefunden
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Menü schließen */}
+                      <div className="border-t pt-3 mt-3">
+                        <button
+                          onClick={() => setShowChatMenu(false)}
+                          className="w-full text-center py-2 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+                          Schließen
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
+
+            {status && (
+              <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded mb-2 mx-4">
+                {status}
+              </div>
+            )}
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
@@ -1239,8 +1680,8 @@ const AnocmUI = () => {
           <button
             onClick={handleLogout}
             className="flex flex-col items-center px-4 py-2 text-gray-500">
-            <Settings className="w-6 h-6 mb-1" />
-            <span className="text-xs">Mehr</span>
+            <LogOut className="w-6 h-6 mb-1" />
+            <span className="text-xs">Ausloggen</span>
           </button>
         </div>
       </div>
@@ -1278,6 +1719,31 @@ const AnocmUI = () => {
                 onChange={(e) => setNewChatUserId(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
               />
+
+              {/* TTL Preset Auswahl */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  🕐 Verschwindende Nachrichten:
+                </label>
+                <select
+                  value={selectedTTLPreset}
+                  onChange={(e) =>
+                    setSelectedTTLPreset(parseInt(e.target.value))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
+                  <option value={1}>Schnell (5min - 1h - 6h)</option>
+                  <option value={2}>Normal (1h - 1Tag - 1Woche)</option>
+                  <option value={3}>Langsam (1Tag - 1Woche - 1Monat)</option>
+                </select>
+                <div className="text-xs text-gray-500 mt-1">
+                  {selectedTTLPreset === 1 &&
+                    "Min: 5min, Standard: 1h, Max: 6h"}
+                  {selectedTTLPreset === 2 &&
+                    "Min: 1h, Standard: 1Tag, Max: 1Woche"}
+                  {selectedTTLPreset === 3 &&
+                    "Min: 1Tag, Standard: 1Woche, Max: 1Monat"}
+                </div>
+              </div>
 
               <div className="flex space-x-3">
                 <button
@@ -1369,6 +1835,52 @@ const AnocmUI = () => {
                 className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
                 Schließen
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Add User Modal */}
+      {showAddUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              👤 User zu Chat hinzufügen
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  User ID
+                </label>
+                <input
+                  type="text"
+                  placeholder="z.B. user123..."
+                  value={newChatUserId}
+                  onChange={(e) => setNewChatUserId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mt-1"
+                  autoFocus
+                />
+                <div className="text-xs text-gray-500 mt-1">
+                  Gib die User ID der Person ein, die du hinzufügen möchtest
+                </div>
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleAddUserToChat}
+                  disabled={!newChatUserId.trim()}
+                  className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors text-sm">
+                  Hinzufügen
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddUser(false);
+                    setNewChatUserId("");
+                  }}
+                  className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                  Abbrechen
+                </button>
+              </div>
             </div>
           </div>
         </div>
