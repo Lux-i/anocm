@@ -83,6 +83,8 @@ const AnocmUI = () => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [messageInput, setMessageInput] = useState("");
+  const [decryptedLastMessages, setDecryptedLastMessages] = useState<{ [chatId: string]: string }>({});
+
 
   // Modal States
   const [showCreateChat, setShowCreateChat] = useState(false);
@@ -1140,6 +1142,35 @@ const AnocmUI = () => {
     return () => clearInterval(interval);
   }, [wsActive, selectedChatId]);
 
+
+  useEffect(() => {
+    const decryptLastMessages = async () => {
+      const entries = await Promise.all(
+        chats.map(async (chat) => {
+          if (chat.lastMessage?.content && chat.chatId) {
+            const chatkey = await Encryption.loadKey(chat.chatId);
+            if (chatkey) {
+              try {
+                const decrypted = await Encryption.decryptMessage(chatkey, chat.lastMessage.content);
+                return [chat.chatId, decrypted];
+              } catch {
+                return [chat.chatId, "Verschlüsselte Nachricht"];
+              }
+            } else {
+              return [chat.chatId, "Verschlüsselte Nachricht"];
+            }
+          }
+          return [chat.chatId, "Keine Nachrichten"];
+        })
+      );
+      setDecryptedLastMessages(Object.fromEntries(entries));
+    };
+  
+    decryptLastMessages();
+  }, [chats]);
+  
+
+
   // Filtered Data
   const selectedChat = chats.find((chat) => chat.chatId === selectedChatId);
   const filteredChats = chats.filter(
@@ -1429,7 +1460,7 @@ const AnocmUI = () => {
                         </div>
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-gray-600 truncate">
-                            {chat.lastMessage?.content || "Keine Nachrichten"}
+                            {decryptedLastMessages[chat.chatId] || "Keine Nachrichten"}
                           </p>
                           {chat.unreadCount > 0 && (
                             <span className="inline-flex items-center justify-center min-w-5 h-5 px-1 text-xs font-medium text-white bg-blue-500 rounded-full ml-2">
