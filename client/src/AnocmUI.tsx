@@ -16,9 +16,20 @@ import {
   RefreshCcw,
 } from "lucide-react";
 import { DatabaseResponse, User, Chat, ChatMessage } from "@anocm/shared/dist";
-import { WsMessage, Action } from "@anocm/shared/dist";
+import { WsMessage } from "@anocm/shared/dist";
 import { Encryption } from "./Encryption";
 import { UUID } from "crypto";
+
+//CHANGE TO IMPORT
+enum Action {
+  None = "",
+  BroadcastToChat = "BroadcastToChat",
+  Init = "Init",
+  MessageResponse = "MessageResponse",
+  DH_PUBLIC_EX = "dhpublic", //Diffie-Hellman public key exchange
+  CK_EX = "chatkey", //Chat key exchange
+  CK_REQ = "chatkeyreq", //Chat key request
+}
 
 const API_V1 = "http://localhost:8080/api/v1";
 const API_V2 = "http://localhost:8080/api/v2";
@@ -1280,8 +1291,7 @@ const AnocmUI = () => {
                   refreshChats();
                 }}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                title="Chats aktualisieren"
-              >
+                title="Chats aktualisieren">
                 <RefreshCcw className="w-5 h-5 text-gray-600" />
               </button>
 
