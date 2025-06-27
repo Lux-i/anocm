@@ -51,5 +51,19 @@ REM Step 6: Move assets to public
 echo Moving assets to public...
 move "%SRC_ASSETS%" "%DST_ASSETS%\.."
 
-echo Done.
+echo Finished building.
+
+if "%1"=="start" (
+    echo Starting server...
+    pushd "%SERVER_DIR%"
+    call node .
+    if %ERRORLEVEL% NEQ 0 (
+        echo Error: Failed to start the server.
+        pause
+        exit /b %ERRORLEVEL%
+    )
+    popd
+) else (
+    echo To start the server, run: 'node .' in %SERVER_DIR%
+)
 pause
