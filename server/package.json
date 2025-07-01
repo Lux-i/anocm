@@ -9,6 +9,7 @@
     "ejs": "^3.1.10",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "greenlock-express": "^4.0.3",
     "redis": "^4.7.0",
     "utf-8-validate": "^6.0.5",
     "uuid": "^11.1.0",

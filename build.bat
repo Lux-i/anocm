@@ -1,10 +1,13 @@
 @echo off
 SETLOCAL
 
+REM Define base path
+set "BASE_DIR=%~dp0"
+if "%BASE_DIR:~-1%"=="\" set "BASE_DIR=%BASE_DIR:~0,-1%"
 REM Define paths
-set "CLIENT_DIR=E:\anocm\client"
-set "SERVER_DIR=E:\anocm\server"
-set "SHARED_DIR=E:\anocm\shared"
+set "CLIENT_DIR=%BASE_DIR%\client"
+set "SERVER_DIR=%BASE_DIR%\server"
+set "SHARED_DIR=%BASE_DIR%\shared"
 set "SRC_DIST=%CLIENT_DIR%\dist"
 set "DST_DIR=%SERVER_DIR%\dist"
 set "SRC_ASSETS=%SERVER_DIR%\dist\assets"
