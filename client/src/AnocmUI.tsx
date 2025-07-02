@@ -15,6 +15,8 @@ import {
   Clock,
   X,
   RefreshCcw,
+  Moon,
+  Sun
 } from "lucide-react";
 import { DatabaseResponse, User, Chat, ChatMessage } from "@anocm/shared/dist";
 import { WsMessage } from "@anocm/shared/dist";
@@ -75,6 +77,9 @@ const AnocmUI = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+
+  // Dark Mode State
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // UI States
   const [activeSection, setActiveSection] = useState<"chats" | "users">(
@@ -180,6 +185,11 @@ const AnocmUI = () => {
 
     const n = Number(val);
     return n;
+  };
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev);
+    document.documentElement.classList.toggle('dark', !isDarkMode);
   };
 
   //API Functions
@@ -1356,6 +1366,15 @@ const AnocmUI = () => {
             Anonym fortfahren
           </button>
         </div>
+        <div className="fixed bottom-4 right-4">
+          <button
+            onClick={toggleDarkMode}
+            className="p-3 bg-gray-700 dark:bg-gray-200 text-gray-200 dark:text-gray-800 rounded-full shadow-lg hover:bg-gray-600 dark:hover:bg-gray-300 transition-colors"
+            title="Toggle Light/Dark Mode"
+          >
+            {isDarkMode ? <Moon /> : <Sun />}
+          </button>
+        </div>
       </div>
     );
   }
@@ -2204,6 +2223,15 @@ const AnocmUI = () => {
           </div>
         </div>
       )}
+      <div className="fixed bottom-4 right-4">
+        <button
+          onClick={toggleDarkMode}
+          className="p-3 bg-gray-700 dark:bg-gray-200 text-gray-200 dark:text-gray-800 rounded-full shadow-lg hover:bg-gray-600 dark:hover:bg-gray-300 transition-colors"
+          title="Toggle Light/Dark Mode"
+        >
+          {isDarkMode ? <Moon /> : <Sun />}
+        </button>
+      </div>
     </div>
   );
 };
