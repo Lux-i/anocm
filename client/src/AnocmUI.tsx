@@ -34,9 +34,15 @@ enum Action {
   CK_REQ = "chatkeyreq", //Chat key request
 }
 
+/* TEMPORARILY DISABLED TO USE THE LOCAL LINKS BELOW
 const API_V1 = "https://minecraft.tomatenbot.com/api/v1";
 const API_V2 = "https://minecraft.tomatenbot.com/api/v2";
 const WS_URL = "wss://minecraft.tomatenbot.com";
+*/
+
+const API_V1 = "http://localhost:8080/api/v1";
+const API_V2 = "http://localhost:8080/api/v2";
+const WS_URL = "wss://localhost:"
 
 type UIMessage = ChatMessage & {
   id: string;
@@ -1229,10 +1235,10 @@ const AnocmUI = () => {
   // Login Screen
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen min-w-screen bg-white flex items-center justify-center p-4">
+      <div className="min-h-screen min-w-screen bg-white dark:bg-stone-900 flex items-center justify-center p-4">
         <div className="max-w-sm w-full space-y-6">
           <div className="text-center mb-8">
-            <div className="w-32 h-32 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-32 h-32 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 dark:bg-white">
               <svg
                 width="180"
                 height="180"
@@ -1286,7 +1292,7 @@ const AnocmUI = () => {
                 />
               </svg>
             </div>
-            <p className="text-gray-500">Anonymous Chat Messenger</p>
+            <p className="text-gray-500 dark:text-white">Anonymous Chat Messenger</p>
           </div>
 
           {authError && (
@@ -1302,22 +1308,22 @@ const AnocmUI = () => {
           )}
 
           {/*Tab switcher */}
-          <div className="relative bg-gray-100 rounded-xl p-1 mb-6">
+          <div className="relative bg-gray-100 dark:bg-stone-800 rounded-xl p-1 mb-6">
             <div className="flex relative">
               <div
-                className={`absolute top-1 bottom-1 w-1/2 bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out ${authMode === "register" ? "transform translate-x-full" : ""
+                className={`absolute top-1 bottom-1 w-1/2 bg-white dark:bg-stone-900 rounded-lg shadow-sm transition-transform duration-300 ease-out ${authMode === "register" ? "transform translate-x-full" : ""
                   }`}
               />
 
               <button
                 onClick={() => setAuthMode("login")}
-                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${authMode === "login" ? "text-gray-900" : "text-gray-500"
+                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${authMode === "login" ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
                   }`}>
                 Anmelden
               </button>
               <button
                 onClick={() => setAuthMode("register")}
-                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${authMode === "register" ? "text-gray-900" : "text-gray-500"
+                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${authMode === "register" ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
                   }`}>
                 Registrieren
               </button>
@@ -1351,18 +1357,18 @@ const AnocmUI = () => {
                 authMode === "login" ? handleLogin(false) : handleRegister()
               }
               disabled={!loginForm.username}
-              className="w-full bg-blue-500 text-white py-4 rounded-xl font-semibold disabled:bg-gray-300 transition-all duration-200 hover:bg-blue-600">
+              className="w-full bg-blue-500 text-white dark:disabled:text-gray-400 py-4 rounded-xl font-semibold disabled:bg-gray-300 dark:disabled:bg-gray-700 transition-all duration-200 hover:bg-blue-600">
               {authMode === "login" ? "Anmelden" : "Registrieren"}
             </button>
           </div>
 
           <div className="text-center">
-            <span className="text-gray-400 text-sm">oder</span>
+            <span className="text-gray-400 dark:text-white text-sm">oder</span>
           </div>
 
           <button
             onClick={() => handleLogin(true)}
-            className="w-full bg-white border-2 border-gray-200 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200">
+            className="w-full bg-white dark:bg-stone-900 border-2 border-gray-200 dark:border-stone-800 text-gray-700 dark:text-gray-300 py-4 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-stone-950 transition-all duration-200">
             Anonym fortfahren
           </button>
         </div>
