@@ -32,9 +32,9 @@ enum Action {
   CK_REQ = "chatkeyreq", //Chat key request
 }
 
-const API_V1 = "https://minecraft.tomatenbot.com/api/v1";
-const API_V2 = "https://minecraft.tomatenbot.com/api/v2";
-const WS_URL = "wss://minecraft.tomatenbot.com";
+const API_V1 = "https://anocm.tomatenbot.com/api/v1";
+const API_V2 = "https://anocm.tomatenbot.com/api/v2";
+const WS_URL = "wss://anocm.tomatenbot.com";
 
 type UIMessage = ChatMessage & {
   id: string;
@@ -250,10 +250,10 @@ const AnocmUI = () => {
           prev.map((c) =>
             c.chatId === chatId
               ? {
-                ...c,
-                chatUserList: chat.chatUserList || {},
-                name: chat.name || c.name,
-              }
+                  ...c,
+                  chatUserList: chat.chatUserList || {},
+                  name: chat.name || c.name,
+                }
               : c
           )
         );
@@ -372,10 +372,10 @@ const AnocmUI = () => {
           prev.map((c) =>
             c.chatId === chatId
               ? {
-                ...c,
-                chatUserList: chat.chatUserList || {},
-                name: chat.name ?? c.name,
-              }
+                  ...c,
+                  chatUserList: chat.chatUserList || {},
+                  name: chat.name ?? c.name,
+                }
               : c
           )
         );
@@ -498,7 +498,7 @@ const AnocmUI = () => {
       return true;
     }
 
-    if ((min == -1 && max == -1) && ttl != -1) return false
+    if (min == -1 && max == -1 && ttl != -1) return false;
 
     if (ttl < min && min != -1) return false;
     if (ttl > max && max != -1) return false;
@@ -664,7 +664,7 @@ const AnocmUI = () => {
     }
     // Aktuelle TTL-Auswahl für diesen Chat holen
 
-    const selectedTTL = (messageTTL == undefined ? null : messageTTL);
+    const selectedTTL = messageTTL == undefined ? null : messageTTL;
 
     const result = await sendMessage(
       selectedChatId,
@@ -936,12 +936,12 @@ const AnocmUI = () => {
             prev.map((chat) =>
               chat.chatId === data.chatID
                 ? {
-                  ...chat,
-                  lastMessage: {
-                    content: contentText,
-                    timestamp: new Date(data.timestamp),
-                  },
-                }
+                    ...chat,
+                    lastMessage: {
+                      content: contentText,
+                      timestamp: new Date(data.timestamp),
+                    },
+                  }
                 : chat
             )
           );
@@ -1295,20 +1295,23 @@ const AnocmUI = () => {
           <div className="relative bg-gray-100 rounded-xl p-1 mb-6">
             <div className="flex relative">
               <div
-                className={`absolute top-1 bottom-1 w-1/2 bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out ${authMode === "register" ? "transform translate-x-full" : ""
-                  }`}
+                className={`absolute top-1 bottom-1 w-1/2 bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out ${
+                  authMode === "register" ? "transform translate-x-full" : ""
+                }`}
               />
 
               <button
                 onClick={() => setAuthMode("login")}
-                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${authMode === "login" ? "text-gray-900" : "text-gray-500"
-                  }`}>
+                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${
+                  authMode === "login" ? "text-gray-900" : "text-gray-500"
+                }`}>
                 Anmelden
               </button>
               <button
                 onClick={() => setAuthMode("register")}
-                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${authMode === "register" ? "text-gray-900" : "text-gray-500"
-                  }`}>
+                className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${
+                  authMode === "register" ? "text-gray-900" : "text-gray-500"
+                }`}>
                 Registrieren
               </button>
             </div>
@@ -1367,19 +1370,21 @@ const AnocmUI = () => {
       <div className="hidden md:flex w-16 bg-white border-r border-gray-200 flex-col items-center py-4 space-y-2">
         <button
           onClick={() => setActiveSection("chats")}
-          className={`p-3 rounded-full transition-colors ${activeSection === "chats"
-            ? "bg-blue-500 text-white"
-            : "hover:bg-gray-100 text-gray-500"
-            }`}>
+          className={`p-3 rounded-full transition-colors ${
+            activeSection === "chats"
+              ? "bg-blue-500 text-white"
+              : "hover:bg-gray-100 text-gray-500"
+          }`}>
           <MessageCircle className="w-5 h-5" />
         </button>
 
         <button
           onClick={() => setActiveSection("users")}
-          className={`p-3 rounded-full transition-colors ${activeSection === "users"
-            ? "bg-blue-500 text-white"
-            : "hover:bg-gray-100 text-gray-500"
-            }`}>
+          className={`p-3 rounded-full transition-colors ${
+            activeSection === "users"
+              ? "bg-blue-500 text-white"
+              : "hover:bg-gray-100 text-gray-500"
+          }`}>
           <Users className="w-5 h-5" />
         </button>
 
@@ -1400,8 +1405,9 @@ const AnocmUI = () => {
 
       {/* Chat/Users List */}
       <div
-        className={`${selectedChatId ? "hidden md:flex" : "flex"
-          } w-full md:w-80 bg-white border-r border-gray-200 flex-col pb-16 md:pb-0`}>
+        className={`${
+          selectedChatId ? "hidden md:flex" : "flex"
+        } w-full md:w-80 bg-white border-r border-gray-200 flex-col pb-16 md:pb-0`}>
         {/* Header */}
         <div className="px-4 py-3 border-b border-gray-200 bg-white">
           <div className="flex items-center justify-between">
@@ -1459,8 +1465,9 @@ const AnocmUI = () => {
                   <div
                     key={chat.chatId}
                     onClick={() => setSelectedChatId(chat.chatId)}
-                    className={`px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${selectedChatId === chat.chatId ? "bg-blue-50" : ""
-                      } ${index > 0 ? "border-t border-gray-100" : ""}`}>
+                    className={`px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                      selectedChatId === chat.chatId ? "bg-blue-50" : ""
+                    } ${index > 0 ? "border-t border-gray-100" : ""}`}>
                     <div className="flex items-center space-x-3">
                       {/* Avatar */}
                       <div
@@ -1511,8 +1518,9 @@ const AnocmUI = () => {
                 filteredUsers.map((user, index) => (
                   <div
                     key={user.userId}
-                    className={`px-4 py-3 hover:bg-gray-50 transition-colors ${index > 0 ? "border-t border-gray-100" : ""
-                      }`}>
+                    className={`px-4 py-3 hover:bg-gray-50 transition-colors ${
+                      index > 0 ? "border-t border-gray-100" : ""
+                    }`}>
                     <div className="flex items-center space-x-3">
                       {/* Avatar */}
                       <div className="relative">
@@ -1566,8 +1574,9 @@ const AnocmUI = () => {
 
       {/* Main Chat Area*/}
       <div
-        className={`${selectedChatId ? "flex" : "hidden md:flex"
-          } flex-1 flex-col pb-16 md:pb-0 w-full overflow-x-hidden`}>
+        className={`${
+          selectedChatId ? "flex" : "hidden md:flex"
+        } flex-1 flex-col pb-16 md:pb-0 w-full overflow-x-hidden`}>
         {selectedChat ? (
           <>
             {/* Chat Header */}
@@ -1642,7 +1651,7 @@ const AnocmUI = () => {
                           <select
                             value={
                               chatMessageTTLs[selectedChatId!] === undefined ||
-                                chatMessageTTLs[selectedChatId!] === null
+                              chatMessageTTLs[selectedChatId!] === null
                                 ? ""
                                 : chatMessageTTLs[selectedChatId!]
                             }
@@ -1711,7 +1720,7 @@ const AnocmUI = () => {
                         {/* Teilnehmer Liste */}
                         <div className="space-y-2 max-h-40 overflow-y-auto">
                           {selectedChat?.chatUserList &&
-                            Object.entries(selectedChat.chatUserList).length >
+                          Object.entries(selectedChat.chatUserList).length >
                             0 ? (
                             Object.entries(selectedChat.chatUserList).map(
                               ([userId, username]) => (
@@ -1787,21 +1796,24 @@ const AnocmUI = () => {
                 {messages?.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex w-full ${message.isOwn ? "justify-end" : "justify-start"
-                      }`}>
+                    className={`flex w-full ${
+                      message.isOwn ? "justify-end" : "justify-start"
+                    }`}>
                     <div
                       className={`
                         max-w-[45%] px-3 py-2 rounded-2xl text-sm break-words whitespace-pre-wrap
-                        ${message.senderId === "system"
-                          ? "bg-gray-200 text-gray-600 text-center mx-auto"
-                          : message.isOwn
+                        ${
+                          message.senderId === "system"
+                            ? "bg-gray-200 text-gray-600 text-center mx-auto"
+                            : message.isOwn
                             ? "bg-blue-500 text-white"
                             : "bg-white text-gray-900 border"
                         }`}>
                       <div>{message.content}</div>
                       <div
-                        className={`text-xs mt-1 ${message.isOwn ? "text-blue-100" : "text-gray-500"
-                          }`}>
+                        className={`text-xs mt-1 ${
+                          message.isOwn ? "text-blue-100" : "text-gray-500"
+                        }`}>
                         {formatTimestamp(message.timestamp)}
                       </div>
                     </div>
@@ -1826,7 +1838,10 @@ const AnocmUI = () => {
                 </div>
                 <textarea
                   value={messageTTL}
-                  onChange={(e) => { setMessageTTL(e.target.value); console.log(e.target.value); }}
+                  onChange={(e) => {
+                    setMessageTTL(e.target.value);
+                    console.log(e.target.value);
+                  }}
                   onKeyPress={handleKeyPress}
                   placeholder="TTL (in seconds)"
                   className="w-35 px-3 py-2 border border-gray-300 rounded-full resize-none focus:outline-none focus:border-blue-500 text-sm"
@@ -1924,8 +1939,9 @@ const AnocmUI = () => {
               setActiveSection("chats");
               setSelectedChatId(null);
             }}
-            className={`relative flex flex-col items-center px-4 py-2 ${activeSection === "chats" ? "text-blue-500" : "text-gray-500"
-              }`}>
+            className={`relative flex flex-col items-center px-4 py-2 ${
+              activeSection === "chats" ? "text-blue-500" : "text-gray-500"
+            }`}>
             <MessageCircle className="w-6 h-6 mb-1" />
             <span className="text-xs">Chats</span>
             {chats.reduce((total, chat) => total + chat.unreadCount, 0) > 0 && (
@@ -1942,8 +1958,9 @@ const AnocmUI = () => {
               setActiveSection("users");
               setSelectedChatId(null);
             }}
-            className={`flex flex-col items-center px-4 py-2 ${activeSection === "users" ? "text-blue-500" : "text-gray-500"
-              }`}>
+            className={`flex flex-col items-center px-4 py-2 ${
+              activeSection === "users" ? "text-blue-500" : "text-gray-500"
+            }`}>
             <Users className="w-6 h-6 mb-1" />
             <span className="text-xs">Kontakte</span>
           </button>
