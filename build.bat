@@ -13,6 +13,20 @@ set "DST_DIR=%SERVER_DIR%\dist"
 set "SRC_ASSETS=%SERVER_DIR%\dist\assets"
 set "DST_ASSETS=%SERVER_DIR%\public\assets"
 
+if "%1"=="help" (
+   echo Usage: ^(.\^)build.bat option[help^|start^|start-local ?^<port^>]
+   echo.
+   echo Installs the dependencies, compiles TypeScript files, builds the client, and moves the built files to the server directory.
+   echo.
+   echo Options:
+   echo   help        - Show this help message.
+   echo   start       - In addition: Start the server.
+   echo   start-local port - In addition: Start the server locally ^(index_local.js^). If a port is specified, the local server will use that port.
+   echo.
+   pause
+   goto :end
+)
+
 REM Step 1: Install dependencies
 echo Installing dependencies...
 call npm install
@@ -23,7 +37,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 REM Step 2: Build shared TypeScript
-echo Running tsc in shared...
+echo Running 'tsc' in shared...
 pushd "%SHARED_DIR%"
 call tsc
 if %ERRORLEVEL% NEQ 0 (
@@ -34,7 +48,7 @@ if %ERRORLEVEL% NEQ 0 (
 popd
 
 REM Step 3: Build server TypeScript
-echo Running tsc in server...
+echo Running 'tsc' in server...
 pushd "%SERVER_DIR%"
 call tsc
 if %ERRORLEVEL% NEQ 0 (
@@ -45,7 +59,7 @@ if %ERRORLEVEL% NEQ 0 (
 popd
 
 REM Step 4: Build client
-echo Running npm run build in client...
+echo Running 'npm run build' in client...
 pushd "%CLIENT_DIR%"
 call npm run build
 if %ERRORLEVEL% NEQ 0 (
@@ -87,7 +101,26 @@ if "%1"=="start" (
         exit /b %ERRORLEVEL%
     )
     popd
-) else (
-    echo To start the server, run: 'node .' in %SERVER_DIR%
+    goto :end
+) 
+if "%1"=="start-local" (
+    echo Starting server locally...
+    pushd "%SERVER_DIR%"
+    call node index_local.js "%2"
+    if %ERRORLEVEL% NEQ 0 (
+        echo Error: Failed to start the local server.
+        pause
+        exit /b %ERRORLEVEL%
+    )
+    popd
+    goto :end
 )
+
+echo.
+echo To start the server, run: 'node .' in %SERVER_DIR%
+echo If you want to start the server locally, use 'node index_local.js' instead of 'node .'.
+echo.
+
 pause
+:end
+exit /b 0
