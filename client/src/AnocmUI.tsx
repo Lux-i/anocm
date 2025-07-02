@@ -42,7 +42,7 @@ const WS_URL = "wss://minecraft.tomatenbot.com";
 
 const API_V1 = "http://localhost:8080/api/v1";
 const API_V2 = "http://localhost:8080/api/v2";
-const WS_URL = "wss://localhost:"
+const WS_URL = "wss://localhost:8080"
 
 type UIMessage = ChatMessage & {
   id: string;
