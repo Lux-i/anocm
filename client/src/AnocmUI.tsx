@@ -1235,7 +1235,7 @@ const AnocmUI = () => {
   // Login Screen
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen min-w-screen bg-white dark:bg-stone-900 flex items-center justify-center p-4">
+      <div className="min-h-screen min-w-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="max-w-sm w-full space-y-6">
           <div className="text-center mb-8">
             <div className="w-32 h-32 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 dark:bg-white">
@@ -1308,10 +1308,10 @@ const AnocmUI = () => {
           )}
 
           {/*Tab switcher */}
-          <div className="relative bg-gray-100 dark:bg-stone-800 rounded-xl p-1 mb-6">
+          <div className="relative bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6">
             <div className="flex relative">
               <div
-                className={`absolute top-1 bottom-1 w-1/2 bg-white dark:bg-stone-900 rounded-lg shadow-sm transition-transform duration-300 ease-out ${authMode === "register" ? "transform translate-x-full" : ""
+                className={`absolute top-1 bottom-1 w-1/2 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-transform duration-300 ease-out ${authMode === "register" ? "transform translate-x-full" : ""
                   }`}
               />
 
@@ -1368,13 +1368,13 @@ const AnocmUI = () => {
 
           <button
             onClick={() => handleLogin(true)}
-            className="w-full bg-white dark:bg-stone-900 border-2 border-gray-200 dark:border-stone-800 text-gray-700 dark:text-gray-300 py-4 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-stone-950 transition-all duration-200">
+            className="w-full bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 py-4 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-950 transition-all duration-200">
             Anonym fortfahren
           </button>
         </div>
         <div className="fixed bottom-4 right-4">
           <button
-            onClick={toggleDarkMode}
+            onClick={() => toggleDarkMode()}
             className="p-3 bg-gray-700 dark:bg-gray-200 text-gray-200 dark:text-gray-800 rounded-full shadow-lg hover:bg-gray-600 dark:hover:bg-gray-300 transition-colors"
             title="Toggle Light/Dark Mode"
           >
@@ -1387,14 +1387,14 @@ const AnocmUI = () => {
 
   // Main Chat Interface
   return (
-    <div className="flex h-screen w-screen bg-white">
+    <div className="flex h-screen w-screen bg-white dark:bg-gray-900">
       {/* Desktop Sidebar*/}
-      <div className="hidden md:flex w-16 bg-white border-r border-gray-200 flex-col items-center py-4 space-y-2">
+      <div className="hidden md:flex w-16 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex-col items-center py-4 space-y-2">
         <button
           onClick={() => setActiveSection("chats")}
           className={`p-3 rounded-full transition-colors ${activeSection === "chats"
             ? "bg-blue-500 text-white"
-            : "hover:bg-gray-100 text-gray-500"
+            : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white"
             }`}>
           <MessageCircle className="w-5 h-5" />
         </button>
@@ -1403,7 +1403,7 @@ const AnocmUI = () => {
           onClick={() => setActiveSection("users")}
           className={`p-3 rounded-full transition-colors ${activeSection === "users"
             ? "bg-blue-500 text-white"
-            : "hover:bg-gray-100 text-gray-500"
+            : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white"
             }`}>
           <Users className="w-5 h-5" />
         </button>
@@ -1411,14 +1411,21 @@ const AnocmUI = () => {
         <div className="flex-1" />
 
         <button
+          onClick={toggleDarkMode}
+          className="p-3 bg-gray-700 dark:bg-gray-200 text-gray-200 dark:text-gray-800 rounded-full shadow-lg hover:bg-gray-600 dark:hover:bg-gray-300 transition-colors"
+          title="Toggle Light/Dark Mode"
+        >
+          {isDarkMode ? <Moon /> : <Sun />}
+        </button>
+        <button
           onClick={() => setShowSettings(true)}
-          className="p-3 rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
+          className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white transition-colors">
           <Settings className="w-5 h-5" />
         </button>
 
         <button
           onClick={handleLogout}
-          className="p-3 rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
+          className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white transition-colors">
           <LogOut className="w-5 h-5" />
         </button>
       </div>
@@ -1426,19 +1433,19 @@ const AnocmUI = () => {
       {/* Chat/Users List */}
       <div
         className={`${selectedChatId ? "hidden md:flex" : "flex"
-          } w-full md:w-80 bg-white border-r border-gray-200 flex-col pb-16 md:pb-0`}>
+          } w-full md:w-80 bg-white dark:bg-gray-700 border-r border-gray-200 flex-col pb-16 md:pb-0`}>
         {/* Header */}
-        <div className="px-4 py-3 border-b border-gray-200 bg-white">
+        <div className="px-4 py-3 border-b border-gray-200 bg-white dark:bg-gray-900">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-gray-900">
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
               {activeSection === "chats" ? "Anocm" : "Kontakte"}
             </h1>
             <div className="flex items-center space-x-1">
               <button
                 onClick={() => setShowCreateChat(true)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white rounded-full transition-colors"
                 title="Neuen Chat erstellen">
-                <Edit className="w-5 h-5 text-gray-600" />
+                <Edit className="w-5 h-5" />
               </button>
 
               {/* Refresh Button */}
@@ -1447,22 +1454,22 @@ const AnocmUI = () => {
                   console.log("🔄 Lade Chats manuell neu...");
                   refreshChats();
                 }}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white rounded-full transition-colors"
                 title="Chats aktualisieren">
-                <RefreshCcw className="w-5 h-5 text-gray-600" />
+                <RefreshCcw className="w-5 h-5" />
               </button>
 
               <button
                 onClick={() => setShowSettings(true)}
-                className="md:hidden p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <Settings className="w-5 h-5 text-gray-600" />
+                className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:hover:text-white rounded-full transition-colors">
+                <Settings className="w-5 h-5" />
               </button>
             </div>
           </div>
         </div>
 
         {/* Search */}
-        <div className="px-4 py-2 bg-white border-b border-gray-100">
+        <div className="px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -1476,7 +1483,7 @@ const AnocmUI = () => {
         </div>
 
         {/* List Content */}
-        <div className="flex-1 overflow-y-auto bg-white">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
           {activeSection === "chats" ? (
             <>
               {filteredChats.length > 0 ? (
@@ -1484,8 +1491,8 @@ const AnocmUI = () => {
                   <div
                     key={chat.chatId}
                     onClick={() => setSelectedChatId(chat.chatId)}
-                    className={`px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${selectedChatId === chat.chatId ? "bg-blue-50" : ""
-                      } ${index > 0 ? "border-t border-gray-100" : ""}`}>
+                    className={`px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${selectedChatId === chat.chatId ? "bg-blue-50 dark:bg-blue-950" : ""
+                      } ${index > 0 ? "border-t border-gray-100 dark:border-gray-700" : ""}`}>
                     <div className="flex items-center space-x-3">
                       {/* Avatar */}
                       <div
@@ -1499,17 +1506,17 @@ const AnocmUI = () => {
                       {/* Chat Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <h3 className="text-sm font-medium text-gray-900 truncate">
+                          <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {chat.name}
                           </h3>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             {chat.lastMessage
                               ? formatTimestamp(chat.lastMessage.timestamp)
                               : ""}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-600 truncate">
+                          <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
                             {decryptedLastMessages[chat.chatId] ||
                               "Keine Nachrichten"}
                           </p>
@@ -1524,7 +1531,7 @@ const AnocmUI = () => {
                   </div>
                 ))
               ) : (
-                <div className="p-8 text-center text-gray-500">
+                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                   <p>{searchTerm ? "Keine Chats gefunden" : "Keine Chats"}</p>
                 </div>
               )}
@@ -1596,13 +1603,13 @@ const AnocmUI = () => {
         {selectedChat ? (
           <>
             {/* Chat Header */}
-            <div className="px-4 py-3 bg-white border-b border-gray-200">
+            <div className="px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={() => setSelectedChatId(null)}
-                    className="md:hidden p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <ArrowLeft className="w-5 h-5 text-gray-600" />
+                    className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+                    <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                   </button>
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-sm ${getAvatarColor(
@@ -1612,10 +1619,10 @@ const AnocmUI = () => {
                     {getInitials(selectedChat.name)}
                   </div>
                   <div>
-                    <h2 className="text-sm font-medium text-gray-900">
+                    <h2 className="text-sm font-medium text-gray-900 dark:text-white">
                       {selectedChat.name}
                     </h2>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {selectedChat.isAnonymous
                         ? "Anonymer Chat"
                         : "Zuletzt aktiv vor kurzem"}
@@ -1627,32 +1634,32 @@ const AnocmUI = () => {
                 <div className="relative">
                   <button
                     onClick={handleOpenChatMenu}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors group">
                     <div className="flex flex-col space-y-1">
-                      <div className="w-1 h-1 bg-gray-600 rounded-full" />
-                      <div className="w-1 h-1 bg-gray-600 rounded-full" />
-                      <div className="w-1 h-1 bg-gray-600 rounded-full" />
+                      <div className="w-1 h-1 bg-gray-600 dark:group-hover:bg-white rounded-full" />
+                      <div className="w-1 h-1 bg-gray-600 dark:group-hover:bg-white rounded-full" />
+                      <div className="w-1 h-1 bg-gray-600 dark:group-hover:bg-white rounded-full" />
                     </div>
                   </button>
 
                   {showChatMenu && (
-                    <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-64 z-10">
-                      <div className="text-xs text-gray-500 mb-3 px-1 font-medium">
+                    <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-3 min-w-64 z-10">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-3 px-1 font-medium">
                         Chat-Verwaltung
                       </div>
 
                       {/* Chat TTL Info */}
-                      <div className="px-3 py-2 bg-gray-50 rounded-lg mb-3">
+                      <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg mb-3">
                         <div className="flex items-center space-x-2 mb-1">
-                          <Clock className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-700">
+                          <Clock className="w-4 h-4 text-gray-600 dark:text-white" />
+                          <span className="text-sm font-medium text-gray-700 dark:text-white">
                             {chatSettings
                               ? `TTL: ${formatTTL(chatSettings.defaultTTL)}`
                               : "TTL: Standard"}
                           </span>
                         </div>
                         {chatSettings && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-400">
                             Min: {formatTTL(chatSettings.minTTL)} - Max:{" "}
                             {formatTTL(chatSettings.maxTTL)}
                           </div>
@@ -1661,7 +1668,7 @@ const AnocmUI = () => {
 
                       {chatSettings && (
                         <div className="mb-4">
-                          <label className="text-xs text-gray-500 font-medium block mb-1">
+                          <label className="text-xs text-gray-500 dark:text-gray-400 font-medium block mb-1">
                             Standard Selbstzerstörungszeit für neue Nachrichten
                           </label>
                           <select
@@ -1688,7 +1695,7 @@ const AnocmUI = () => {
                                   : `${ttlValue} Sekunden`
                               );
                             }}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                            className="w-full px-2 py-1 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 dark:text-white rounded text-sm">
                             {/* Standard-Option */}
                             <option value="">
                               Standard ({formatTTL(chatSettings.defaultTTL)})
@@ -1713,9 +1720,9 @@ const AnocmUI = () => {
                       )}
 
                       {/* Teilnehmer Verwaltung */}
-                      <div className="border-t pt-3">
+                      <div className="border-t dark:border-gray-300 pt-3">
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-medium text-gray-700">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             👥 Teilnehmer (
                             {selectedChat?.chatUserList
                               ? Object.keys(selectedChat.chatUserList).length
@@ -1727,7 +1734,7 @@ const AnocmUI = () => {
                               setShowAddUser(true);
                               setShowChatMenu(false);
                             }}
-                            className="flex items-center space-x-1 px-2 py-1 text-blue-500 hover:bg-blue-50 rounded transition-colors text-xs">
+                            className="flex items-center space-x-1 px-2 py-1 text-blue-500 dark:hover:bg-gray-700 hover:bg-blue-50 rounded transition-colors text-xs">
                             <UserPlus className="w-3 h-3" />
                             <span>Hinzufügen</span>
                           </button>
@@ -1742,7 +1749,7 @@ const AnocmUI = () => {
                               ([userId, username]) => (
                                 <div
                                   key={userId}
-                                  className="flex items-center justify-between py-2 px-2 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors">
+                                  className="flex items-center justify-between py-2 px-2 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                                   <div className="flex items-center space-x-2">
                                     <div
                                       className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium ${getAvatarColor(
@@ -1752,7 +1759,7 @@ const AnocmUI = () => {
                                       {getInitials(username)}
                                     </div>
                                     <div className="flex flex-col">
-                                      <span className="text-sm font-medium text-gray-700">
+                                      <span className="text-sm font-medium text-gray-700 dark:text-white">
                                         {username}
                                         {userId === currentUser?.userId && (
                                           <span className="text-blue-600 text-xs ml-1">
@@ -1760,7 +1767,7 @@ const AnocmUI = () => {
                                           </span>
                                         )}
                                       </span>
-                                      <span className="text-xs text-gray-500">
+                                      <span className="text-xs text-gray-500 dark:text-gray-400">
                                         {userId.slice(0, 8)}...
                                       </span>
                                     </div>
@@ -1779,7 +1786,7 @@ const AnocmUI = () => {
                               )
                             )
                           ) : (
-                            <div className="text-gray-500 text-sm italic py-4 text-center">
+                            <div className="text-gray-500 dark:text-gray-400 text-sm italic py-4 text-center">
                               Keine Teilnehmer gefunden
                             </div>
                           )}
@@ -1787,10 +1794,10 @@ const AnocmUI = () => {
                       </div>
 
                       {/* Menü schließen */}
-                      <div className="border-t pt-3 mt-3">
+                      <div className="border-t dark:border-gray-300 pt-3 mt-3">
                         <button
                           onClick={() => setShowChatMenu(false)}
-                          className="w-full text-center py-2 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+                          className="w-full text-center py-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors">
                           Schließen
                         </button>
                       </div>
@@ -1807,7 +1814,7 @@ const AnocmUI = () => {
             )}
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 bg-gray-50 w-full">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 bg-gray-50 dark:bg-gray-800 w-full">
               <div className="space-y-2">
                 {messages?.map((message) => (
                   <div
@@ -1836,7 +1843,7 @@ const AnocmUI = () => {
             </div>
 
             {/* Message Input */}
-            <div className="bg-white border-t border-gray-200 px-4 py-4">
+            <div className="bg-white dark:bg-gray-900 border-t border-gray-200 px-4 py-4">
               <div className="flex align-items-center space-x-2">
                 <div className="flex-1">
                   <textarea
@@ -1844,7 +1851,7 @@ const AnocmUI = () => {
                     onChange={(e) => setMessageInput(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="send"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-full resize-none focus:outline-none focus:border-blue-500 text-sm"
+                    className="w-full px-3 py-2 dark:bg-white border border-gray-300 rounded-full resize-none focus:outline-none focus:border-blue-500 text-sm"
                     rows={1}
                     style={{ minHeight: "36px", maxHeight: "100px" }}
                   />
@@ -1854,14 +1861,14 @@ const AnocmUI = () => {
                   onChange={(e) => { setMessageTTL(e.target.value); console.log(e.target.value); }}
                   onKeyPress={handleKeyPress}
                   placeholder="TTL (in seconds)"
-                  className="w-35 px-3 py-2 border border-gray-300 rounded-full resize-none focus:outline-none focus:border-blue-500 text-sm"
+                  className="w-35 px-3 py-2 dark:bg-white border border-gray-300 rounded-full resize-none focus:outline-none focus:border-blue-500 text-sm"
                   rows={1}
                   style={{ minHeight: "36px", maxHeight: "100px" }}
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={!messageInput.trim()}
-                  className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+                  className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-400 dark:disabled:text-gray-500 disabled:cursor-not-allowed transition-colors">
                   <Send className="h-[100%]" />
                 </button>
               </div>
@@ -1869,7 +1876,7 @@ const AnocmUI = () => {
           </>
         ) : (
           // Empty State
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800">
             <div className="text-center max-w-sm">
               <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
@@ -1925,10 +1932,10 @@ const AnocmUI = () => {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 Willkommen bei AnoCM
               </h3>
-              <p className="text-gray-600 text-sm mb-6">
+              <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
                 Wählen Sie eine Unterhaltung aus, um loszulegen.
               </p>
               <button
@@ -1942,7 +1949,7 @@ const AnocmUI = () => {
       </div>
 
       {/* Mobile Bottom Navigation*/}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 min-w-scren">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 px-4 py-2 min-w-scren">
         <div className="flex justify-around items-center">
           <button
             onClick={() => {
@@ -1984,9 +1991,9 @@ const AnocmUI = () => {
 
       {/* Create Chat Modal */}
       {showCreateChat && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black dark:bg-gray-950 bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-6 w-full max-w-sm">
+            <h3 className="text-lg font-medium text-gray-900 text-white mb-4">
               Neue Nachricht
             </h3>
 
@@ -2013,19 +2020,19 @@ const AnocmUI = () => {
                 placeholder="User ID"
                 value={newChatUserId}
                 onChange={(e) => setNewChatUserId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
               />
 
               {/* TTL Preset Auswahl */}
               <div>
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   🕐 Verschwindende Nachrichten:
                 </label>
 
                 <div>
                   <label
                     htmlFor="minTTL"
-                    className="text-sm font-medium text-gray-700">
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Min:
                   </label>
 
@@ -2035,7 +2042,7 @@ const AnocmUI = () => {
                     onChange={(e) =>
                       setSelectedMinTTL(parseInt(e.target.value))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
+                    className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
                     {DROPDOWN_TTL_PRESETS.map((preset) => (
                       <option key={preset.value} value={preset.value}>
                         {preset.text}
@@ -2047,7 +2054,7 @@ const AnocmUI = () => {
                 <div>
                   <label
                     htmlFor="maxTTL"
-                    className="text-sm font-medium text-gray-700">
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Max:
                   </label>
 
@@ -2057,7 +2064,7 @@ const AnocmUI = () => {
                     onChange={(e) =>
                       setSelectedMaxTTL(parseInt(e.target.value))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
+                    className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
                     {DROPDOWN_TTL_PRESETS.map((preset) => (
                       <option key={preset.value} value={preset.value}>
                         {preset.text}
@@ -2069,7 +2076,7 @@ const AnocmUI = () => {
                 <div>
                   <label
                     htmlFor="defaultTTL"
-                    className="text-sm font-medium text-gray-700">
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Standard:
                   </label>
 
@@ -2079,7 +2086,7 @@ const AnocmUI = () => {
                     onChange={(e) =>
                       setSelectedDefaultTTL(parseInt(e.target.value))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
+                    className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
                     {DROPDOWN_TTL_PRESETS.map((preset) => (
                       <option key={preset.value} value={preset.value}>
                         {preset.text}
@@ -2093,7 +2100,7 @@ const AnocmUI = () => {
                 <button
                   onClick={handleCreateChat}
                   disabled={!newChatUserId}
-                  className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors text-sm">
+                  className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-500 dark:disabled:text-gray-700 transition-colors text-sm">
                   Chat starten
                 </button>
                 <button
@@ -2101,7 +2108,7 @@ const AnocmUI = () => {
                     setShowCreateChat(false);
                     setNewChatUserId("");
                   }}
-                  className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                  className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-red-500 transition-colors text-sm">
                   Abbrechen
                 </button>
               </div>
@@ -2112,43 +2119,43 @@ const AnocmUI = () => {
 
       {/* Settings Modal*/}
       {showSettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black dark:bg-gray-950 bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-sm">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
               Einstellungen
             </h3>
 
             <div className="space-y-4">
               <div className="text-sm">
-                <div className="text-gray-500">Benutzer</div>
-                <div className="font-medium">{currentUser?.username}</div>
+                <div className="text-gray-500 dark:text-gray-400">Benutzer</div>
+                <div className="font-medium dark:text-white">{currentUser?.username}</div>
               </div>
               <div className="text-sm">
-                <div className="text-gray-500">Deine User ID</div>
-                <div className="font-mono text-xs bg-gray-100 p-2 rounded border break-all">
+                <div className="text-gray-500 dark:text-gray-400">Deine User ID</div>
+                <div className="font-mono text-xs bg-gray-100 dark:bg-gray-700 dark:text-white p-2 rounded border break-all">
                   {currentUser?.userId}
                 </div>
                 {currentUser?.isAnonymous && (
-                  <div className="text-xs text-blue-600 mt-1">
+                  <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                     Teile diese ID, damit andere dich zu Chats hinzufügen können
                   </div>
                 )}
               </div>
               <div className="text-sm">
-                <div className="text-gray-500">Status</div>
-                <div className="font-medium">
+                <div className="text-gray-500 dark:text-gray-400">Status</div>
+                <div className="font-medium dark:text-white">
                   {currentUser?.isAnonymous ? "Anonym" : "Registriert"}
                 </div>
               </div>
 
               {/* Teilnehmer-Liste mit Entfernen-Buttons */}
-              <div className="text-sm font-medium">Teilnehmer:</div>
+              <div className="text-sm font-medium dark:text-gray-400">Teilnehmer:</div>
               {selectedChat?.chatUserList ? (
                 Object.entries(selectedChat.chatUserList).map(
                   ([userId, username]) => (
                     <div
                       key={userId}
-                      className="flex items-center justify-between">
+                      className="flex items-center dark:text-white justify-between">
                       <span>
                         {username}
                         {userId === currentUser?.userId && " (Du)"}
@@ -2171,8 +2178,31 @@ const AnocmUI = () => {
                   )
                 )
               ) : (
-                <div className="text-gray-500 italic">Keine Teilnehmer</div>
+                <div className="text-gray-500 dark:text-white italic">Keine Teilnehmer</div>
               )}
+
+              <div className="text-sm font-medium dark:text-gray-400">Farbschema</div>
+              <div className="relative bg-gray-100 dark:bg-gray-700 rounded-xl p-1 mb-6">
+                <div className="flex relative">
+                  <div
+                    className={`absolute top-1 bottom-1 w-1/2 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-transform duration-300 ease-out ${isDarkMode === false ? "transform translate-x-full" : ""
+                      }`}
+                  />
+
+                  <button
+                    onClick={() => toggleDarkMode()}
+                    className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${isDarkMode === false ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
+                      }`}>
+                    Dunkel
+                  </button>
+                  <button
+                    onClick={() => toggleDarkMode()}
+                    className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${isDarkMode === true ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
+                      }`}>
+                    Hell
+                  </button>
+                </div>
+              </div>
 
               <button
                 onClick={() => setShowSettings(false)}
@@ -2229,15 +2259,6 @@ const AnocmUI = () => {
           </div>
         </div>
       )}
-      <div className="fixed bottom-4 right-4">
-        <button
-          onClick={toggleDarkMode}
-          className="p-3 bg-gray-700 dark:bg-gray-200 text-gray-200 dark:text-gray-800 rounded-full shadow-lg hover:bg-gray-600 dark:hover:bg-gray-300 transition-colors"
-          title="Toggle Light/Dark Mode"
-        >
-          {isDarkMode ? <Moon /> : <Sun />}
-        </button>
-      </div>
     </div>
   );
 };
