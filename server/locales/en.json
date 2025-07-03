@@ -1,0 +1,19 @@
+{
+  "authPage": {
+    "anocm": "Anonymous Chat Messenger",
+    "or": "or",
+    "tabSwitcher": {
+      "login": "Login",
+      "register": "Registration"
+    },
+    "buttons": {
+      "login": "Login",
+      "register": "Register",
+      "anonymous": "Continue Anonymously"
+    },
+    "inputField": {
+      "username": "Username",
+      "password": "Password"
+    }
+  }
+}

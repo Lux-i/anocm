@@ -93,6 +93,10 @@ app.engine("html", require("ejs").renderFile);
 app.set("views", __dirname + "/html");
 app.set("view engine", "ejs");
 
+//#region locales Endpoints
+app.use("/locales", express.static(__dirname + "/locales"));
+//#endregion
+
 //#region API Endpoints
 const v1Router = require("./routers/v1").default;
 app.use("/api/v1", v1Router);

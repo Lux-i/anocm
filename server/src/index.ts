@@ -72,6 +72,10 @@ app.set("views", __dirname + "/html");
 app.set("view engine", "ejs");
 app.set("trust proxy", 1);
 
+//#region locales Endpoints
+app.use("/locales", express.static(__dirname + "/locales"));
+//#endregion
+
 //#region API Endpoints
 const v1Router = require("./routers/v1").default;
 app.use("/api/v1", v1Router);
