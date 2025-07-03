@@ -15,5 +15,55 @@
       "username": "Benutzername",
       "password": "Kennwort"
     }
+  },
+  "languageSelect": {
+    "title": "Sprache auswählen:"
+  },
+  "chatList": {
+    "contacts": "Kontakte",
+    "createNewChat": "Neuen Chat erstellen",
+    "refreshChats": "Chats aktualisieren",
+    "search": "Suchen...",
+    "noNewMessages": "Keine neuen Nachrichten...",
+    "noChatsFound": "Keine Chats gefunden.",
+    "noChats": "Keine Chats.",
+    "online": "Online",
+    "offline": "Offline",
+    "noContactsFound": "Keine Kontakte gefunden...",
+    "noContacts": "Keine Kontakte.",
+    "anonymousChat": "Anonymer Chat",
+    "recentlyActive": "Vor kurzem aktiv"
+  },
+  "chatMenu": {
+    "manageChat": "Chat-Verwaltung",
+    "ttlInfo": {
+      "pre": "Standard-Lebensdauer für neue Nachrichten:",
+      "post": "Gilt für alle neuen Nachrichten, bis du es änderst.",
+      "standard": "Standard"
+    }
+  },
+  "ttlPresets": {
+    "broadcast": "Broadcast",
+    "fiveMin": "5 Minuten",
+    "halfHour": "30 Minuten",
+    "oneHour": "1 Stunde",
+    "oneDay": "1 Tag",
+    "oneWeek": "1 Woche",
+    "oneMonth": "1 Monat",
+    "permanent": "Dauerhaft"
+  },
+  "timeUnits": {
+    "second_one": "1 Sekunde",
+    "second_other": "{{count}} Sekunden",
+    "minute_one": "1 Minute",
+    "minute_other": "{{count}} Minuten",
+    "hour_one": "1 Stunde",
+    "hour_other": "{{count}} Stunden",
+    "day_one": "1 Tag",
+    "day_other": "{{count}} Tage",
+    "week_one": "1 Woche",
+    "week_other": "{{count}} Wochen",
+    "month_one": "1 Monat",
+    "month_other": "{{count}} Monate"
   }
 }

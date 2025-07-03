@@ -19,12 +19,14 @@ import {
   Sun,
   ChevronDown,
   ChevronUp,
+  Languages,
 } from "lucide-react";
 import { DatabaseResponse, User, Chat, ChatMessage } from "@anocm/shared/dist";
 import { WsMessage } from "@anocm/shared/dist";
 import { Encryption } from "./Encryption";
 import { UUID } from "crypto";
 import { useTranslation } from "react-i18next";
+import { t } from "i18next";
 
 //CHANGE TO IMPORT
 enum Action {
@@ -37,9 +39,17 @@ enum Action {
   CK_REQ = "chatkeyreq", //Chat key request
 }
 
-const API_V1 = "https://anocm.tomatenbot.com/api/v1";
-const API_V2 = "https://anocm.tomatenbot.com/api/v2";
-const WS_URL = "wss://anocm.tomatenbot.com";
+const START_LOCAL = true;
+
+const API_V1 = START_LOCAL
+  ? "http://localhost:8080/api/v1"
+  : "https://anocm.tomatenbot.com/api/v1";
+const API_V2 = START_LOCAL
+  ? "http://localhost:8080/api/v2"
+  : "https://anocm.tomatenbot.com/api/v2";
+const WS_URL = START_LOCAL
+  ? "wss://localhost:8080"
+  : "wss://anocm.tomatenbot.com";
 
 type UIMessage = ChatMessage & {
   id: string;
@@ -48,17 +58,14 @@ type UIMessage = ChatMessage & {
 };
 
 const DROPDOWN_TTL_PRESETS = [
-  {
-    value: 0,
-    text: "Broadcast",
-  },
-  { value: 300, text: "5 Minuten" },
-  { value: 1800, text: "30 Minuten" },
-  { value: 3600, text: "1 Stunde" },
-  { value: 86400, text: "1 Tag" },
-  { value: 604800, text: "1 Woche" },
-  { value: 2592000, text: "1 Monat" },
-  { value: -1, text: "Permanent" },
+  { value: 0, text: t("ttlPresets.broadcast") },
+  { value: 300, text: t("ttlPresets.fiveMin") },
+  { value: 1800, text: t("ttlPresets.halfHour") },
+  { value: 3600, text: t("ttlPresets.oneHour") },
+  { value: 86400, text: t("ttlPresets.oneDay") },
+  { value: 604800, text: t("ttlPresets.oneWeek") },
+  { value: 2592000, text: t("ttlPresets.oneMonth") },
+  { value: -1, text: t("ttlPresets.broadcast") },
 ];
 
 const AnocmUI = () => {
@@ -99,6 +106,7 @@ const AnocmUI = () => {
   // Modal States
   const [showCreateChat, setShowCreateChat] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showLanguages, setShowLanguages] = useState(false);
   const [newChatUserId, setNewChatUserId] = useState("");
   const [showChatMenu, setShowChatMenu] = useState(false);
   const [chatSettings, setChatSettings] = useState<{
@@ -183,12 +191,14 @@ const AnocmUI = () => {
   };
 
   const formatTTL = (seconds: number): string => {
-    if (seconds < 0) return "Permanent";
-    if (seconds === 0) return "Broadcast";
-    if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-    return `${Math.floor(seconds / 86400)}d`;
+    if (seconds < 0) return t("ttlPresets.permanent");
+    if (seconds === 0) return t("ttlPresets.broadcast");
+    if (seconds < 60) return t("timeUnits.second", { count: seconds });
+    if (seconds < 3600)
+      return t("timeUnits.minute", { count: Math.floor(seconds / 60) });
+    if (seconds < 86400)
+      return t("timeUnits.hour", { count: Math.floor(seconds / 3600) });
+    return t("timeUnits.day", { count: Math.floor(seconds / 86400) });
   };
 
   const cleanTTL = (val) => {
@@ -1482,6 +1492,12 @@ const AnocmUI = () => {
           {isDarkMode ? <Moon /> : <Sun />}
         </button>
         <button
+          onClick={() => setShowLanguages(true)}
+          className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white transition-colors"
+        >
+          <Languages />
+        </button>
+        <button
           onClick={() => setShowSettings(true)}
           className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white transition-colors"
         >
@@ -1506,13 +1522,13 @@ const AnocmUI = () => {
         <div className="px-4 py-3 border-b border-gray-200 bg-white dark:bg-gray-900">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {activeSection === "chats" ? "Anocm" : "Kontakte"}
+              {activeSection === "chats" ? "Anocm" : t("chatList.contacts")}
             </h1>
             <div className="flex items-center space-x-1">
               <button
                 onClick={() => setShowCreateChat(true)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white rounded-full transition-colors"
-                title="Neuen Chat erstellen"
+                title={t("chatList.createNewChat")}
               >
                 <Edit className="w-5 h-5" />
               </button>
@@ -1524,7 +1540,7 @@ const AnocmUI = () => {
                   refreshChats();
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white rounded-full transition-colors"
-                title="Chats aktualisieren"
+                title={t("chatList.refreshChats")}
               >
                 <RefreshCcw className="w-5 h-5" />
               </button>
@@ -1545,7 +1561,7 @@ const AnocmUI = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Suchen"
+              placeholder={t("chatList.search")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-gray-100 border-0 rounded-full focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-500 text-sm"
@@ -1598,7 +1614,7 @@ const AnocmUI = () => {
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
                             {decryptedLastMessages[chat.chatId] ||
-                              "Keine Nachrichten"}
+                              t("chatList.noNewMessages")}
                           </p>
                           {chat.unreadCount > 0 && (
                             <span className="inline-flex items-center justify-center min-w-5 h-5 px-1 text-xs font-medium text-white bg-blue-500 rounded-full ml-2">
@@ -1612,7 +1628,11 @@ const AnocmUI = () => {
                 ))
               ) : (
                 <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  <p>{searchTerm ? "Keine Chats gefunden" : "Keine Chats"}</p>
+                  <p>
+                    {searchTerm
+                      ? t("chatList.noChatsFound")
+                      : t("chatList.noChats")}
+                  </p>
                 </div>
               )}
             </>
@@ -1650,8 +1670,8 @@ const AnocmUI = () => {
                         </h3>
                         <p className="text-sm text-gray-500">
                           {user.isOnline
-                            ? "Online"
-                            : "Zuletzt aktiv vor kurzem"}
+                            ? t("chatList.online")
+                            : t("chatList.offline")}
                         </p>
                       </div>
 
@@ -1671,7 +1691,9 @@ const AnocmUI = () => {
               ) : (
                 <div className="p-8 text-center text-gray-500">
                   <p>
-                    {searchTerm ? "Keine Kontakte gefunden" : "Keine Kontakte"}
+                    {searchTerm
+                      ? t("chatList.noContactsFound")
+                      : t("chatList.noContacts")}
                   </p>
                 </div>
               )}
@@ -1712,8 +1734,8 @@ const AnocmUI = () => {
                     </h2>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {selectedChat.isAnonymous
-                        ? "Anonymer Chat"
-                        : "Zuletzt aktiv vor kurzem"}
+                        ? t("chatList.anonymousChat")
+                        : t("chatList.recentlyActive")}
                     </p>
                   </div>
                 </div>
@@ -1734,7 +1756,7 @@ const AnocmUI = () => {
                   {showChatMenu && (
                     <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-3 min-w-64 z-10">
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-3 px-1 font-medium">
-                        Chat-Verwaltung
+                        {t("chatMenu.manageChat")}
                       </div>
 
                       {/* Chat TTL Info */}
@@ -1758,7 +1780,7 @@ const AnocmUI = () => {
                       {chatSettings && (
                         <div className="mb-4">
                           <label className="text-xs text-gray-500 dark:text-gray-400 font-medium block mb-1">
-                            Standard Selbstzerstörungszeit für neue Nachrichten
+                            {t("chatMenu.ttlInfo.pre")}
                           </label>
                           <select
                             value={
@@ -1788,7 +1810,8 @@ const AnocmUI = () => {
                           >
                             {/* Standard-Option */}
                             <option value="">
-                              Standard ({formatTTL(chatSettings.defaultTTL)})
+                              {t("chatMenu.ttlInfo.standard")} (
+                              {formatTTL(chatSettings.defaultTTL)})
                             </option>
                             {/* Dynamische Optionen von Backend */}
                             {getTtlOptions(
@@ -1804,7 +1827,7 @@ const AnocmUI = () => {
                               ))}
                           </select>
                           <div className="text-xs text-gray-400 mt-1">
-                            Gilt für alle neuen Nachrichten, bis du es änderst.
+                            {t("chatMenu.ttlInfo.post")}
                           </div>
                         </div>
                       )}
@@ -2232,6 +2255,34 @@ const AnocmUI = () => {
                   Abbrechen
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Languages Modal*/}
+      {showLanguages && (
+        <div className="fixed inset-0 bg-black dark:bg-gray-950 bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 text-center rounded-lg p-6 w-full max-w-sm">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              {t("languageSelect.title")}
+            </h3>
+            <div className="space-y-4">
+              {Object.keys(lngs).map((lng) => (
+                <button
+                  key={lng}
+                  className={`inline-flex items-center justify-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-md ${
+                    i18n.resolvedLanguage === lng ? "font-bold" : "font-normal"
+                  }`}
+                  type="button"
+                  onClick={() => {
+                    i18n.changeLanguage(lng);
+                    setShowLanguages(false);
+                  }}
+                >
+                  {lngs[lng].nativeName}
+                </button>
+              ))}
             </div>
           </div>
         </div>

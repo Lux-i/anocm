@@ -15,5 +15,55 @@
       "username": "Nom d'utilisateur",
       "password": "Mot de passe"
     }
+  },
+  "languageSelect": {
+    "title": "Choisir la langue:"
+  },
+  "chatList": {
+    "contacts": "Les contacts",
+    "createNewChat": "Créer un nouveau chat",
+    "refreshChats": "Actualiser les chats",
+    "search": "Rechercher...",
+    "noNewMessages": "Aucun nouveau messages...",
+    "noChatsFound": "Aucun chat trouvé",
+    "noChats": "Aucun chat.",
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "noContactsFound": "Aucun contact trouvé...",
+    "noContacts": "Aucun contact.",
+    "anonymousChat": "Chat anonyme",
+    "recentlyActive": "Récemment actif"
+  },
+  "chatMenu": {
+    "manageChat": "Gestion du chat",
+    "ttlInfo": {
+      "pre": "Durée de vie par défaut des nouveaux messages:",
+      "post": "S'applique à tous les nouveaux messages jusqu'à ce que tu le changes.",
+      "standard": "Défaut"
+    }
+  },
+  "ttlPresets": {
+    "broadcast": "diffusion",
+    "fiveMin": "5 minutes",
+    "halfHour": "30 minutes",
+    "oneHour": "1 heure",
+    "oneDay": "1 jour",
+    "oneWeek": "1 semaine",
+    "oneMonth": "1 mois",
+    "permanent": "permanent"
+  },
+  "timeUnits": {
+    "second_one": "1 second",
+    "second_other": "{{count}} seconds",
+    "minute_one": "1 minute",
+    "minute_other": "{{count}} minutes",
+    "hour_one": "1 heure",
+    "hour_other": "{{count}} heures",
+    "day_one": "1 jour",
+    "day_other": "{{count}} jours",
+    "week_one": "1 semaine",
+    "week_other": "{{count}} semaines",
+    "month_one": "1 mois",
+    "month_other": "{{count}} mois"
   }
 }
