@@ -16,12 +16,13 @@ import {
   X,
   RefreshCcw,
   Moon,
-  Sun
+  Sun,
 } from "lucide-react";
 import { DatabaseResponse, User, Chat, ChatMessage } from "@anocm/shared/dist";
 import { WsMessage } from "@anocm/shared/dist";
 import { Encryption } from "./Encryption";
 import { UUID } from "crypto";
+import { useTranslation } from "react-i18next";
 
 //CHANGE TO IMPORT
 enum Action {
@@ -121,6 +122,9 @@ const AnocmUI = () => {
   // TTL für einzelne Nachrichten
   const [messageTTL, setMessageTTL] = useState<number | null>(null); // null = defaultTTL verwenden
 
+  // Translation Relevant Logic
+  const { t } = useTranslation();
+
   // Helper Functions
   const formatTimestamp = (date: Date): string => {
     const now = new Date();
@@ -189,7 +193,7 @@ const AnocmUI = () => {
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
-    document.documentElement.classList.toggle('dark', !isDarkMode);
+    document.documentElement.classList.toggle("dark", !isDarkMode);
   };
 
   //API Functions
@@ -1238,7 +1242,8 @@ const AnocmUI = () => {
                 height="180"
                 viewBox="0 0 180 180"
                 fill="none"
-                xmlns="http://www.w3.org/2000/svg">
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <path
                   d="M0 64C0 41.5979 0 30.3968 4.35974 21.8404C8.19467 14.3139 14.3139 8.19467 21.8404 4.35974C30.3968 0 41.5979 0 64 0H116C138.402 0 149.603 0 158.16 4.35974C165.686 8.19467 171.805 14.3139 175.64 21.8404C180 30.3968 180 41.5979 180 64V116C180 138.402 180 149.603 175.64 158.16C171.805 165.686 165.686 171.805 158.16 175.64C149.603 180 138.402 180 116 180H64C41.5979 180 30.3968 180 21.8404 175.64C14.3139 171.805 8.19467 165.686 4.35974 158.16C0 149.603 0 138.402 0 116V64Z"
                   fill="#323232"
@@ -1286,7 +1291,9 @@ const AnocmUI = () => {
                 />
               </svg>
             </div>
-            <p className="text-gray-500 dark:text-white">Anonymous Chat Messenger</p>
+            <p className="text-gray-500 dark:text-white">
+              {t("authPage.anocm")}
+            </p>
           </div>
 
           {authError && (
@@ -1313,16 +1320,22 @@ const AnocmUI = () => {
               <button
                 onClick={() => setAuthMode("login")}
                 className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${
-                  authMode === "login" ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
-                }`}>
-                Anmelden
+                  authMode === "login"
+                    ? "text-gray-900 dark:text-gray-100"
+                    : "text-gray-500 dark:text-gray-400"
+                }`}
+              >
+                {t("authPage.tabSwitcher.login")}
               </button>
               <button
                 onClick={() => setAuthMode("register")}
                 className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${
-                  authMode === "register" ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
-                }`}>
-                Registrieren
+                  authMode === "register"
+                    ? "text-gray-900 dark:text-gray-100"
+                    : "text-gray-500 dark:text-gray-400"
+                }`}
+              >
+                {t("authPage.tabSwitcher.register")}
               </button>
             </div>
           </div>
@@ -1331,7 +1344,7 @@ const AnocmUI = () => {
           <div className="space-y-4">
             <input
               type="text"
-              placeholder="Benutzername"
+              placeholder={t("authPage.inputField.username")}
               value={loginForm.username}
               onChange={(e) =>
                 setLoginForm((prev) => ({ ...prev, username: e.target.value }))
@@ -1341,7 +1354,7 @@ const AnocmUI = () => {
 
             <input
               type="password"
-              placeholder="Passwort"
+              placeholder={t("authPage.inputField.password")}
               value={loginForm.password}
               onChange={(e) =>
                 setLoginForm((prev) => ({ ...prev, password: e.target.value }))
@@ -1354,19 +1367,25 @@ const AnocmUI = () => {
                 authMode === "login" ? handleLogin(false) : handleRegister()
               }
               disabled={!loginForm.username}
-              className="w-full bg-blue-500 text-white dark:disabled:text-gray-400 py-4 rounded-xl font-semibold disabled:bg-gray-300 dark:disabled:bg-gray-700 transition-all duration-200 hover:bg-blue-600">
-              {authMode === "login" ? "Anmelden" : "Registrieren"}
+              className="w-full bg-blue-500 text-white dark:disabled:text-gray-400 py-4 rounded-xl font-semibold disabled:bg-gray-300 dark:disabled:bg-gray-700 transition-all duration-200 hover:bg-blue-600"
+            >
+              {authMode === "login"
+                ? t("authPage.buttons.login")
+                : t("authPage.buttons.register")}
             </button>
           </div>
 
           <div className="text-center">
-            <span className="text-gray-400 dark:text-white text-sm">oder</span>
+            <span className="text-gray-400 dark:text-white text-sm">
+              {t("authPage.or")}
+            </span>
           </div>
 
           <button
             onClick={() => handleLogin(true)}
-            className="w-full bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 py-4 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-950 transition-all duration-200">
-            Anonym fortfahren
+            className="w-full bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 py-4 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-950 transition-all duration-200"
+          >
+            {t("authPage.buttons.anonymous")}
           </button>
         </div>
         <div className="fixed bottom-4 right-4">
@@ -1393,7 +1412,8 @@ const AnocmUI = () => {
             activeSection === "chats"
               ? "bg-blue-500 text-white"
               : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white"
-          }`}>
+          }`}
+        >
           <MessageCircle className="w-5 h-5" />
         </button>
 
@@ -1403,7 +1423,8 @@ const AnocmUI = () => {
             activeSection === "users"
               ? "bg-blue-500 text-white"
               : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white"
-          }`}>
+          }`}
+        >
           <Users className="w-5 h-5" />
         </button>
 
@@ -1418,13 +1439,15 @@ const AnocmUI = () => {
         </button>
         <button
           onClick={() => setShowSettings(true)}
-          className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white transition-colors">
+          className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white transition-colors"
+        >
           <Settings className="w-5 h-5" />
         </button>
 
         <button
           onClick={handleLogout}
-          className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white transition-colors">
+          className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white transition-colors"
+        >
           <LogOut className="w-5 h-5" />
         </button>
       </div>
@@ -1433,7 +1456,8 @@ const AnocmUI = () => {
       <div
         className={`${
           selectedChatId ? "hidden md:flex" : "flex"
-        } w-full md:w-80 bg-white dark:bg-gray-700 border-r border-gray-200 flex-col pb-16 md:pb-0`}>
+        } w-full md:w-80 bg-white dark:bg-gray-700 border-r border-gray-200 flex-col pb-16 md:pb-0`}
+      >
         {/* Header */}
         <div className="px-4 py-3 border-b border-gray-200 bg-white dark:bg-gray-900">
           <div className="flex items-center justify-between">
@@ -1444,7 +1468,8 @@ const AnocmUI = () => {
               <button
                 onClick={() => setShowCreateChat(true)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white rounded-full transition-colors"
-                title="Neuen Chat erstellen">
+                title="Neuen Chat erstellen"
+              >
                 <Edit className="w-5 h-5" />
               </button>
 
@@ -1455,13 +1480,15 @@ const AnocmUI = () => {
                   refreshChats();
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:hover:text-white rounded-full transition-colors"
-                title="Chats aktualisieren">
+                title="Chats aktualisieren"
+              >
                 <RefreshCcw className="w-5 h-5" />
               </button>
 
               <button
                 onClick={() => setShowSettings(true)}
-                className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:hover:text-white rounded-full transition-colors">
+                className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:hover:text-white rounded-full transition-colors"
+              >
                 <Settings className="w-5 h-5" />
               </button>
             </div>
@@ -1492,15 +1519,23 @@ const AnocmUI = () => {
                     key={chat.chatId}
                     onClick={() => setSelectedChatId(chat.chatId)}
                     className={`px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                      selectedChatId === chat.chatId ? "bg-blue-50 dark:bg-blue-950" : ""
-                    } ${index > 0 ? "border-t border-gray-100 dark:border-gray-700" : ""}`}>
+                      selectedChatId === chat.chatId
+                        ? "bg-blue-50 dark:bg-blue-950"
+                        : ""
+                    } ${
+                      index > 0
+                        ? "border-t border-gray-100 dark:border-gray-700"
+                        : ""
+                    }`}
+                  >
                     <div className="flex items-center space-x-3">
                       {/* Avatar */}
                       <div
                         className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm ${getAvatarColor(
                           chat.name,
                           chat.isAnonymous
-                        )}`}>
+                        )}`}
+                      >
                         {getInitials(chat.name)}
                       </div>
 
@@ -1546,7 +1581,8 @@ const AnocmUI = () => {
                     key={user.userId}
                     className={`px-4 py-3 hover:bg-gray-50 transition-colors ${
                       index > 0 ? "border-t border-gray-100" : ""
-                    }`}>
+                    }`}
+                  >
                     <div className="flex items-center space-x-3">
                       {/* Avatar */}
                       <div className="relative">
@@ -1554,7 +1590,8 @@ const AnocmUI = () => {
                           className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm ${getAvatarColor(
                             user.name,
                             user.isAnonymous
-                          )}`}>
+                          )}`}
+                        >
                           {getInitials(user.name)}
                         </div>
                         {user.isOnline && (
@@ -1580,7 +1617,8 @@ const AnocmUI = () => {
                           setNewChatUserId(user.userId);
                           setShowCreateChat(true);
                         }}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      >
                         <MessageCircle className="w-4 h-4 text-gray-600" />
                       </button>
                     </div>
@@ -1602,7 +1640,8 @@ const AnocmUI = () => {
       <div
         className={`${
           selectedChatId ? "flex" : "hidden md:flex"
-        } flex-1 flex-col pb-16 md:pb-0 w-full overflow-x-hidden`}>
+        } flex-1 flex-col pb-16 md:pb-0 w-full overflow-x-hidden`}
+      >
         {selectedChat ? (
           <>
             {/* Chat Header */}
@@ -1611,14 +1650,16 @@ const AnocmUI = () => {
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={() => setSelectedChatId(null)}
-                    className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+                    className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                  >
                     <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                   </button>
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-sm ${getAvatarColor(
                       selectedChat.name,
                       selectedChat.isAnonymous
-                    )}`}>
+                    )}`}
+                  >
                     {getInitials(selectedChat.name)}
                   </div>
                   <div>
@@ -1637,7 +1678,8 @@ const AnocmUI = () => {
                 <div className="relative">
                   <button
                     onClick={handleOpenChatMenu}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors group">
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors group"
+                  >
                     <div className="flex flex-col space-y-1">
                       <div className="w-1 h-1 bg-gray-600 dark:group-hover:bg-white rounded-full" />
                       <div className="w-1 h-1 bg-gray-600 dark:group-hover:bg-white rounded-full" />
@@ -1698,7 +1740,8 @@ const AnocmUI = () => {
                                   : `${ttlValue} Sekunden`
                               );
                             }}
-                            className="w-full px-2 py-1 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 dark:text-white rounded text-sm">
+                            className="w-full px-2 py-1 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 dark:text-white rounded text-sm"
+                          >
                             {/* Standard-Option */}
                             <option value="">
                               Standard ({formatTTL(chatSettings.defaultTTL)})
@@ -1737,7 +1780,8 @@ const AnocmUI = () => {
                               setShowAddUser(true);
                               setShowChatMenu(false);
                             }}
-                            className="flex items-center space-x-1 px-2 py-1 text-blue-500 dark:hover:bg-gray-700 hover:bg-blue-50 rounded transition-colors text-xs">
+                            className="flex items-center space-x-1 px-2 py-1 text-blue-500 dark:hover:bg-gray-700 hover:bg-blue-50 rounded transition-colors text-xs"
+                          >
                             <UserPlus className="w-3 h-3" />
                             <span>Hinzufügen</span>
                           </button>
@@ -1752,13 +1796,15 @@ const AnocmUI = () => {
                               ([userId, username]) => (
                                 <div
                                   key={userId}
-                                  className="flex items-center justify-between py-2 px-2 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                  className="flex items-center justify-between py-2 px-2 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                >
                                   <div className="flex items-center space-x-2">
                                     <div
                                       className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium ${getAvatarColor(
                                         username,
                                         false
-                                      )}`}>
+                                      )}`}
+                                    >
                                       {getInitials(username)}
                                     </div>
                                     <div className="flex flex-col">
@@ -1781,7 +1827,8 @@ const AnocmUI = () => {
                                         handleRemoveUserFromChat(userId)
                                       }
                                       className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
-                                      title="User entfernen">
+                                      title="User entfernen"
+                                    >
                                       <X className="w-3 h-3" />
                                     </button>
                                   }
@@ -1800,7 +1847,8 @@ const AnocmUI = () => {
                       <div className="border-t dark:border-gray-300 pt-3 mt-3">
                         <button
                           onClick={() => setShowChatMenu(false)}
-                          className="w-full text-center py-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors">
+                          className="w-full text-center py-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
+                        >
                           Schließen
                         </button>
                       </div>
@@ -1824,7 +1872,8 @@ const AnocmUI = () => {
                     key={message.id}
                     className={`flex w-full ${
                       message.isOwn ? "justify-end" : "justify-start"
-                    }`}>
+                    }`}
+                  >
                     <div
                       className={`
                         max-w-[45%] px-3 py-2 rounded-2xl text-sm break-words whitespace-pre-wrap
@@ -1834,12 +1883,14 @@ const AnocmUI = () => {
                             : message.isOwn
                             ? "bg-blue-500 text-white"
                             : "bg-white text-gray-900 border"
-                        }`}>
+                        }`}
+                    >
                       <div>{message.content}</div>
                       <div
                         className={`text-xs mt-1 ${
                           message.isOwn ? "text-blue-100" : "text-gray-500"
-                        }`}>
+                        }`}
+                      >
                         {formatTimestamp(message.timestamp)}
                       </div>
                     </div>
@@ -1877,7 +1928,8 @@ const AnocmUI = () => {
                 <button
                   onClick={handleSendMessage}
                   disabled={!messageInput.trim()}
-                  className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-400 dark:disabled:text-gray-500 disabled:cursor-not-allowed transition-colors">
+                  className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-400 dark:disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+                >
                   <Send className="h-[100%]" />
                 </button>
               </div>
@@ -1893,7 +1945,8 @@ const AnocmUI = () => {
                   height="180"
                   viewBox="0 0 180 180"
                   fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <path
                     d="M0 64C0 41.5979 0 30.3968 4.35974 21.8404C8.19467 14.3139 14.3139 8.19467 21.8404 4.35974C30.3968 0 41.5979 0 64 0H116C138.402 0 149.603 0 158.16 4.35974C165.686 8.19467 171.805 14.3139 175.64 21.8404C180 30.3968 180 41.5979 180 64V116C180 138.402 180 149.603 175.64 158.16C171.805 165.686 165.686 171.805 158.16 175.64C149.603 180 138.402 180 116 180H64C41.5979 180 30.3968 180 21.8404 175.64C14.3139 171.805 8.19467 165.686 4.35974 158.16C0 149.603 0 138.402 0 116V64Z"
                     fill="#323232"
@@ -1949,7 +2002,8 @@ const AnocmUI = () => {
               </p>
               <button
                 onClick={() => setShowCreateChat(true)}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+              >
                 Neue Nachricht
               </button>
             </div>
@@ -1967,7 +2021,8 @@ const AnocmUI = () => {
             }}
             className={`relative flex flex-col items-center px-4 py-2 ${
               activeSection === "chats" ? "text-blue-500" : "text-gray-500"
-            }`}>
+            }`}
+          >
             <MessageCircle className="w-6 h-6 mb-1" />
             <span className="text-xs">Chats</span>
             {chats.reduce((total, chat) => total + chat.unreadCount, 0) > 0 && (
@@ -1986,14 +2041,16 @@ const AnocmUI = () => {
             }}
             className={`flex flex-col items-center px-4 py-2 ${
               activeSection === "users" ? "text-blue-500" : "text-gray-500"
-            }`}>
+            }`}
+          >
             <Users className="w-6 h-6 mb-1" />
             <span className="text-xs">Kontakte</span>
           </button>
 
           <button
             onClick={handleLogout}
-            className="flex flex-col items-center px-4 py-2 text-gray-500">
+            className="flex flex-col items-center px-4 py-2 text-gray-500"
+          >
             <LogOut className="w-6 h-6 mb-1" />
             <span className="text-xs">Ausloggen</span>
           </button>
@@ -2043,7 +2100,8 @@ const AnocmUI = () => {
                 <div>
                   <label
                     htmlFor="minTTL"
-                    className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
                     Min:
                   </label>
 
@@ -2053,7 +2111,8 @@ const AnocmUI = () => {
                     onChange={(e) =>
                       setSelectedMinTTL(parseInt(e.target.value))
                     }
-                    className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
+                    className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 mt-1"
+                  >
                     {DROPDOWN_TTL_PRESETS.map((preset) => (
                       <option key={preset.value} value={preset.value}>
                         {preset.text}
@@ -2065,7 +2124,8 @@ const AnocmUI = () => {
                 <div>
                   <label
                     htmlFor="maxTTL"
-                    className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
                     Max:
                   </label>
 
@@ -2075,7 +2135,8 @@ const AnocmUI = () => {
                     onChange={(e) =>
                       setSelectedMaxTTL(parseInt(e.target.value))
                     }
-                    className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
+                    className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 mt-1"
+                  >
                     {DROPDOWN_TTL_PRESETS.map((preset) => (
                       <option key={preset.value} value={preset.value}>
                         {preset.text}
@@ -2087,7 +2148,8 @@ const AnocmUI = () => {
                 <div>
                   <label
                     htmlFor="defaultTTL"
-                    className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
                     Standard:
                   </label>
 
@@ -2097,7 +2159,8 @@ const AnocmUI = () => {
                     onChange={(e) =>
                       setSelectedDefaultTTL(parseInt(e.target.value))
                     }
-                    className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 mt-1">
+                    className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 mt-1"
+                  >
                     {DROPDOWN_TTL_PRESETS.map((preset) => (
                       <option key={preset.value} value={preset.value}>
                         {preset.text}
@@ -2111,7 +2174,8 @@ const AnocmUI = () => {
                 <button
                   onClick={handleCreateChat}
                   disabled={!newChatUserId}
-                  className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-500 dark:disabled:text-gray-700 transition-colors text-sm">
+                  className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-500 dark:disabled:text-gray-700 transition-colors text-sm"
+                >
                   Chat starten
                 </button>
                 <button
@@ -2119,7 +2183,8 @@ const AnocmUI = () => {
                     setShowCreateChat(false);
                     setNewChatUserId("");
                   }}
-                  className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-red-500 transition-colors text-sm">
+                  className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-red-500 transition-colors text-sm"
+                >
                   Abbrechen
                 </button>
               </div>
@@ -2139,10 +2204,14 @@ const AnocmUI = () => {
             <div className="space-y-4">
               <div className="text-sm">
                 <div className="text-gray-500 dark:text-gray-400">Benutzer</div>
-                <div className="font-medium dark:text-white">{currentUser?.username}</div>
+                <div className="font-medium dark:text-white">
+                  {currentUser?.username}
+                </div>
               </div>
               <div className="text-sm">
-                <div className="text-gray-500 dark:text-gray-400">Deine User ID</div>
+                <div className="text-gray-500 dark:text-gray-400">
+                  Deine User ID
+                </div>
                 <div className="font-mono text-xs bg-gray-100 dark:bg-gray-700 dark:text-white p-2 rounded border break-all">
                   {currentUser?.userId}
                 </div>
@@ -2160,13 +2229,16 @@ const AnocmUI = () => {
               </div>
 
               {/* Teilnehmer-Liste mit Entfernen-Buttons */}
-              <div className="text-sm font-medium dark:text-gray-400">Teilnehmer:</div>
+              <div className="text-sm font-medium dark:text-gray-400">
+                Teilnehmer:
+              </div>
               {selectedChat?.chatUserList ? (
                 Object.entries(selectedChat.chatUserList).map(
                   ([userId, username]) => (
                     <div
                       key={userId}
-                      className="flex items-center dark:text-white justify-between">
+                      className="flex items-center dark:text-white justify-between"
+                    >
                       <span>
                         {username}
                         {userId === currentUser?.userId && " (Du)"}
@@ -2181,7 +2253,8 @@ const AnocmUI = () => {
                               currentUser!.token
                             )
                           }
-                          className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs">
+                          className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs"
+                        >
                           Entfernen
                         </button>
                       )}
@@ -2189,27 +2262,40 @@ const AnocmUI = () => {
                   )
                 )
               ) : (
-                <div className="text-gray-500 dark:text-white italic">Keine Teilnehmer</div>
+                <div className="text-gray-500 dark:text-white italic">
+                  Keine Teilnehmer
+                </div>
               )}
 
-              <div className="text-sm font-medium dark:text-gray-400">Farbschema</div>
+              <div className="text-sm font-medium dark:text-gray-400">
+                Farbschema
+              </div>
               <div className="relative bg-gray-100 dark:bg-gray-700 rounded-xl p-1 mb-6">
                 <div className="flex relative">
                   <div
-                    className={`absolute top-1 bottom-1 w-1/2 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-transform duration-300 ease-out ${isDarkMode === false ? "transform translate-x-full" : ""
-                      }`}
+                    className={`absolute top-1 bottom-1 w-1/2 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-transform duration-300 ease-out ${
+                      isDarkMode === false ? "transform translate-x-full" : ""
+                    }`}
                   />
 
                   <button
                     onClick={() => toggleDarkMode()}
-                    className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${isDarkMode === false ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
-                      }`}>
+                    className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${
+                      isDarkMode === false
+                        ? "text-gray-900 dark:text-gray-100"
+                        : "text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
                     Dunkel
                   </button>
                   <button
                     onClick={() => toggleDarkMode()}
-                    className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${isDarkMode === true ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
-                      }`}>
+                    className={`flex-1 py-3 text-center font-medium transition-colors duration-300 relative z-10 ${
+                      isDarkMode === true
+                        ? "text-gray-900 dark:text-gray-100"
+                        : "text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
                     Hell
                   </button>
                 </div>
@@ -2217,7 +2303,8 @@ const AnocmUI = () => {
 
               <button
                 onClick={() => setShowSettings(false)}
-                className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
+              >
                 Schließen
               </button>
             </div>
@@ -2254,7 +2341,8 @@ const AnocmUI = () => {
                 <button
                   onClick={handleAddUserToChat}
                   disabled={!newChatUserId.trim()}
-                  className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors text-sm">
+                  className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors text-sm"
+                >
                   Hinzufügen
                 </button>
                 <button
@@ -2262,7 +2350,8 @@ const AnocmUI = () => {
                     setShowAddUser(false);
                     setNewChatUserId("");
                   }}
-                  className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                  className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                >
                   Abbrechen
                 </button>
               </div>
