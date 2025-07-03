@@ -35,12 +35,43 @@ i18n
       },
       de: {
         translation: {
-          anocm: "Anonymer Chat-Messenger",
-          or: "oder",
-          buttons: {
-            login: "Anmelden",
-            register: "Registrieren",
-            anonymous: "Anonym fortfahren",
+          authPage: {
+            anocm: "Anonymer Chat-Messenger",
+            or: "oder",
+            tabSwitcher: {
+              login: "Anmeldung",
+              register: "Registrierung",
+            },
+            buttons: {
+              login: "Anmelden",
+              register: "Registrieren",
+              anonymous: "Anonym fortfahren",
+            },
+            inputField: {
+              username: "Benutzername",
+              password: "Kennwort",
+            },
+          },
+        },
+      },
+      fr: {
+        translation: {
+          authPage: {
+            anocm: "Messager de chat anonyme",
+            or: "ou",
+            tabSwitcher: {
+              login: "Connexion",
+              register: "Inscription",
+            },
+            buttons: {
+              login: "Connexion",
+              register: "Inscription",
+              anonymous: "Continuer anonymement",
+            },
+            inputField: {
+              username: "Nom d'utilisateur",
+              password: "Mot de passe",
+            },
           },
         },
       },

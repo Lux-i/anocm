@@ -17,6 +17,8 @@ import {
   RefreshCcw,
   Moon,
   Sun,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { DatabaseResponse, User, Chat, ChatMessage } from "@anocm/shared/dist";
 import { WsMessage } from "@anocm/shared/dist";
@@ -122,8 +124,13 @@ const AnocmUI = () => {
   // TTL für einzelne Nachrichten
   const [messageTTL, setMessageTTL] = useState<number | null>(null); // null = defaultTTL verwenden
 
-  // Translation Relevant Logic
-  const { t } = useTranslation();
+  // i18n relevant variables and functions
+  const lngs = {
+    en: { nativeName: "English" },
+    de: { nativeName: "Deutsch" },
+    fr: { nativeName: "Français" },
+  };
+  const { t, i18n } = useTranslation();
 
   // Helper Functions
   const formatTimestamp = (date: Date): string => {
@@ -194,6 +201,15 @@ const AnocmUI = () => {
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
     document.documentElement.classList.toggle("dark", !isDarkMode);
+  };
+
+  const toggleDropdown = (menuId: string): void => {
+    const dropDownMenu = document.getElementById(menuId);
+    if (!dropDownMenu) {
+      console.error(`Dropdown menu with ID "${menuId}" not found.`);
+      return;
+    }
+    dropDownMenu.classList.toggle("hidden");
   };
 
   //API Functions
@@ -1387,6 +1403,34 @@ const AnocmUI = () => {
           >
             {t("authPage.buttons.anonymous")}
           </button>
+        </div>
+        <div className="fixed top-4 right-4">
+          <div className="relative inline-block text-right mr-2">
+            <button
+              className="inline-flex px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md shadow hover:bg-gray-50, dark:hover:bg-gray-700 focus:outline-none hover:cursor-pointer"
+              onClick={() => toggleDropdown("languageSelector")}
+            >
+              <span>{lngs[i18n.resolvedLanguage].nativeName}</span>
+              <ChevronDown className="ml-2 mr-0" />
+            </button>
+            <div
+              id="languageSelector"
+              className="hidden origin-top-right absolute right-0 mt-2 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-gray-100 dark:ring-gray-700 ring-opacity-5"
+            >
+              {Object.keys(lngs).map((lng) => (
+                <button
+                  key={lng}
+                  className={`inline-flex items-center justify-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-md ${
+                    i18n.resolvedLanguage === lng ? "font-bold" : "font-normal"
+                  }`}
+                  type="button"
+                  onClick={() => i18n.changeLanguage(lng)}
+                >
+                  {lngs[lng].nativeName}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="fixed bottom-4 right-4">
           <button
