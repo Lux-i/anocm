@@ -1462,7 +1462,7 @@ const AnocmUI = () => {
             </div>
           </div>
         </div>
-        <div className="fixed bottom-4 right-4">
+        <div className="fixed max-sm:top-4 max-sm:left-4 sm:bottom-4 sm:right-4">
           <button
             onClick={() => toggleDarkMode()}
             className="p-3 bg-gray-700 dark:bg-gray-200 text-gray-200 dark:text-gray-800 rounded-full shadow-lg hover:bg-gray-600 dark:hover:bg-gray-300 transition-colors"
