@@ -1,4 +1,53 @@
 {
+  "common": {
+    "close": "close",
+    "now": "Now",
+    "newMessage": "New message",
+    "min": "Min:",
+    "max": "Max:",
+    "standard": "Default",
+    "cancel": "cancel",
+    "you": "you"
+  },
+  "errorMessages": {
+    "networkError": "Network Error",
+    "unexpectedResponse": "unexpected response format",
+    "unfinishedKeyExchange": "No chat key found for this chat, exchange might be in progress.",
+    "noChatKey": "No Chat Key",
+    "ttlOutOfBounds": "TTL must be between {{minTTL}} and {{maxTTL}}!",
+    "loadChatListError": "Load chat list error: {{error}}",
+    "authError": {
+      "anoUserCreationFailed": "Failed to create anonymous user: {{error}}",
+      "loginFailed": "Login failed: {{error}}",
+      "registrationFailed": "Registration failed: {{error}}",
+      "missingParameters": "Please enter username (and password)",
+      "chatCreationFailed": "Failed to create chat: {{error}}",
+      "networkError": "Network Error during Chat-Creation",
+      "otherError": "Error: {{error}}"
+    }
+  },
+  "successMessages": {
+    "accountCreated": "Account created! Login-ID: {{userId}} - Login now (without password)."
+  },
+  "otherMessages": {
+    "confirmRemoveUser": "Remove this user?",
+    "endChat": "Chat was ended or you were removed.",
+    "encryptedMessage": "encrypted message"
+  },
+  "timeUnits": {
+    "second_one": "1 second",
+    "second_other": "{{count}} seconds",
+    "minute_one": "1 minute",
+    "minute_other": "{{count}} minutes",
+    "hour_one": "1 hour",
+    "hour_other": "{{count}} hours",
+    "day_one": "1 day",
+    "day_other": "{{count}} days",
+    "week_one": "1 week",
+    "week_other": "{{count}} weeks",
+    "month_one": "1 month",
+    "month_other": "{{count}} months"
+  },
   "authPage": {
     "anocm": "Anonymous Chat Messenger",
     "or": "or",
@@ -16,9 +65,6 @@
       "password": "Password"
     }
   },
-  "languageSelect": {
-    "title": "Select language:"
-  },
   "chatList": {
     "contacts": "Contacts",
     "createNewChat": "Create a new chat",
@@ -34,36 +80,69 @@
     "anonymousChat": "Anonymous Chat",
     "recentlyActive": "Recently active"
   },
-  "chatMenu": {
+  "menus": {
     "manageChat": "Chat Menu",
     "ttlInfo": {
       "pre": "Default time-to-live for new messages:",
-      "post": "Applies to all new messages until you change it.",
-      "standard": "Default"
+      "post": "Applies to all new messages until you change it."
+    },
+    "manageUsers": {
+      "users": "Users",
+      "addUser": "Add user",
+      "noUsersFound": "No users found",
+      "noUser": "Aucun membre",
+      "removeUser": "Remove"
     }
   },
   "ttlPresets": {
-    "broadcast": "broadcast",
+    "broadcast": "Broadcast",
     "fiveMin": "5 minutes",
     "halfHour": "30 minutes",
     "oneHour": "1 hour",
     "oneDay": "1 day",
     "oneWeek": "1 week",
     "oneMonth": "1 month",
-    "permanent": "permanent"
+    "permanent": "Permanent"
   },
-  "timeUnits": {
-    "second_one": "1 second",
-    "second_other": "{{count}} seconds",
-    "minute_one": "1 minute",
-    "minute_other": "{{count}} minutes",
-    "hour_one": "1 hour",
-    "hour_other": "{{count}} hours",
-    "day_one": "1 day",
-    "day_other": "{{count}} days",
-    "week_one": "1 week",
-    "week_other": "{{count}} weeks",
-    "month_one": "1 month",
-    "month_other": "{{count}} months"
+  "sendMessage": {
+    "send": "send",
+    "ttlInSeconds": "TTL (in seconds)"
+  },
+  "initChatPage": {
+    "welcome": "Welcome to AnoCM",
+    "choose": "Select a conversation to get started."
+  },
+  "mobileNav": {
+    "chats": "chats",
+    "contacts": "contacts",
+    "logout": "logout"
+  },
+  "modals": {
+    "userId": "User ID",
+    "createChat": {
+      "setTtl": "Messages' time-to-live:",
+      "startChat": "start chat"
+    },
+    "languageSelect": {
+      "title": "Select language:"
+    },
+    "settings": {
+      "title": "Settings",
+      "yourId": "Your User ID",
+      "user": "User",
+      "shareId": "Share this ID so others can add you to chats.",
+      "status": "status",
+      "anonymous": "anonymous",
+      "registered": "registered"
+    },
+    "darkMode": {
+      "theme": "color theme",
+      "dark": "dark",
+      "light": "light"
+    },
+    "addUser": {
+      "title": "Add User to Chat",
+      "info": "Enter the user ID of the person you want to add."
+    }
   }
 }

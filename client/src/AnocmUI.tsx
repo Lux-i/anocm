@@ -27,6 +27,7 @@ import { Encryption } from "./Encryption";
 import { UUID } from "crypto";
 import { useTranslation } from "react-i18next";
 import { t } from "i18next";
+import { resourceLimits } from "worker_threads";
 
 //CHANGE TO IMPORT
 enum Action {
@@ -146,10 +147,11 @@ const AnocmUI = () => {
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return "jetzt";
-    if (diffMins < 60) return `${diffMins}m`;
-    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h`;
-    return `${Math.floor(diffMins / 1440)}d`;
+    if (diffMins < 1) return t("common.now");
+    if (diffMins < 60) return t("timeUnits.minute", { count: diffMins }); //`${diffMins}m`;
+    if (diffMins < 1440)
+      return t("timeUnits.hour", { count: Math.floor(diffMins / 60) });
+    return t("timeUnits.day", { count: Math.floor(diffMins / 1440) });
   };
 
   const getInitials = (name: string): string => {
@@ -210,7 +212,8 @@ const AnocmUI = () => {
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
-    document.documentElement.classList.toggle("dark", !isDarkMode);
+    document.documentElement.classList.toggle("dark", isDarkMode);
+    console.log("Dark Mode: ", isDarkMode);
   };
 
   const toggleDropdown = (menuId: string): void => {
@@ -241,7 +244,7 @@ const AnocmUI = () => {
         : { success: false, error: data.error };
     } catch (err) {
       console.error("Fehler beim Entfernen:", err);
-      return { success: false, error: "Netzwerkfehler" };
+      return { success: false, error: t("errorMessages.networkError") };
     }
   };
 
@@ -263,7 +266,7 @@ const AnocmUI = () => {
         : { success: false, error: data.error };
     } catch (err) {
       console.error("Fehler beim Hinzufügen:", err);
-      return { success: false, error: "Netzwerkfehler" };
+      return { success: false, error: t("errorMessages.networkError") };
     }
   };
 
@@ -465,7 +468,7 @@ const AnocmUI = () => {
       }
     } catch (err) {
       console.error("Netzwerkfehler:", err);
-      return { success: false, error: "Netzwerkfehler" };
+      return { success: false, error: t("errorMessages.networkError") };
     }
   };
 
@@ -500,14 +503,17 @@ const AnocmUI = () => {
         } else if (typeof data.userData === "string") {
           return { success: true, userId: data.id, token: data.userData };
         } else {
-          return { success: false, error: "Unerwartetes Antwortformat" };
+          return {
+            success: false,
+            error: t("errorMessages.unexpectedResponse"),
+          };
         }
       } else {
         return { success: false, error: data.error };
       }
     } catch (err) {
       console.error("Netzwerkfehler:", err);
-      return { success: false, error: "Netzwerkfehler" };
+      return { success: false, error: t("errorMessages.networkError") };
     }
   };
 
@@ -529,7 +535,7 @@ const AnocmUI = () => {
       }
     } catch (err) {
       console.error("Netzwerkfehler:", err);
-      return { success: false, error: "Netzwerkfehler" };
+      return { success: false, error: t("errorMessages.networkError") };
     }
   };
 
@@ -556,8 +562,8 @@ const AnocmUI = () => {
   ) => {
     const chatkey = await Encryption.loadKey(chatId);
     if (!chatkey) {
-      alert("No chat key found for this chat, exchange might be in progress.");
-      return { success: false, error: "No chat key" };
+      alert(t("errorMessages.unifinishedKeyExchange"));
+      return { success: false, error: t("errorMessages.noChatKey") };
     }
 
     // TTL validieren gegen Chat-Settings
@@ -568,9 +574,10 @@ const AnocmUI = () => {
         );
         return {
           success: false,
-          error: `TTL muss zwischen ${formatTTL(
-            chatSettings.minTTL
-          )} und ${formatTTL(chatSettings.maxTTL)} liegen`,
+          error: t("errorMessages.ttlOutOfBounds", {
+            minTTL: formatTTL(chatSettings.minTTL),
+            maxTTL: formatTTL(chatSettings.maxTTL),
+          }),
         };
       }
     }
@@ -587,7 +594,7 @@ const AnocmUI = () => {
           senderToken: token,
           content: message,
           timestamp: Date.now().toString(),
-          // TTL nur mitsende wenn nicht null od undefined
+          // TTL nur mitsenden wenn nicht null oder undefined
           ...(ttl !== null && ttl !== undefined ? { ttl } : {}),
         }),
       });
@@ -597,7 +604,7 @@ const AnocmUI = () => {
         : { success: false, error: data.error };
     } catch (err) {
       console.error("Fehler beim Senden:", err);
-      return { success: false, error: "Netzwerkfehler" };
+      return { success: false, error: t("errorMessages.networkError") };
     }
   };
 
@@ -612,11 +619,13 @@ const AnocmUI = () => {
       if (result.success) {
         setAuthError(null);
         setSuccessMessage(
-          `Account erstellt! Login-ID: ${result.userId} - Jetzt einloggen (ohne Passwort)`
+          t("successMessages.accountCreated", { userId: result.userId })
         );
       } else {
         setAuthError(
-          "Anonymous User-Erstellung fehlgeschlagen: " + result.error
+          t("errorMessages.authError.anoUserCreationFailed", {
+            error: result.error,
+          })
         );
       }
     } else {
@@ -639,7 +648,9 @@ const AnocmUI = () => {
         setIsAuthenticated(true);
       } else {
         console.error("Login fehlgeschlagen:", result.error);
-        setAuthError("Login fehlgeschlagen: " + result.error);
+        setAuthError(
+          t("errorMessages.authError.loginFailed", { error: result.error })
+        );
       }
     }
   };
@@ -648,13 +659,15 @@ const AnocmUI = () => {
     setAuthError(null);
 
     if (!loginForm.username || !loginForm.password) {
-      setAuthError("Bitte Benutzername und Passwort eingeben");
+      setAuthError(t("errorMessage.authError.missingParameters"));
       return;
     }
 
     const result = await registerUser(loginForm.username, loginForm.password);
     if (!result.success) {
-      setAuthError("Registrierung fehlgeschlagen: " + result.error);
+      setAuthError(
+        t("errorMessages.authError.registrationFailed", { error: result.error })
+      );
       return;
     }
 
@@ -794,11 +807,13 @@ const AnocmUI = () => {
         await refreshChats();
       } else {
         console.error("Fehler beim Erstellen des Chats:", data.error);
-        setAuthError(`Fehler beim Erstellen des Chats: ${data.error}`);
+        setAuthError(
+          t("errorMessages.authError.chatCreationFailed", { error: data.error })
+        );
       }
     } catch (err) {
       console.error("Netzwerkfehler beim Erstellen des Chats:", err);
-      setAuthError("Netzwerkfehler beim Erstellen des Chats");
+      setAuthError("errorMessages.authError.networkError");
     }
   };
 
@@ -834,13 +849,15 @@ const AnocmUI = () => {
         setMessages(chatMessages);
       }
     } else {
-      setAuthError(`Fehler: ${result.error}`);
+      setAuthError(
+        t("errorMessages.authError.otherError", { error: result.error })
+      );
     }
   };
 
   const handleRemoveUserFromChat = async (userIdToRemove: string) => {
     if (!selectedChatId || !currentUser) return;
-    if (!confirm("User wirklich entfernen?")) return;
+    if (!confirm(t("otherMessages.confirmRemoveUser"))) return;
 
     //  Backend call
     const { success, error } = await removeUserFromChat(
@@ -850,7 +867,7 @@ const AnocmUI = () => {
       currentUser.token
     );
     if (!success) {
-      setAuthError(`Fehler: ${error}`);
+      setAuthError(t("errorMessages.authError.otherError", { error: error }));
       return;
     }
     setShowChatMenu(false);
@@ -862,7 +879,7 @@ const AnocmUI = () => {
     if (!newChatIds.includes(selectedChatId)) {
       // sofort aus dem local State entfernen
       setChats((prev) => prev.filter((c) => c.chatId !== selectedChatId));
-      setStatus("Chat beendet oder Du wurdest entfernt.");
+      setStatus(t("otherMessages.endChat"));
       setSelectedChatId(null);
     }
   };
@@ -881,7 +898,7 @@ const AnocmUI = () => {
         throw new Error(data.error || "Failed to load chat list");
       }
     } catch (e: any) {
-      setError(`Load chat list error: ${e.message || e}`);
+      setError(t("errorMessages.loadChatListError", { error: e.message || e }));
     }
   };
 
@@ -961,7 +978,7 @@ const AnocmUI = () => {
 
           const newMessage: UIMessage = {
             id: `msg-${Date.now()}`,
-            content: decryptedText ?? "Verschlüsselte Nachricht",
+            content: decryptedText ?? t("otherMessages.encryptedMessage"),
             senderId: data.senderID,
             timestamp: new Date(data.timestamp),
             isOwn: data.senderID === currentUser.userId,
@@ -1197,7 +1214,7 @@ const AnocmUI = () => {
     (async () => {
       const ids = await refreshChats();
       if (!ids.includes(selectedChatId)) {
-        setStatus("Chat beendet oder Du wurdest entfernt.");
+        setStatus(t("otherMessages.endChat"));
         setSelectedChatId(null);
       }
     })();
@@ -1205,7 +1222,7 @@ const AnocmUI = () => {
     const interval = setInterval(async () => {
       const ids = await refreshChats();
       if (!ids.includes(selectedChatId)) {
-        setStatus("Chat beendet oder Du wurdest entfernt.");
+        setStatus(t("otherMessages.endChat"));
         setSelectedChatId(null);
         clearInterval(interval);
       }
@@ -1228,13 +1245,13 @@ const AnocmUI = () => {
                 );
                 return [chat.chatId, decrypted];
               } catch {
-                return [chat.chatId, "Verschlüsselte Nachricht"];
+                return [chat.chatId, t("otherMessages.encryptedMessage")];
               }
             } else {
-              return [chat.chatId, "Verschlüsselte Nachricht"];
+              return [chat.chatId, t("otherMessages.encryptedMessage")];
             }
           }
-          return [chat.chatId, "Keine Nachrichten"];
+          return [chat.chatId, t("chatList.noNewMessages")];
         })
       );
       setDecryptedLastMessages(Object.fromEntries(entries));
@@ -1756,7 +1773,7 @@ const AnocmUI = () => {
                   {showChatMenu && (
                     <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-3 min-w-64 z-10">
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-3 px-1 font-medium">
-                        {t("chatMenu.manageChat")}
+                        {t("menus.manageChat")}
                       </div>
 
                       {/* Chat TTL Info */}
@@ -1780,7 +1797,7 @@ const AnocmUI = () => {
                       {chatSettings && (
                         <div className="mb-4">
                           <label className="text-xs text-gray-500 dark:text-gray-400 font-medium block mb-1">
-                            {t("chatMenu.ttlInfo.pre")}
+                            {t("menus.ttlInfo.pre")}
                           </label>
                           <select
                             value={
@@ -1810,7 +1827,7 @@ const AnocmUI = () => {
                           >
                             {/* Standard-Option */}
                             <option value="">
-                              {t("chatMenu.ttlInfo.standard")} (
+                              {t("common.standard")} (
                               {formatTTL(chatSettings.defaultTTL)})
                             </option>
                             {/* Dynamische Optionen von Backend */}
@@ -1827,7 +1844,7 @@ const AnocmUI = () => {
                               ))}
                           </select>
                           <div className="text-xs text-gray-400 mt-1">
-                            {t("chatMenu.ttlInfo.post")}
+                            {t("menus.ttlInfo.post")}
                           </div>
                         </div>
                       )}
@@ -1836,7 +1853,7 @@ const AnocmUI = () => {
                       <div className="border-t dark:border-gray-300 pt-3">
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            👥 Teilnehmer (
+                            👥 {t("menus.manageUsers.users")} (
                             {selectedChat?.chatUserList
                               ? Object.keys(selectedChat.chatUserList).length
                               : 0}
@@ -1850,7 +1867,7 @@ const AnocmUI = () => {
                             className="flex items-center space-x-1 px-2 py-1 text-blue-500 dark:hover:bg-gray-700 hover:bg-blue-50 rounded transition-colors text-xs"
                           >
                             <UserPlus className="w-3 h-3" />
-                            <span>Hinzufügen</span>
+                            <span>{t("menus.manageUsers.addUser")}</span>
                           </button>
                         </div>
 
@@ -1904,7 +1921,7 @@ const AnocmUI = () => {
                             )
                           ) : (
                             <div className="text-gray-500 dark:text-gray-400 text-sm italic py-4 text-center">
-                              Keine Teilnehmer gefunden
+                              {t("menus.manageUsers.noUsersFound")}
                             </div>
                           )}
                         </div>
@@ -1916,7 +1933,7 @@ const AnocmUI = () => {
                           onClick={() => setShowChatMenu(false)}
                           className="w-full text-center py-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
                         >
-                          Schließen
+                          {t("common.close")}
                         </button>
                       </div>
                     </div>
@@ -1974,7 +1991,7 @@ const AnocmUI = () => {
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="send"
+                    placeholder={t("sendMessage.send")}
                     className="w-full px-3 py-2 dark:bg-white border border-gray-300 rounded-full resize-none focus:outline-none focus:border-blue-500 text-sm"
                     rows={1}
                     style={{ minHeight: "36px", maxHeight: "100px" }}
@@ -1987,7 +2004,7 @@ const AnocmUI = () => {
                     console.log(e.target.value);
                   }}
                   onKeyPress={handleKeyPress}
-                  placeholder="TTL (in seconds)"
+                  placeholder={t("sendMessage.ttlInSeconds")}
                   className="w-35 px-3 py-2 dark:bg-white border border-gray-300 rounded-full resize-none focus:outline-none focus:border-blue-500 text-sm"
                   rows={1}
                   style={{ minHeight: "36px", maxHeight: "100px" }}
@@ -2062,16 +2079,16 @@ const AnocmUI = () => {
                 </svg>
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Willkommen bei AnoCM
+                {t("initChatPage.welcome")}
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
-                Wählen Sie eine Unterhaltung aus, um loszulegen.
+                {t("initChatPage.choose")}
               </p>
               <button
                 onClick={() => setShowCreateChat(true)}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
               >
-                Neue Nachricht
+                {t("common.newMessage")}
               </button>
             </div>
           </div>
@@ -2091,7 +2108,7 @@ const AnocmUI = () => {
             }`}
           >
             <MessageCircle className="w-6 h-6 mb-1" />
-            <span className="text-xs">Chats</span>
+            <span className="text-xs">{t("mobileNav.chats")}</span>
             {chats.reduce((total, chat) => total + chat.unreadCount, 0) > 0 && (
               <div className="absolute top-0 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                 <span className="text-xs text-white font-medium">
@@ -2111,7 +2128,7 @@ const AnocmUI = () => {
             }`}
           >
             <Users className="w-6 h-6 mb-1" />
-            <span className="text-xs">Kontakte</span>
+            <span className="text-xs">{t("mobileNav.contacts")}</span>
           </button>
 
           <button
@@ -2119,7 +2136,7 @@ const AnocmUI = () => {
             className="flex flex-col items-center px-4 py-2 text-gray-500"
           >
             <LogOut className="w-6 h-6 mb-1" />
-            <span className="text-xs">Ausloggen</span>
+            <span className="text-xs">{t("mobileNav.logout")}</span>
           </button>
         </div>
       </div>
@@ -2129,7 +2146,7 @@ const AnocmUI = () => {
         <div className="fixed inset-0 bg-black dark:bg-gray-950 bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-700 rounded-lg p-6 w-full max-w-sm">
             <h3 className="text-lg font-medium text-gray-900 text-white mb-4">
-              Neue Nachricht
+              {t("common.newMessage")}
             </h3>
 
             <div className="space-y-4">
@@ -2152,7 +2169,7 @@ const AnocmUI = () => {
 
               <input
                 type="text"
-                placeholder="User ID"
+                placeholder={t("modals.userId")}
                 value={newChatUserId}
                 onChange={(e) => setNewChatUserId(e.target.value)}
                 className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
@@ -2161,7 +2178,7 @@ const AnocmUI = () => {
               {/* TTL Preset Auswahl */}
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  🕐 Verschwindende Nachrichten:
+                  🕐 {t("modals.createChat.setTtl")}
                 </label>
 
                 <div>
@@ -2169,7 +2186,7 @@ const AnocmUI = () => {
                     htmlFor="minTTL"
                     className="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
-                    Min:
+                    {t("common.min")}:
                   </label>
 
                   <select
@@ -2193,7 +2210,7 @@ const AnocmUI = () => {
                     htmlFor="maxTTL"
                     className="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
-                    Max:
+                    {t("common.max")}:
                   </label>
 
                   <select
@@ -2217,7 +2234,7 @@ const AnocmUI = () => {
                     htmlFor="defaultTTL"
                     className="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
-                    Standard:
+                    {t("common.standard")}:
                   </label>
 
                   <select
@@ -2243,7 +2260,7 @@ const AnocmUI = () => {
                   disabled={!newChatUserId}
                   className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-500 dark:disabled:text-gray-700 transition-colors text-sm"
                 >
-                  Chat starten
+                  {t("modals.createChat.startChat")}
                 </button>
                 <button
                   onClick={() => {
@@ -2252,7 +2269,7 @@ const AnocmUI = () => {
                   }}
                   className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-red-500 transition-colors text-sm"
                 >
-                  Abbrechen
+                  {t("common.cancel")}
                 </button>
               </div>
             </div>
@@ -2265,7 +2282,7 @@ const AnocmUI = () => {
         <div className="fixed inset-0 bg-black dark:bg-gray-950 bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 text-center rounded-lg p-6 w-full max-w-sm">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              {t("languageSelect.title")}
+              {t("modals.languageSelect.title")}
             </h3>
             <div className="space-y-4">
               {Object.keys(lngs).map((lng) => (
@@ -2293,39 +2310,45 @@ const AnocmUI = () => {
         <div className="fixed inset-0 bg-black dark:bg-gray-950 bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-sm">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              Einstellungen
+              {t("modals.settings.title")}
             </h3>
 
             <div className="space-y-4">
               <div className="text-sm">
-                <div className="text-gray-500 dark:text-gray-400">Benutzer</div>
+                <div className="text-gray-500 dark:text-gray-400">
+                  {t("modals.settings.user")}
+                </div>
                 <div className="font-medium dark:text-white">
                   {currentUser?.username}
                 </div>
               </div>
               <div className="text-sm">
                 <div className="text-gray-500 dark:text-gray-400">
-                  Deine User ID
+                  {t("modals.settings.yourId")}
                 </div>
                 <div className="font-mono text-xs bg-gray-100 dark:bg-gray-700 dark:text-white p-2 rounded border break-all">
                   {currentUser?.userId}
                 </div>
                 {currentUser?.isAnonymous && (
                   <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                    Teile diese ID, damit andere dich zu Chats hinzufügen können
+                    {t("modals.settings.shareId")}
                   </div>
                 )}
               </div>
               <div className="text-sm">
-                <div className="text-gray-500 dark:text-gray-400">Status</div>
+                <div className="text-gray-500 dark:text-gray-400">
+                  {t("modals.settings.status")}
+                </div>
                 <div className="font-medium dark:text-white">
-                  {currentUser?.isAnonymous ? "Anonym" : "Registriert"}
+                  {currentUser?.isAnonymous
+                    ? t("modals.settings.anonymous")
+                    : t("modals.settings.registered")}
                 </div>
               </div>
 
               {/* Teilnehmer-Liste mit Entfernen-Buttons */}
               <div className="text-sm font-medium dark:text-gray-400">
-                Teilnehmer:
+                {t("menus.manageUsers.users")}
               </div>
               {selectedChat?.chatUserList ? (
                 Object.entries(selectedChat.chatUserList).map(
@@ -2336,7 +2359,8 @@ const AnocmUI = () => {
                     >
                       <span>
                         {username}
-                        {userId === currentUser?.userId && " (Du)"}
+                        {userId === currentUser?.userId &&
+                          ` (${t("common.you")})`}
                       </span>
                       {userId !== currentUser?.userId && (
                         <button
@@ -2350,7 +2374,7 @@ const AnocmUI = () => {
                           }
                           className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs"
                         >
-                          Entfernen
+                          {t("menus.manageUsers.removeUser")}
                         </button>
                       )}
                     </div>
@@ -2358,12 +2382,12 @@ const AnocmUI = () => {
                 )
               ) : (
                 <div className="text-gray-500 dark:text-white italic">
-                  Keine Teilnehmer
+                  {t("menus.manageUsers.noUser")}
                 </div>
               )}
 
               <div className="text-sm font-medium dark:text-gray-400">
-                Farbschema
+                {t("modals.darkMode.theme")}
               </div>
               <div className="relative bg-gray-100 dark:bg-gray-700 rounded-xl p-1 mb-6">
                 <div className="flex relative">
@@ -2381,7 +2405,7 @@ const AnocmUI = () => {
                         : "text-gray-500 dark:text-gray-400"
                     }`}
                   >
-                    Dunkel
+                    {t("modals.darkMode.dark")}
                   </button>
                   <button
                     onClick={() => toggleDarkMode()}
@@ -2391,7 +2415,7 @@ const AnocmUI = () => {
                         : "text-gray-500 dark:text-gray-400"
                     }`}
                   >
-                    Hell
+                    {t("modals.darkMode.light")}
                   </button>
                 </div>
               </div>
@@ -2400,7 +2424,7 @@ const AnocmUI = () => {
                 onClick={() => setShowSettings(false)}
                 className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
               >
-                Schließen
+                {t("common.close")}
               </button>
             </div>
           </div>
@@ -2411,13 +2435,13 @@ const AnocmUI = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
-              👤 User zu Chat hinzufügen
+              👤 {t("modals.addUser.title")}
             </h3>
 
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700">
-                  User ID
+                  {t("modals.userId")}
                 </label>
                 <input
                   type="text"
@@ -2428,7 +2452,7 @@ const AnocmUI = () => {
                   autoFocus
                 />
                 <div className="text-xs text-gray-500 mt-1">
-                  Gib die User ID der Person ein, die du hinzufügen möchtest
+                  {t("modals.addUser.info")}
                 </div>
               </div>
 
@@ -2438,7 +2462,7 @@ const AnocmUI = () => {
                   disabled={!newChatUserId.trim()}
                   className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors text-sm"
                 >
-                  Hinzufügen
+                  {t("menus.manageUsers.addUser")}
                 </button>
                 <button
                   onClick={() => {
@@ -2447,7 +2471,7 @@ const AnocmUI = () => {
                   }}
                   className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm"
                 >
-                  Abbrechen
+                  {t("common.cancel")}
                 </button>
               </div>
             </div>

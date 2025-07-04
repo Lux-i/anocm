@@ -1,4 +1,53 @@
 {
+  "common": {
+    "close": "Fermer",
+    "now": "maintenant",
+    "newMessage": "Nouveau Message",
+    "min": "Min",
+    "max": "Max",
+    "standard": "Défaut",
+    "cancel": "Annuler",
+    "you": "vous"
+  },
+  "errorMessages": {
+    "networkError": "Erreur réseau",
+    "unexpectedResponse": "Format de réponse inattendu",
+    "unfinishedKeyExchange": "Aucune clé de chat trouvée pour ce chat, l'échange pourrait être en cours.",
+    "noChatKey": "Aucune clé de chat",
+    "ttlOutOfBounds": "La durée de vie doit être comprise entre {{minTTL}} et {{maxTTL}}!",
+    "loadChatListError": "Erreur de chargement de la liste de chats: {{error}}",
+    "authError": {
+      "anoUserCreationFailed": "Échec de la création de l'utilisateur anonyme: {{error}}",
+      "loginFailed": "Échec de la connexion: {{error}}",
+      "registrationFailed": "Échec de l'inscription: {{error}}",
+      "missingParameters": "Veuillez entrer un nom d'utilisateur (et un mot de passe)",
+      "chatCreationFailed": "Échec de la création du chat: {{error}}",
+      "networkError": "Erreur réseau lors de la création du chat",
+      "otherError": "Erreur: {{error}}"
+    }
+  },
+  "successMessages": {
+    "accountCreated": "Compte créé! ID de connexion: {{userId}} - Connectez-vous maintenant (sans mot de passe)."
+  },
+  "otherMessages": {
+    "confirmRemoveUser": "Supprimer cet utilisateur?",
+    "endChat": "Le chat a été terminé ou vous avez été supprimé.",
+    "encryptedMessage": "message crypté"
+  },
+  "timeUnits": {
+    "second_one": "1 seconde",
+    "second_other": "{{count}} secondes",
+    "minute_one": "1 minute",
+    "minute_other": "{{count}} minutes",
+    "hour_one": "1 heure",
+    "hour_other": "{{count}} heures",
+    "day_one": "1 jour",
+    "day_other": "{{count}} jours",
+    "week_one": "1 semaine",
+    "week_other": "{{count}} semaines",
+    "month_one": "1 mois",
+    "month_other": "{{count}} mois"
+  },
   "authPage": {
     "anocm": "Messenger de chat anonyme",
     "or": "ou",
@@ -16,15 +65,12 @@
       "password": "Mot de passe"
     }
   },
-  "languageSelect": {
-    "title": "Choisir la langue:"
-  },
   "chatList": {
     "contacts": "Les contacts",
     "createNewChat": "Créer un nouveau chat",
     "refreshChats": "Actualiser les chats",
     "search": "Rechercher...",
-    "noNewMessages": "Aucun nouveau messages...",
+    "noNewMessages": "Aucun nouveau message...",
     "noChatsFound": "Aucun chat trouvé",
     "noChats": "Aucun chat.",
     "online": "En ligne",
@@ -34,12 +80,18 @@
     "anonymousChat": "Chat anonyme",
     "recentlyActive": "Récemment actif"
   },
-  "chatMenu": {
+  "menus": {
     "manageChat": "Gestion du chat",
     "ttlInfo": {
       "pre": "Durée de vie par défaut des nouveaux messages:",
-      "post": "S'applique à tous les nouveaux messages jusqu'à ce que tu le changes.",
-      "standard": "Défaut"
+      "post": "S'applique à tous les nouveaux messages jusqu'à ce que tu le changes."
+    },
+    "manageUsers": {
+      "users": "les membres",
+      "addUser": "Ajouter des membrers",
+      "noUsersFound": "Aucun membres trouvé",
+      "noUser": "Aucun membre",
+      "removeUser": "Supprimer"
     }
   },
   "ttlPresets": {
@@ -52,18 +104,45 @@
     "oneMonth": "1 mois",
     "permanent": "permanent"
   },
-  "timeUnits": {
-    "second_one": "1 second",
-    "second_other": "{{count}} seconds",
-    "minute_one": "1 minute",
-    "minute_other": "{{count}} minutes",
-    "hour_one": "1 heure",
-    "hour_other": "{{count}} heures",
-    "day_one": "1 jour",
-    "day_other": "{{count}} jours",
-    "week_one": "1 semaine",
-    "week_other": "{{count}} semaines",
-    "month_one": "1 mois",
-    "month_other": "{{count}} mois"
+  "sendMessage": {
+    "send": "envoyer",
+    "ttlInSeconds": "TTL (en secondes)"
+  },
+  "initChatPage": {
+    "welcome": "Bienvenue chez AnoCM",
+    "choose": "Sélectionez une conversation pour commencer."
+  },
+  "mobileNav": {
+    "chats": "conversations",
+    "contacts": "contacts",
+    "logout": "déconnexion"
+  },
+  "modals": {
+    "userId": "ID d'utilisateur",
+    "createChat": {
+      "setTtl": "Durée de vie des messages:",
+      "startChat": "Démarrer le chat"
+    },
+    "languageSelect": {
+      "title": "Choisir la langue:"
+    },
+    "settings": {
+      "title": "Paramètres",
+      "yourId": "Votre ID d'utilisateur",
+      "user": "utlisateur",
+      "shareId": "Partagez cet ID pour que d'autres puissent vous ajouter aux conversations.",
+      "status": "statut",
+      "anonymous": "anonyme",
+      "registered": "enregistré"
+    },
+    "darkMode": {
+      "theme": "thème de couleur",
+      "dark": "sombre",
+      "light": "clair"
+    },
+    "addUser": {
+      "title": "Ajouter une personne au conversation",
+      "info": "Entrez l'ID d'utilisateur de la personne que vous souhaitez ajouter."
+    }
   }
 }
