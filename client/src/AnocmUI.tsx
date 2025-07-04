@@ -1440,7 +1440,7 @@ const AnocmUI = () => {
               className="inline-flex px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md shadow hover:bg-gray-50, dark:hover:bg-gray-700 focus:outline-none hover:cursor-pointer"
               onClick={() => toggleDropdown("languageSelector")}
             >
-              <span>{lngs[i18n.resolvedLanguage].nativeName}</span>
+              <span>{i18n.resolvedLanguage}</span>
               <ChevronDown className="ml-2 mr-0" />
             </button>
             <div
