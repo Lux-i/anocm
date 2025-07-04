@@ -1,0 +1,150 @@
+{
+  "common": {
+    "close": "Schließen",
+    "now": "jetzt",
+    "newMessage": "Neue Nachricht",
+    "min": "Min",
+    "max": "Max",
+    "standard": "Standard",
+    "cancel": "Abbrechen",
+    "you": "Sie",
+    "language": "Sprache"
+  },
+  "errorMessages": {
+    "networkError": "Netzwerkfehler",
+    "unexpectedResponse": "Unerwartetes Antwortformat",
+    "unfinishedKeyExchange": "Kein Chat-Schlüssel für diesen Chat gefunden, der Austausch könnte im Gange sein.",
+    "noChatKey": "Kein Chat-Schlüssel",
+    "ttlOutOfBounds": "TTL muss zwischen {{minTTL}} und {{maxTTL}} liegen!",
+    "loadChatListError": "Fehler beim Laden der Chatliste: {{error}}",
+    "authError": {
+      "anoUserCreationFailed": "Fehler beim Erstellen des anonymen Benutzers: {{error}}",
+      "loginFailed": "Anmeldung fehlgeschlagen: {{error}}",
+      "registrationFailed": "Registrierung fehlgeschlagen: {{error}}",
+      "missingParameters": "Bitte geben Sie Benutzername (und Passwort) ein",
+      "chatCreationFailed": "Fehler beim Erstellen des Chats: {{error}}",
+      "networkError": "Netzwerkfehler während der Chat-Erstellung",
+      "otherError": "Fehler: {{error}}"
+    }
+  },
+  "successMessages": {
+    "accountCreated": "Konto erstellt! Login-ID: {{userId}} - Jetzt anmelden (ohne Passwort)."
+  },
+  "otherMessages": {
+    "confirmRemoveUser": "Diesen Benutzer entfernen?",
+    "endChat": "Chat wurde beendet oder Sie wurden entfernt.",
+    "encryptedMessage": "verschlüsselte Nachricht"
+  },
+  "timeUnits": {
+    "second_one": "1 Sekunde",
+    "second_other": "{{count}} Sekunden",
+    "minute_one": "1 Minute",
+    "minute_other": "{{count}} Minuten",
+    "hour_one": "1 Stunde",
+    "hour_other": "{{count}} Stunden",
+    "day_one": "1 Tag",
+    "day_other": "{{count}} Tage",
+    "week_one": "1 Woche",
+    "week_other": "{{count}} Wochen",
+    "month_one": "1 Monat",
+    "month_other": "{{count}} Monate"
+  },
+  "authPage": {
+    "anocm": "Anonymer Chat-Messenger",
+    "or": "oder",
+    "tabSwitcher": {
+      "login": "Anmeldung",
+      "register": "Registrierung"
+    },
+    "buttons": {
+      "login": "Anmelden",
+      "register": "Registrieren",
+      "anonymous": "Anonym fortfahren"
+    },
+    "inputField": {
+      "username": "Benutzername",
+      "password": "Kennwort"
+    }
+  },
+  "chatList": {
+    "contacts": "Kontakte",
+    "createNewChat": "Neuen Chat erstellen",
+    "refreshChats": "Chats aktualisieren",
+    "search": "Suchen...",
+    "noNewMessages": "Keine neuen Nachrichten...",
+    "noChatsFound": "Keine Chats gefunden.",
+    "noChats": "Keine Chats.",
+    "online": "Online",
+    "offline": "Offline",
+    "noContactsFound": "Keine Kontakte gefunden...",
+    "noContacts": "Keine Kontakte.",
+    "anonymousChat": "Anonymer Chat",
+    "recentlyActive": "Vor kurzem aktiv"
+  },
+  "menus": {
+    "manageChat": "Chat-Verwaltung",
+    "ttlInfo": {
+      "pre": "Standard-Lebensdauer für neue Nachrichten:",
+      "post": "Gilt für alle neuen Nachrichten, bis du es änderst."
+    },
+    "manageUsers": {
+      "users": "Teilnehmer",
+      "addUser": "Hinzufügen",
+      "noUsersFound": "Keine Teilnehmer gefunden",
+      "noUser": "Keine Teilnehmer",
+      "removeUser": "Entfernen"
+    }
+  },
+  "ttlPresets": {
+    "broadcast": "Broadcast",
+    "fiveMin": "5 Minuten",
+    "halfHour": "30 Minuten",
+    "oneHour": "1 Stunde",
+    "oneDay": "1 Tag",
+    "oneWeek": "1 Woche",
+    "oneMonth": "1 Monat",
+    "permanent": "Dauerhaft"
+  },
+  "sendMessage": {
+    "send": "abschicken",
+    "ttlInSeconds": "TTL (in Sekunden)"
+  },
+  "initChatPage": {
+    "welcome": "Willkommen bei AnoCM",
+    "choose": "Wählen Sie eine Unterhaltung aus, um loszulegen"
+  },
+  "mobileNav": {
+    "chats": "Chats",
+    "contacts": "Kontakte",
+    "logout": "Abmelden"
+  },
+  "modals": {
+    "userId": "Benutzer ID",
+    "createChat": {
+      "setTtl": "Lebensdauer der Nachrichten:",
+      "startChat": "Chat starten"
+    },
+    "languageSelect": {
+      "title": "Sprache auswählen:",
+      "changeLanguage": "Andere Sprache auswählen"
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "yourId": "Ihre User ID",
+      "user": "Benutzer",
+      "shareId": "Teilen Sie diese ID, damit andere Sie zu Chats hinzufügen können.",
+      "status": "Status",
+      "anonymous": "anonym",
+      "registered": "registriert"
+    },
+    "darkMode": {
+      "theme": "Farbschema",
+      "dark": "Dunkel",
+      "light": "Hell"
+    },
+    "addUser": {
+      "title": "Benutzer zu Chat hinzufügen",
+      "info": "Geben Sie die User ID der Person ein, die Sie hinzufügen möchten."
+    }
+  }
+}
