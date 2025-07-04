@@ -58,7 +58,7 @@ type UIMessage = ChatMessage & {
   isOwn: boolean;
 };
 
-const DROPDOWN_TTL_PRESETS = [
+const getDropdownTtlPresets = (t: Function) => [
   { value: 0, text: t("ttlPresets.broadcast") },
   { value: 300, text: t("ttlPresets.fiveMin") },
   { value: 1800, text: t("ttlPresets.halfHour") },
@@ -140,6 +140,9 @@ const AnocmUI = () => {
     fr: { nativeName: "Français" },
   };
   const { t, i18n } = useTranslation();
+
+  //DROPDOWN TTL PRESETS
+  const DROPDOWN_TTL_PRESETS = getDropdownTtlPresets(t);
 
   // Helper Functions
   const formatTimestamp = (date: Date): string => {
@@ -2385,7 +2388,21 @@ const AnocmUI = () => {
                   {t("menus.manageUsers.noUser")}
                 </div>
               )}
-
+              <div className="text-sm font-medium dark:text-gray-400">
+                {t("common.language")}
+              </div>
+              <div className="font-medium dark:text-white">
+                {lngs[i18n.resolvedLanguage].nativeName}
+              </div>
+              <button
+                onClick={() => {
+                  setShowSettings(false);
+                  setShowLanguages(true);
+                }}
+                className="w-full bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 py-4 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-950 transition-all duration-200 text-xs"
+              >
+                {t("modals.languageSelect.changeLanguage")}
+              </button>
               <div className="text-sm font-medium dark:text-gray-400">
                 {t("modals.darkMode.theme")}
               </div>

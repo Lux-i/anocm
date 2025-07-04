@@ -3,11 +3,12 @@
     "close": "close",
     "now": "Now",
     "newMessage": "New message",
-    "min": "Min:",
-    "max": "Max:",
+    "min": "Min",
+    "max": "Max",
     "standard": "Default",
     "cancel": "cancel",
-    "you": "you"
+    "you": "you",
+    "language": "language"
   },
   "errorMessages": {
     "networkError": "Network Error",
@@ -124,7 +125,8 @@
       "startChat": "start chat"
     },
     "languageSelect": {
-      "title": "Select language:"
+      "title": "Select language:",
+      "changeLanguage": "Change Language"
     },
     "settings": {
       "title": "Settings",

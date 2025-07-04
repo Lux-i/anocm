@@ -7,7 +7,8 @@
     "max": "Max",
     "standard": "Défaut",
     "cancel": "Annuler",
-    "you": "vous"
+    "you": "vous",
+    "language": "langue"
   },
   "errorMessages": {
     "networkError": "Erreur réseau",
@@ -124,7 +125,8 @@
       "startChat": "Démarrer le chat"
     },
     "languageSelect": {
-      "title": "Choisir la langue:"
+      "title": "Choisir la langue:",
+      "changeLanguage": "Choisir une autre langue"
     },
     "settings": {
       "title": "Paramètres",
