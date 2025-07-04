@@ -79,7 +79,7 @@ const AnocmUI = () => {
   const [status, setStatus] = useState<string | null>(null);
 
   // Dark Mode State
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   // UI States
   const [activeSection, setActiveSection] = useState<"chats" | "users">(
