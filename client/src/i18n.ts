@@ -4,7 +4,7 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
 
 const API_BASE =
-  process.env.REACT_API_BASE_URL || "https://anocm.tomatenbot.com";
+  import.meta.env.VITE_API_BASE_URL || "https://anocm.tomatenbot.com";
 
 i18n
   .use(Backend)
