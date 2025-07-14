@@ -3,6 +3,8 @@ config.json
 server/modules
 server/**/*.js
 
+server/assets
+
 .env
 
 public
