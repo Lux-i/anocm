@@ -66,6 +66,7 @@ app.use(
     maxAge: 7 * 24 * 60 * 60 * 1000,
   })
 );
+console.log("Serving static files from:", __dirname + "/public");
 //#endregion
 
 // Templating (if used)
