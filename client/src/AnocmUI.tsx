@@ -40,17 +40,12 @@ enum Action {
   CK_REQ = "chatkeyreq", //Chat key request
 }
 
-const START_LOCAL = false;
+const API_BASE =
+  process.env.REACT_API_BASE_URL || "https://anocm.tomatenbot.com";
 
-const API_V1 = START_LOCAL
-  ? "http://localhost:8080/api/v1"
-  : "https://anocm.tomatenbot.com/api/v1";
-const API_V2 = START_LOCAL
-  ? "http://localhost:8080/api/v2"
-  : "https://anocm.tomatenbot.com/api/v2";
-const WS_URL = START_LOCAL
-  ? "wss://localhost:8080"
-  : "wss://anocm.tomatenbot.com";
+const API_V1 = `${API_BASE}/api/v1`;
+const API_V2 = `${API_BASE}/api/v2`;
+const WS_URL = process.env.WSS_URL || "wss://anocm.tomatenbot.com/ws";
 
 type UIMessage = ChatMessage & {
   id: string;

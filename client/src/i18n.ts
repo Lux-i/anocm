@@ -3,6 +3,9 @@ import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
 
+const API_BASE =
+  process.env.REACT_API_BASE_URL || "https://anocm.tomatenbot.com";
+
 i18n
   .use(Backend)
   .use(LanguageDetector)
@@ -14,7 +17,7 @@ i18n
       escapeValue: false,
     },
     backend: {
-      loadPath: "http://anocm.tomatenbot.com/locales/{{lng}}.json",
+      loadPath: `${API_BASE}/locales/{{lng}}.json`,
     },
   });
 
