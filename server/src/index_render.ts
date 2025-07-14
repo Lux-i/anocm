@@ -67,6 +67,8 @@ app.use(
   })
 );
 console.log("Serving static files from:", __dirname + "/public");
+import fs from "fs";
+console.log("Public dir contents:", fs.readdirSync(__dirname + "/public"));
 //#endregion
 
 // Templating (if used)
