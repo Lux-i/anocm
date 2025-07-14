@@ -14,7 +14,7 @@ i18n
       escapeValue: false,
     },
     backend: {
-      loadPath: "http://localhost:8080/locales/{{lng}}.json",
+      loadPath: "http://anocm.tomatenbot.com/locales/{{lng}}.json",
     },
   });
 
