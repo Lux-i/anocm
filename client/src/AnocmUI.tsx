@@ -2350,7 +2350,7 @@ const AnocmUI = () => {
                 <div className="flex relative">
                   <div
                     className={`absolute top-1 bottom-1 w-1/2 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-transform duration-300 ease-out ${
-                      isDarkMode === false ? "transform translate-x-full" : ""
+                      isDarkMode === true ? "transform translate-x-full" : ""
                     }`}
                   />
 
