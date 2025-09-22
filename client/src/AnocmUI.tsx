@@ -555,7 +555,7 @@ const AnocmUI = () => {
   ) => {
     const chatkey = await Encryption.loadKey(chatId);
     if (!chatkey) {
-      alert(t("errorMessages.unifinishedKeyExchange"));
+      alert(t("errorMessages.unfinishedKeyExchange"));
       return { success: false, error: t("errorMessages.noChatKey") };
     }
 
