@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 export namespace Encryption {
   function bufferToBase64(buffer: ArrayBuffer): string {
     return btoa(String.fromCharCode(...new Uint8Array(buffer)));
@@ -10,7 +11,7 @@ export namespace Encryption {
           .split("")
           .map((char) => char.charCodeAt(0))
       );
-    } catch (e: any) {
+    } catch (e) {
       console.log(e);
       return null;
     }
