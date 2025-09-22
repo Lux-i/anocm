@@ -890,7 +890,7 @@ const AnocmUI = () => {
       } else {
         throw new Error(data.error || "Failed to load chat list");
       }
-    } catch (e: any) {
+    } catch (e) {
       setError(t("errorMessages.loadChatListError", { error: e.message || e }));
     }
   };
@@ -1114,7 +1114,7 @@ const AnocmUI = () => {
       console.log("WebSocket getrennt");
       setWsActive(false);
     };
-  }, [isAuthenticated, currentUser?.userId, selectedChatId]);
+  }, [isAuthenticated]);
 
   // Nachrichten laden wenn Chat ausgewählt
   useEffect(() => {
