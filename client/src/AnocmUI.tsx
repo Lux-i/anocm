@@ -977,7 +977,8 @@ const AnocmUI = () => {
             isOwn: data.senderID === currentUser.userId,
           };
 
-          if (data.chatID === selectedChatId) {
+          //isOwn check only temporary
+          if (data.chatID === selectedChatId || newMessage.isOwn) {
             console.log("Nachricht für aktuellen Chat, füge zu messages hinzu");
             setMessages((prev) => [...prev, newMessage]);
           }
