@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-namespace */
-
-import { EncryptionService } from "./Encryption";
+//import { EncryptionService } from "./Encryption";
 
 //temp
 type ExchangeInfo = {
