@@ -13,7 +13,7 @@ This project is part of a _university project_ undertaken by a group of students
 Current messaging applications face several privacy issues, including:
 
 - **Persistent message storage**: Messages are stored in databases, which may be accessed by third parties through backdoors or other means.
-- **User identification** Messages are stored in databases, which may be accessed by third parties through backdoors or other means.
+- **User identification**: Messages are stored in databases, which may be accessed by third parties through backdoors or other means.
 - **Data collection**: Even if it's only telemetry data, many messengers collect and sell user data to third parties.
   These issues put user privacy and anonymity at risk.
 
