@@ -2,6 +2,8 @@ config.json
 # custom
 server/modules
 server/**/*.js
+!server/eslint.config.js
+!server/jest.config.js
 
 server/assets
 
