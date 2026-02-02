@@ -134,7 +134,7 @@ export default () => {
         });
       }
 
-      Database.getChatSettings(chatId, userId, token).then(
+      Database.getChatSettings(chatId, userId).then(
         (chat: Chat | any) => {
           if (instanceOfChat(chat)) {
             const response: DatabaseResponse = {
