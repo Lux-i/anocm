@@ -10,9 +10,9 @@ import {
   Action,
 } from "@anocm/shared/dist";
 import { broadcastToChat } from "../message/message";
-import chat from "../../routes/v1/chat";
 const argon2 = require("argon2");
 
+/* eslint-disable @typescript-eslint/no-namespace */
 export namespace Database {
   const client: RedisClientType = createClient({
     username: process.env.DB_USERNAME,
@@ -44,6 +44,7 @@ export namespace Database {
     try {
       client.connect();
     } catch (err) {
+      console.log("Could not connect to Redis: ", err);
       return false;
     }
 
@@ -87,7 +88,7 @@ export namespace Database {
       }
 
       if (users.length >= 2) {
-        let chatId = randomUUID();
+        const chatId = randomUUID();
         for (const user of users) {
           if (!(await client.exists(`user:${user.userId}`))) {
             console.log("User not found");
@@ -109,12 +110,12 @@ export namespace Database {
               );
             }
 
-            let chatArray = await client.hGet(
+            const chatArray = await client.hGet(
               `user:${user.userId}`,
               `chatList`
             );
             if (chatArray == null) {
-              let newChatArray: string[] = [];
+              const newChatArray: string[] = [];
               newChatArray.push(chatId);
               await client.hSet(
                 `user:${user.userId}`,
@@ -250,7 +251,7 @@ export namespace Database {
         );
       }
 
-      let res = await client.hExists(`chat:${chatId}:users`, userId);
+      const res = await client.hExists(`chat:${chatId}:users`, userId);
       return res;
     } catch (err: any) {
       console.error("Error checking User: ", err);
@@ -287,8 +288,8 @@ export namespace Database {
         `maxMessageTTL`
       );
 
-      let minTTL = parseInt(minTTLRes ?? "0");
-      let maxTTL = parseInt(maxTTLRes ?? "0");
+      const minTTL = parseInt(minTTLRes ?? "0");
+      const maxTTL = parseInt(maxTTLRes ?? "0");
 
       if (ttl == undefined || ttl == null || isNaN(ttl)) {
         ttl = parseInt(
@@ -320,7 +321,7 @@ export namespace Database {
         }
       }
 
-      let msg: WsMessage = {
+      const msg: WsMessage = {
         action: Action.BroadcastToChat,
         content: message,
         senderID: senderId as UUID,
@@ -338,7 +339,7 @@ export namespace Database {
     }
   }
 
-  function isValidTLL(ttl: number, min: number, max: number): Boolean {
+  function isValidTLL(ttl: number, min: number, max: number): boolean {
     if (ttl == -1 && max == -1) {
       return true;
     }
@@ -351,7 +352,7 @@ export namespace Database {
     return true;
   }
 
-  function validMinAndMax(min: number, max: number): Boolean {
+  function validMinAndMax(min: number, max: number): boolean {
     const isPermanentMaxTTL: boolean = max === -1;
     const isPermanentMinTTL: boolean = max === -1;
 
@@ -384,7 +385,7 @@ export namespace Database {
         //console.log(response);
         const convertedResponse: messageStructure = {};
 
-        for (let [key, msg] of Object.entries(response)) {
+        for (const [key, msg] of Object.entries(response)) {
           const parsedKey: EpochTimeStamp = Number(key);
 
           const rawMessage = typeof msg === "string" ? JSON.parse(msg) : msg;
@@ -420,7 +421,7 @@ export namespace Database {
 
     const parsedArray = JSON.parse(chatArray);
 
-    for (let chat in parsedArray) {
+    for (const chat in parsedArray) {
       if (!(await checkUserinChat(chat, userId))) {
         const index = parsedArray.indexOf(chat);
         if (index !== -1) {
@@ -479,9 +480,9 @@ export namespace Database {
       } while (cursor !== 0);
 
       try {
-        let userId: UUID = randomUUID();
+        const userId: UUID = randomUUID();
         //Uses argon2id hashing
-        let hashPW = await argon2.hash(password, {
+        const hashPW = await argon2.hash(password, {
           type: argon2.argon2id,
           memoryCost: 2 ** 16, // 64 MB
           timeCost: 5,
@@ -506,7 +507,7 @@ export namespace Database {
     userId_username: UUID | string,
     password?: string
   ): Promise<string[] | false> {
-    let token: UUID = randomUUID();
+    const token: UUID = randomUUID();
 
     if (typeof password == "undefined") {
       let cursor = 0;
@@ -526,7 +527,7 @@ export namespace Database {
               token: `${token}`,
             });
             await client.hExpire(key, `token`, 86400);
-            let userId = key.replace("user:", "");
+            const userId = key.replace("user:", "");
 
             return [userId, token];
           }
@@ -547,13 +548,13 @@ export namespace Database {
         for (const key of keys) {
           const searchResult = await client.hGet(key, "username");
           if (searchResult == userId_username) {
-            let hashPW = await client.hGet(key, "password");
+            const hashPW = await client.hGet(key, "password");
             if (await verifyHash(hashPW!, password)) {
               await client.hSet(key, {
                 token: `${token}`,
               });
               //console.log(await client.hExpire(key, `token`, 86400));
-              let userId = key.replace("user:", "");
+              const userId = key.replace("user:", "");
               return [userId, token];
             }
           }
@@ -570,8 +571,8 @@ export namespace Database {
    * @returns {Promise<UUID>} Client ID
    */
   export async function createAnoUser(): Promise<UUID> {
-    let userId: string = randomUUID();
-    let clientId: UUID = randomUUID();
+    const userId: string = randomUUID();
+    const clientId: UUID = randomUUID();
 
     await client.hSet(`user:${userId}`, {
       UUID: `${clientId}`,
@@ -630,7 +631,6 @@ export namespace Database {
   export async function getChatSettings(
     chatIdInput: UUID,
     adminId: UUID,
-    adminToken: UUID
   ): Promise<Chat | false> {
     try {
       if (!(await checkUserinChat(chatIdInput, adminId))) {
@@ -685,9 +685,9 @@ export namespace Database {
         !(await client.HEXISTS(`chat:${chatId}:users`, `${userId}`))
       ) {
         if (await client.hSet(`chat:${chatId}:users`, `${userId}`, "member")) {
-          let chatArray = await client.hGet(`user:${userId}`, `chatList`);
+          const chatArray = await client.hGet(`user:${userId}`, `chatList`);
           if (chatArray == null) {
-            let newChatArray: string[] = [];
+            const newChatArray: string[] = [];
             newChatArray.push(chatId);
             await client.hSet(
               `user:${userId}`,

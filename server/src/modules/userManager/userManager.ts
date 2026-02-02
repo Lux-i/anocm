@@ -4,6 +4,7 @@ import { UUID } from "crypto";
 import { WsMessage } from "@anocm/shared/dist";
 import { WebSocket } from "ws";
 
+/* eslint-disable @typescript-eslint/no-namespace */
 export namespace UserManager {
   const users: Map<UUID, WebSocket> = new Map();
 

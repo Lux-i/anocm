@@ -5,7 +5,6 @@ import {
 } from "../message/message";
 import { WebSocket as WebSocketType } from "ws";
 import { UserManager } from "../userManager/userManager";
-import { UUID } from "crypto";
 /**
  *
  * @param message message object

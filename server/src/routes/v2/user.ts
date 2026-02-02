@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Database } from "../../modules/database/database";
-import { DatabaseResponse, Chat } from "@anocm/shared/dist";
+import { DatabaseResponse } from "@anocm/shared/dist";
 import { UUID } from "crypto";
 
 const express = require("express");
@@ -116,17 +116,17 @@ export default () => {
     }
   });
 
-    router.get("/getUsername", async (req: Request, res: Response) => {
+  router.get("/getUsername", async (req: Request, res: Response) => {
     try {
       const [searchUserId, userId, token] = req.body as string;
       Database.getUsername(searchUserId, userId, token).then((username) => {
-        if(username != false){
+        if (username != false) {
           const response: DatabaseResponse = {
             success: true,
             userData: username,
           };
           res.send(response);
-        }else{
+        } else {
           const response: DatabaseResponse = {
             success: false,
           };

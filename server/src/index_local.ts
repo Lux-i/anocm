@@ -31,6 +31,8 @@ try {
   const { Port } = require("./config.json");
   configPort = Port;
 } catch (err) {
+  console.log(err);
+
   configPort = null;
 }
 
@@ -118,7 +120,7 @@ server.listen(UsedPort, () => {
 //#region WebSocket
 const wss = new WebSocket.Server({ server: server });
 
-wss.on("connection", async (ws: WebSocketType, req: Request) => {
+wss.on("connection", async (ws: WebSocketType) => {
   console.log("Connected to WebSocket");
   ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
 

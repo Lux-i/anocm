@@ -102,7 +102,7 @@ const server = http.createServer(app);
 // WebSocket setup
 const wss = new WebSocket.Server({ server });
 
-wss.on("connection", async (ws: WebSocketType, req: Request) => {
+wss.on("connection", async (ws: WebSocketType) => {
   ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
 
   ws.on("message", async (data: WebSocket.RawData) => {

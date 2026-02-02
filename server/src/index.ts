@@ -109,7 +109,7 @@ function httpsWorker(glx: any) {
   // WebSocket setup
   const wss = new WebSocket.Server({ server: server });
 
-  wss.on("connection", async (ws: WebSocketType, req: Request) => {
+  wss.on("connection", async (ws: WebSocketType) => {
     // console.log("Connected to WebSocket");
     ws.send(JSON.stringify({ msg: "Connected to WebSocket" }));
 

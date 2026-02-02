@@ -6,7 +6,7 @@ import { validate } from "uuid";
 import { WebSocket as WebSocketType } from "ws";
 
 export async function broadcastToChat(message: WsMessage) {
-  let messageCopy = JSON.parse(JSON.stringify(message));
+  const messageCopy = JSON.parse(JSON.stringify(message));
 
   if (
     message.senderToken === undefined ||
@@ -106,7 +106,7 @@ export async function initWebsocketWithUserManager(
     return;
   }
 
-  let res = await Database.verifyUser(
+  const res = await Database.verifyUser(
     message.senderID, message.senderToken);
 
   if (res === false) {
