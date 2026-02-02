@@ -52,7 +52,7 @@ jobs:
         run: npm test
 
   build:
-    name: Build (full application)
+    name: Build (Render-style build)
     runs-on: ubuntu-latest
     needs: test
 
@@ -64,29 +64,19 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
+      - name: Install dependencies (root)
         run: npm ci
 
-      - name: Build shared
-        working-directory: shared
-        run: npx tsc
+      - name: Build all workspaces (root)
+        run: npm run build
 
-      - name: Build server
-        working-directory: server
-        run: npx tsc
-
-      - name: Build client
-        working-directory: client
-        run: |
-          npm ci
-          npm run build
-
-      - name: Move client build to server
+      - name: Move client build to server (postbuild)
         run: |
           rm -rf server/dist
           mv client/dist server/dist
 
-      - name: Move assets to server public
+      - name: Move assets to server public (postbuild)
         run: |
+          mkdir -p server/public
           rm -rf server/public/assets
-          mv server/dist/assets server/public/assets
+          if [ -d server/dist/assets ]; then mv server/dist/assets server/public/assets; fi
