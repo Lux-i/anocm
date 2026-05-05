@@ -167,7 +167,7 @@ export namespace Encryption {
         ciphertext!
       );
       return new TextDecoder().decode(decrypted);
-    } catch (e: any) {
+    } catch (e) {
       console.log(e);
       return combinedString;
     }

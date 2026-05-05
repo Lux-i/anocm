@@ -6,8 +6,20 @@ type ExchangeInfo = {
   sharedKey: CryptoKey | null;
   active: boolean;
   error: boolean;
-  status: string;
+  status: Status;
+  role: Role;
 };
+
+enum Role {
+  REQUEST,
+  SEND,
+}
+
+enum Status {
+  INIT,
+  PENDING,
+  CLOSED,
+}
 
 export class KeyExchangeService {
   exchanges: Map<string, ExchangeInfo>;
@@ -20,14 +32,15 @@ export class KeyExchangeService {
     return chatId + userId;
   };
 
-  private initExchange = (exchangeId: string) => {
+  private initExchange = (exchangeId: string, role: Role) => {
     if (!this.exchanges.has(exchangeId)) {
       const exchangeInfo: ExchangeInfo = {
         dhKeypair: null,
         sharedKey: null,
         active: true,
         error: false,
-        status: "init",
+        status: Status.INIT,
+        role: role,
       };
 
       this.exchanges.set(exchangeId, exchangeInfo);
@@ -37,9 +50,9 @@ export class KeyExchangeService {
     }
   };
 
-  public startExchange = async (chatId: string, userId: string) => {
+  public startExchange = async (chatId: string, userId: string, role: Role) => {
     const exchangeId = this.generateExchangeIdentifier(chatId, userId);
-    if (this.initExchange(exchangeId)) {
+    if (this.initExchange(exchangeId, role)) {
       //resolve promise
       Promise.resolve(exchangeId);
       //create dhKeypair
