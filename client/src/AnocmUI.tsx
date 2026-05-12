@@ -44,7 +44,7 @@ const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "https://anocm.tomatenbot.com";
 
 //const API_V1 = `${API_BASE}/api/v1`;
-const API_V2 = `${API_BASE}/api/v2`;
+const API_V2 = `/api/v2`;
 const WS_URL = import.meta.env.VITE_WSS_URL || "wss://anocm.tomatenbot.com/ws";
 
 type UIMessage = ChatMessage & {
