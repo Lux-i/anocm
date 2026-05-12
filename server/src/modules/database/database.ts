@@ -18,8 +18,8 @@ export namespace Database {
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     socket: {
-      host: "redis-18414.c293.eu-central-1-1.ec2.redns.redis-cloud.com",
-      port: 18414,
+      host: "redis-19164.c135.eu-central-1-1.ec2.cloud.redislabs.com",
+      port: 19164,
     },
   });
   /**
@@ -69,20 +69,19 @@ export namespace Database {
     minTTL: number,
     maxTTL: number,
     userId: UUID,
-    token: UUID
+    token: UUID,
   ): Promise<UUID | false> {
     if (await verifyUser(userId, token)) {
-
       if (!isValidTLL(ttl, minTTL, maxTTL)) {
         console.log(
-          `Invalid TTL settings: defaultTTL=${ttl}, minTTL=${minTTL}, maxTTL=${maxTTL}`
+          `Invalid TTL settings: defaultTTL=${ttl}, minTTL=${minTTL}, maxTTL=${maxTTL}`,
         );
         return false;
       }
 
       if (!validMinAndMax(minTTL, maxTTL)) {
         console.log(
-          `Invalid min and max TTL settings: minTTL=${minTTL}, maxTTL=${maxTTL}`
+          `Invalid min and max TTL settings: minTTL=${minTTL}, maxTTL=${maxTTL}`,
         );
         return false;
       }
@@ -100,19 +99,19 @@ export namespace Database {
             await client.hSet(
               `chat:${chatId}:users`,
               `${user.userId}`,
-              `admin`
+              `admin`,
             );
             if ((await client.ttl(`user:${user.userId}`)) != -1) {
               await client.hExpire(
                 `chat:${chatId}:users`,
                 `${user.userId}`,
-                await client.ttl(`user:${user.userId}`)
+                await client.ttl(`user:${user.userId}`),
               );
             }
 
             const chatArray = await client.hGet(
               `user:${user.userId}`,
-              `chatList`
+              `chatList`,
             );
             if (chatArray == null) {
               const newChatArray: string[] = [];
@@ -120,7 +119,7 @@ export namespace Database {
               await client.hSet(
                 `user:${user.userId}`,
                 `chatList`,
-                JSON.stringify(newChatArray)
+                JSON.stringify(newChatArray),
               );
             } else {
               const newChatArray: string[] = JSON.parse(chatArray);
@@ -128,7 +127,7 @@ export namespace Database {
               await client.hSet(
                 `user:${user.userId}`,
                 `chatList`,
-                JSON.stringify(newChatArray)
+                JSON.stringify(newChatArray),
               );
             }
           }
@@ -137,13 +136,13 @@ export namespace Database {
             await client.hSet(
               `chat:${chatId}:users`,
               `${user.userId}`,
-              `member`
+              `member`,
             );
             if ((await client.ttl(`user:${user.userId}`)) != -1) {
               await client.hExpire(
                 `chat:${chatId}:users`,
                 `${user.userId}`,
-                await client.ttl(`user:${user.userId}`)
+                await client.ttl(`user:${user.userId}`),
               );
             }
           }
@@ -167,19 +166,24 @@ export namespace Database {
 
   export async function editChatSettings(
     chatId: UUID,
-    newSettings: chatSettings
+    newSettings: chatSettings,
   ) {
-
-    if (!isValidTLL(newSettings.defaultTTL, newSettings.minTTL, newSettings.maxTTL)) {
+    if (
+      !isValidTLL(
+        newSettings.defaultTTL,
+        newSettings.minTTL,
+        newSettings.maxTTL,
+      )
+    ) {
       console.log(
-        `Invalid TTL settings: defaultTTL=${newSettings.defaultTTL}, minTTL=${newSettings.minTTL}, maxTTL=${newSettings.maxTTL}`
+        `Invalid TTL settings: defaultTTL=${newSettings.defaultTTL}, minTTL=${newSettings.minTTL}, maxTTL=${newSettings.maxTTL}`,
       );
       return false;
     }
 
     if (!validMinAndMax(newSettings.minTTL, newSettings.maxTTL)) {
       console.log(
-        `Invalid min and max TTL settings: minTTL=${newSettings.minTTL}, maxTTL=${newSettings.maxTTL}`
+        `Invalid min and max TTL settings: minTTL=${newSettings.minTTL}, maxTTL=${newSettings.maxTTL}`,
       );
       return false;
     }
@@ -205,7 +209,7 @@ export namespace Database {
     newAdmins: User[],
     chatId: UUID,
     adminId: UUID,
-    adminToken: UUID
+    adminToken: UUID,
   ) {
     if (newAdmins.length < 1) {
       return;
@@ -226,7 +230,7 @@ export namespace Database {
     userId: UUID,
     chatId: UUID,
     adminId: UUID,
-    adminToken: UUID
+    adminToken: UUID,
   ) {
     if ((await client.hLen(`chat:${chatId}:users`)) == 2) {
       return;
@@ -242,12 +246,12 @@ export namespace Database {
 
   export async function checkUserinChat(
     chatId: string,
-    userId: string
+    userId: string,
   ): Promise<boolean | -1> {
     try {
       if (typeof chatId !== "string" || typeof userId !== "string") {
         throw new TypeError(
-          `Invalid types: chatId=${typeof chatId}, userId=${typeof userId}`
+          `Invalid types: chatId=${typeof chatId}, userId=${typeof userId}`,
         );
       }
 
@@ -272,7 +276,7 @@ export namespace Database {
     senderToken: string,
     message: string,
     timestamp: number,
-    ttl?: number
+    ttl?: number,
   ): Promise<boolean | any> {
     try {
       if (!(await checkUserinChat(chatId, senderId))) {
@@ -281,11 +285,11 @@ export namespace Database {
 
       const minTTLRes = await client.hGet(
         `chat:${chatId}:settings`,
-        `minMessageTTL`
+        `minMessageTTL`,
       );
       const maxTTLRes = await client.hGet(
         `chat:${chatId}:settings`,
-        `maxMessageTTL`
+        `maxMessageTTL`,
       );
 
       const minTTL = parseInt(minTTLRes ?? "0");
@@ -294,7 +298,7 @@ export namespace Database {
       if (ttl == undefined || ttl == null || isNaN(ttl)) {
         ttl = parseInt(
           (await client.hGet(`chat:${chatId}:settings`, `defaultMessageTTL`)) ??
-          "0"
+            "0",
         );
       }
 
@@ -313,7 +317,7 @@ export namespace Database {
         await client.hSet(
           `chat:${chatId}:messages`,
           timestamp,
-          JSON.stringify(messageObj)
+          JSON.stringify(messageObj),
         );
 
         if (ttl != -1) {
@@ -344,7 +348,7 @@ export namespace Database {
       return true;
     }
 
-    if ((min == -1 && max == -1) && ttl != -1) return false
+    if (min == -1 && max == -1 && ttl != -1) return false;
 
     if (ttl < min && min != -1) return false;
     if (ttl > max && max != -1) return false;
@@ -356,7 +360,11 @@ export namespace Database {
     const isPermanentMaxTTL: boolean = max === -1;
     const isPermanentMinTTL: boolean = max === -1;
 
-    const isMinBelowEqualMax: boolean = (isPermanentMaxTTL) ? true : (isPermanentMinTTL) ? false : min <= max;
+    const isMinBelowEqualMax: boolean = isPermanentMaxTTL
+      ? true
+      : isPermanentMinTTL
+        ? false
+        : min <= max;
 
     return isMinBelowEqualMax;
   }
@@ -368,7 +376,7 @@ export namespace Database {
   export async function getChatMessages(
     chatId: string,
     userId: UUID,
-    userToken: string
+    userToken: string,
   ): Promise<messageStructure | false> {
     if (
       !(await verifyUser(userId, userToken)) ||
@@ -407,7 +415,7 @@ export namespace Database {
 
   export async function getUserChatList(
     userId: string,
-    userToken: string
+    userToken: string,
   ): Promise<string | false> {
     if (!(await verifyUser(userId, userToken))) {
       return false;
@@ -432,7 +440,7 @@ export namespace Database {
     await client.hSet(
       `user:${userId}`,
       `chatList`,
-      JSON.stringify(parsedArray)
+      JSON.stringify(parsedArray),
     );
 
     const finalArray = await client.hGet(`user:${userId}`, "chatList");
@@ -452,7 +460,7 @@ export namespace Database {
    */
   export async function createUser(
     username: string,
-    password: string
+    password: string,
   ): Promise<UUID | false> {
     if (
       typeof username != undefined &&
@@ -505,7 +513,7 @@ export namespace Database {
 
   export async function loginUser(
     userId_username: UUID | string,
-    password?: string
+    password?: string,
   ): Promise<string[] | false> {
     const token: UUID = randomUUID();
 
@@ -589,11 +597,16 @@ export namespace Database {
   export async function getChat(
     chatIdInput: string,
     adminId: string,
-    adminToken: string
+    adminToken: string,
   ): Promise<Chat | any> {
     try {
       adminId = adminId.replace("user:", "");
-      if (!(await checkUserinChat(chatIdInput, adminId) || !(await verifyUser(adminId, adminToken)))) {
+      if (
+        !(
+          (await checkUserinChat(chatIdInput, adminId)) ||
+          !(await verifyUser(adminId, adminToken))
+        )
+      ) {
         console.log("Not permitted!");
 
         throw Error("User is not permitted");
@@ -650,7 +663,7 @@ export namespace Database {
   export async function getChatUsers(
     chatIdInput: UUID,
     userToken: UUID,
-    userId: UUID
+    userId: UUID,
   ): Promise<Chat | false> {
     try {
       if (!(await verifyUser(userId, userToken))) {
@@ -677,7 +690,7 @@ export namespace Database {
     chatId: UUID,
     userId: UUID,
     adminId: UUID,
-    adminToken: UUID
+    adminToken: UUID,
   ): Promise<boolean> {
     if (await checkAdmin(adminId, adminToken, chatId)) {
       if (
@@ -692,7 +705,7 @@ export namespace Database {
             await client.hSet(
               `user:${userId}`,
               `chatList`,
-              JSON.stringify(newChatArray)
+              JSON.stringify(newChatArray),
             );
           } else {
             const newChatArray: string[] = JSON.parse(chatArray);
@@ -700,7 +713,7 @@ export namespace Database {
             await client.hSet(
               `user:${userId}`,
               `chatList`,
-              JSON.stringify(newChatArray)
+              JSON.stringify(newChatArray),
             );
           }
 
@@ -724,7 +737,7 @@ export namespace Database {
     chatId: UUID,
     userId: UUID,
     adminId: UUID,
-    adminToken: UUID
+    adminToken: UUID,
   ): Promise<boolean> {
     if (!(await checkAdmin(adminId, adminToken, chatId))) {
       return false;
@@ -747,7 +760,7 @@ export namespace Database {
             await client.hSet(
               `user:${userId}`,
               `chatList`,
-              JSON.stringify(parsedArray)
+              JSON.stringify(parsedArray),
             );
           }
         }
@@ -771,7 +784,7 @@ export namespace Database {
    */
   export async function verifyHash(
     hash: string,
-    password: string
+    password: string,
   ): Promise<boolean> {
     try {
       if (!hash || typeof hash !== "string" || hash.trim() === "") {
@@ -796,7 +809,7 @@ export namespace Database {
 
   export async function verifyUser(
     userId: string,
-    token: string
+    token: string,
   ): Promise<boolean> {
     const savedToken = await client.hGet(`user:${userId}`, "token");
     if (savedToken == token) {
@@ -808,7 +821,7 @@ export namespace Database {
   export async function checkAdmin(
     userId: string,
     token: string,
-    chatId: string
+    chatId: string,
   ): Promise<boolean> {
     if (await verifyUser(userId, token)) {
       const userRole = await client.hGet(`chat:${chatId}:users`, `${userId}`);
@@ -846,7 +859,11 @@ export namespace Database {
     return nonAnoUsers;
   }
 
-  export async function getUsername(searchUserId: string, userId: string, token: string): Promise<string | false> {
+  export async function getUsername(
+    searchUserId: string,
+    userId: string,
+    token: string,
+  ): Promise<string | false> {
     if (!(await verifyUser(userId, token))) {
       return false;
     }
