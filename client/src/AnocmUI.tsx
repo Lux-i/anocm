@@ -40,8 +40,9 @@ enum Action {
 
 const users = [];
 
-const API_BASE =
+/*const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "https://anocm.tomatenbot.com";
+*/
 
 //const API_V1 = `${API_BASE}/api/v1`;
 const API_V2 = `/api/v2`;
