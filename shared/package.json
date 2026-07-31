@@ -6,10 +6,7 @@
   "scripts": {
     "build": "tsc"
   },
-  "dependencies": {
-    "crypto": "^1.0.1"
-  },
   "devDependencies": {
-    "@types/node": "^22.14.1"
+    "@types/node": "^22.20.1"
   }
 }

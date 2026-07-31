@@ -6,7 +6,10 @@
         "declarationMap": true,
         "module": "NodeNext",
         "target": "es2022",
-        "moduleResolution": "nodenext"
+        "moduleResolution": "nodenext",
+        "types": [
+            "node"
+        ]
     },
     "include": [
         "src/**/*"
