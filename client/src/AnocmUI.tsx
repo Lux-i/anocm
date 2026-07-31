@@ -118,17 +118,9 @@ const AnocmUI = () => {
   const DROPDOWN_TTL_PRESETS = getDropdownTtlPresets(t);
 
   // Helper Functions
-  const formatTimestamp = (date: Date): string => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-
-    if (diffMins < 1) return t("common.now");
-    if (diffMins < 60) return t("timeUnits.minute", { count: diffMins }); //`${diffMins}m`;
-    if (diffMins < 1440)
-      return t("timeUnits.hour", { count: Math.floor(diffMins / 60) });
-    return t("timeUnits.day", { count: Math.floor(diffMins / 1440) });
-  };
+  const { formatTimestamp, formatTTL } = useFormatters();
+  
+  // ! formatTimestamp function definition
 
   const getInitials = (name: string): string => {
     if (!name || name.length === 0) {
@@ -168,16 +160,7 @@ const AnocmUI = () => {
     return colors[index];
   };
 
-  const formatTTL = (seconds: number): string => {
-    if (seconds < 0) return t("ttlPresets.permanent");
-    if (seconds === 0) return t("ttlPresets.broadcast");
-    if (seconds < 60) return t("timeUnits.second", { count: seconds });
-    if (seconds < 3600)
-      return t("timeUnits.minute", { count: Math.floor(seconds / 60) });
-    if (seconds < 86400)
-      return t("timeUnits.hour", { count: Math.floor(seconds / 3600) });
-    return t("timeUnits.day", { count: Math.floor(seconds / 86400) });
-  };
+  // ! formatTTL function definition
 
   const cleanTTL = (val) => {
     console.log(`val: ${val}`);
