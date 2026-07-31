@@ -32,6 +32,7 @@ import { UIMessage } from "./features/types";
 import { Action, API_V2, WS_URL, getDropdownTtlPresets } from "./features/constants";
 import { useFormatters } from "./hooks/useFormatters";
 import { getInitials, getAvatarColor } from "./utils/formatting";
+import { cleanTTL, getTtlOptions, checkIfTTLIsValid } from "./utils/ttl";
 
 // ! Action enum definition
 
@@ -132,12 +133,7 @@ const AnocmUI = () => {
 
   // ! formatTTL function definition
 
-  const cleanTTL = (val) => {
-    console.log(`val: ${val}`);
-
-    const n = Number(val);
-    return n;
-  };
+  // ! cleanTTL function definition
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
@@ -251,23 +247,7 @@ const AnocmUI = () => {
     }
   };
 
-  function getTtlOptions(min: number, def: number, max: number) {
-    const presets = [
-      min,
-      def,
-      max,
-      300,
-      900,
-      3600,
-      21600,
-      86400,
-      604800,
-      2592000,
-    ];
-    return Array.from(
-      new Set(presets.filter((x) => x >= min && x <= max)),
-    ).sort((a, b) => a - b);
-  }
+  // ! getTtlOptions function definition
 
   //Rückgabe: Array der aktuellen ChatIds
   const refreshChats = async (): Promise<string[]> => {
@@ -454,18 +434,7 @@ const AnocmUI = () => {
     }
   };
 
-  function checkIfTTLIsValid(ttl: number, min: number, max: number): boolean {
-    if (ttl == -1 && max == -1) {
-      return true;
-    }
-
-    if (min == -1 && max == -1 && ttl != -1) return false;
-
-    if (ttl < min && min != -1) return false;
-    if (ttl > max && max != -1) return false;
-
-    return true;
-  }
+  // ! checkIfTTLIsValid function definition
 
   const sendMessage = async (
     chatId: string,
