@@ -31,10 +31,11 @@ import { TFunction } from "i18next";
 import { UIMessage } from "./features/types";
 import { Action, API_V2, WS_URL, getDropdownTtlPresets } from "./features/constants";
 import { useFormatters } from "./hooks/useFormatters";
+import { useAuth } from "./hooks/useAuth";
 import { getInitials, getAvatarColor } from "./utils/formatting";
 import { cleanTTL, getTtlOptions, checkIfTTLIsValid } from "./utils/ttl";
 
-// ! Action enum definition
+// ! Action enum definition --> features/constants.ts
 
 const users = [];
 
@@ -42,11 +43,11 @@ const users = [];
   import.meta.env.VITE_API_BASE_URL || "https://anocm.tomatenbot.com";
 */
 
-// ! API and WebSocket URL definitions
+// ! API and WebSocket URL definitions --> features/constants.ts
 
-// ! UIMessage type definition
+// ! UIMessage type definition --> features/types.ts
 
-// ! getDropdownTtlPresets function definition
+// ! getDropdownTtlPresets function definition --> features/constants.ts
 
 const AnocmUI = () => {
   const wsRef = useRef<WebSocket | null>(null);
@@ -59,14 +60,8 @@ const AnocmUI = () => {
   const [DHKeyPair, setDHKeyPair] = useState<CryptoKeyPair | null>(null);
   const [sharedKey, setSharedKey] = useState<CryptoKey | null>(null);
 
-  // Auth State
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loginForm, setLoginForm] = useState({ username: "", password: "" });
-  const [authMode, setAuthMode] = useState("login");
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
+  // ! Auth State --> useAuth.ts
+  const [status, setStatus] = useState<string | null>(null); // not used in useAuth, so it is left here for the time being
 
   // Dark Mode State
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -125,15 +120,15 @@ const AnocmUI = () => {
   // Helper Functions
   const { formatTimestamp, formatTTL } = useFormatters();
 
-  // ! formatTimestamp function definition
+  // ! formatTimestamp function definition --> utils/formatting.ts
 
-  // ! getInitials function definition
+  // ! getInitials function definition --> utils/formatting.ts
 
-  // ! getAvatarColor function definition
+  // ! getAvatarColor function definition --> utils/formatting.ts
 
-  // ! formatTTL function definition
+  // ! formatTTL function definition --> utils/ttl.ts
 
-  // ! cleanTTL function definition
+  // ! cleanTTL function definition --> utils/ttl.ts
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
@@ -247,7 +242,7 @@ const AnocmUI = () => {
     }
   };
 
-  // ! getTtlOptions function definition
+  // ! getTtlOptions function definition --> utils/ttl.ts
 
   //Rückgabe: Array der aktuellen ChatIds
   const refreshChats = async (): Promise<string[]> => {
@@ -344,6 +339,7 @@ const AnocmUI = () => {
     }
   };
 
+  // ! createAnonymousUser function definition --> api/authApi.ts
   const createAnonymousUser = async (): Promise<{
     success: boolean;
     userId?: string;
@@ -367,6 +363,8 @@ const AnocmUI = () => {
     }
   };
 
+
+  // ! loginUser function definition --> api/authApi.ts
   const loginUser = async (
     username: string,
     password: string,
@@ -412,6 +410,7 @@ const AnocmUI = () => {
     }
   };
 
+  // ! registerUser function definition --> api/authApi.ts
   const registerUser = async (
     username: string,
     password: string,
@@ -434,7 +433,7 @@ const AnocmUI = () => {
     }
   };
 
-  // ! checkIfTTLIsValid function definition
+  // ! checkIfTTLIsValid function definition --> utils/ttl.ts
 
   const sendMessage = async (
     chatId: string,
@@ -492,6 +491,10 @@ const AnocmUI = () => {
   };
 
   // Event Handlers
+
+  const { isAuthenticated, currentUser, loginForm, setLoginForm, authMode, setAuthMode, authError, successMessage, handleLogin, handleRegister, handleAuthLogout} = useAuth();
+
+  // ! handleLogin function definition --> hooks/useAuth.ts
   const handleLogin = async (asAnonymous = false) => {
     console.log("Login startet...");
     setAuthError(null);
@@ -538,6 +541,7 @@ const AnocmUI = () => {
     }
   };
 
+  // ! handleREgister function definition --> hooks/useAuth.ts
   const handleRegister = async () => {
     setAuthError(null);
 
@@ -587,13 +591,12 @@ const AnocmUI = () => {
     setShowChatMenu(true);
   };
 
+  // ! handleLogout function definition --> hooks/useAuth.ts and other hooks not yet defined
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    setCurrentUser(null);
+    handleAuthLogout();
     setSelectedChatId(null);
     setChats([]);
     setMessages([]);
-    setLoginForm({ username: "", password: "" });
   };
 
   const handleSendMessage = async () => {

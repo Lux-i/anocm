@@ -1,1 +1,0 @@
-// TODO: extract createAnonymousUser, loginUser, registerUser

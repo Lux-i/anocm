@@ -1,5 +1,3 @@
-// TODO: extract formatTimestamp, getInitials, getAvatarColor
-
 import { TFunction } from "i18next";
 
 export const formatTimestamp = (date: Date, t: TFunction): string => {
