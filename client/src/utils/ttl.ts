@@ -1,5 +1,3 @@
-// TODO: extract cleanTTL, getTtlOptions, checkIfTTLIsValid
-
 import { TFunction } from "i18next";
 
 export const formatTTL = (seconds: number, t: TFunction): string => {
