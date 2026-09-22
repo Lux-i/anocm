@@ -39,7 +39,7 @@ const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "https://anocm.tomatenbot.com";
 
 //const API_V1 = `${API_BASE}/api/v1`;
-const API_V2 = `${API_BASE}/api/v2`;
+const API_V2 = `/api/v2`;
 const WS_URL = import.meta.env.VITE_WSS_URL || "wss://anocm.tomatenbot.com/ws";
 
 type UIMessage = ChatMessage & {
@@ -84,7 +84,7 @@ const AnocmUI = () => {
 
   // UI States
   const [activeSection, setActiveSection] = useState<"chats" | "users">(
-    "chats"
+    "chats",
   );
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 
@@ -223,7 +223,7 @@ const AnocmUI = () => {
     chatId: string,
     userId: string,
     adminId: string,
-    adminToken: string
+    adminToken: string,
   ) => {
     try {
       const res = await fetch(`${API_V2}/chat/remuser`, {
@@ -245,7 +245,7 @@ const AnocmUI = () => {
     chatId: string,
     userId: string,
     adminId: string,
-    adminToken: string
+    adminToken: string,
   ) => {
     try {
       const res = await fetch(`${API_V2}/chat/adduser`, {
@@ -266,11 +266,11 @@ const AnocmUI = () => {
   const getChatMessages = async (
     chatId: string,
     userId: string,
-    token: string
+    token: string,
   ): Promise<UIMessage[]> => {
     try {
       const res = await fetch(
-        `${API_V2}/chat/getchat?chatid=${chatId}&userid=${userId}&token=${token}`
+        `${API_V2}/chat/getchat?chatid=${chatId}&userid=${userId}&token=${token}`,
       );
       const data = (await res.json()) as DatabaseResponse & { userData?: Chat };
 
@@ -290,8 +290,8 @@ const AnocmUI = () => {
                   chatUserList: chat.chatUserList || {},
                   name: chat.name || c.name,
                 }
-              : c
-          )
+              : c,
+          ),
         );
 
         // Nachrichten extrahieren
@@ -329,7 +329,7 @@ const AnocmUI = () => {
       2592000,
     ];
     return Array.from(
-      new Set(presets.filter((x) => x >= min && x <= max))
+      new Set(presets.filter((x) => x >= min && x <= max)),
     ).sort((a, b) => a - b);
   }
 
@@ -338,7 +338,7 @@ const AnocmUI = () => {
     if (!currentUser) return [];
     try {
       const url = `${API_V2}/chat/getChatList?userId=${encodeURIComponent(
-        currentUser.userId
+        currentUser.userId,
       )}&token=${encodeURIComponent(currentUser.token)}`;
       const res = await fetch(url, {
         method: "GET",
@@ -357,7 +357,7 @@ const AnocmUI = () => {
       const chatIds: string[] =
         typeof data.userData === "string"
           ? JSON.parse(data.userData)
-          : data.userData ?? [];
+          : (data.userData ?? []);
 
       // doppelte Chat-IDs entfernen - NICHT ENTFERNEN
       chatIds.forEach((id, index) => {
@@ -379,7 +379,7 @@ const AnocmUI = () => {
             lastMessage: old?.lastMessage ?? null,
             unreadCount: old?.unreadCount ?? 0,
           } as Chat;
-        })
+        }),
       );
 
       return chatIds;
@@ -391,12 +391,12 @@ const AnocmUI = () => {
   };
 
   const getChatSettings = async (
-    chatId: string
+    chatId: string,
   ): Promise<{ minTTL: number; defaultTTL: number; maxTTL: number } | null> => {
     if (!currentUser) return null;
     try {
       const res = await fetch(
-        `${API_V2}/chat/getChatSettings?chatid=${chatId}&userid=${currentUser.userId}&token=${currentUser.token}`
+        `${API_V2}/chat/getChatSettings?chatid=${chatId}&userid=${currentUser.userId}&token=${currentUser.token}`,
       );
 
       const data = (await res.json()) as DatabaseResponse;
@@ -412,8 +412,8 @@ const AnocmUI = () => {
                   chatUserList: chat.chatUserList || {},
                   name: chat.name ?? c.name,
                 }
-              : c
-          )
+              : c,
+          ),
         );
         return {
           minTTL: cleanTTL(chat.chatSettings?.minMessageTTL, 3600),
@@ -467,7 +467,7 @@ const AnocmUI = () => {
 
   const loginUser = async (
     username: string,
-    password: string
+    password: string,
   ): Promise<{
     success: boolean;
     userId?: string;
@@ -512,7 +512,7 @@ const AnocmUI = () => {
 
   const registerUser = async (
     username: string,
-    password: string
+    password: string,
   ): Promise<{ success: boolean; userId?: string; error?: string }> => {
     try {
       const res = await fetch(`${API_V2}/user/newuser`, {
@@ -551,7 +551,7 @@ const AnocmUI = () => {
     senderId: string,
     token: string,
     ttl?: number | null,
-    settings?: { minTTL: number; defaultTTL: number; maxTTL: number } | null
+    settings?: { minTTL: number; defaultTTL: number; maxTTL: number } | null,
   ) => {
     const chatkey = await Encryption.loadKey(chatId);
     if (!chatkey) {
@@ -563,7 +563,7 @@ const AnocmUI = () => {
     if (ttl !== null && ttl !== undefined && chatSettings) {
       if (!checkIfTTLIsValid(ttl, chatSettings.minTTL, chatSettings.maxTTL)) {
         console.error(
-          `TTL ${ttl} außerhalb erlaubter Grenzen: ${chatSettings.minTTL}-${chatSettings.maxTTL}`
+          `TTL ${ttl} außerhalb erlaubter Grenzen: ${chatSettings.minTTL}-${chatSettings.maxTTL}`,
         );
         return {
           success: false,
@@ -612,13 +612,13 @@ const AnocmUI = () => {
       if (result.success) {
         setAuthError(null);
         setSuccessMessage(
-          t("successMessages.accountCreated", { userId: result.userId })
+          t("successMessages.accountCreated", { userId: result.userId }),
         );
       } else {
         setAuthError(
           t("errorMessages.authError.anoUserCreationFailed", {
             error: result.error,
-          })
+          }),
         );
       }
     } else {
@@ -642,7 +642,7 @@ const AnocmUI = () => {
       } else {
         console.error("Login fehlgeschlagen:", result.error);
         setAuthError(
-          t("errorMessages.authError.loginFailed", { error: result.error })
+          t("errorMessages.authError.loginFailed", { error: result.error }),
         );
       }
     }
@@ -659,7 +659,9 @@ const AnocmUI = () => {
     const result = await registerUser(loginForm.username, loginForm.password);
     if (!result.success) {
       setAuthError(
-        t("errorMessages.authError.registrationFailed", { error: result.error })
+        t("errorMessages.authError.registrationFailed", {
+          error: result.error,
+        }),
       );
       return;
     }
@@ -686,7 +688,7 @@ const AnocmUI = () => {
         await getChatMessages(
           selectedChatId,
           currentUser.userId,
-          currentUser.token
+          currentUser.token,
         );
       } catch (e) {
         console.error("Fehler beim Nachladen des Chats:", e);
@@ -718,7 +720,7 @@ const AnocmUI = () => {
       currentUser.userId,
       currentUser.token,
       selectedTTL,
-      chatSettings
+      chatSettings,
     );
 
     if (result.success) {
@@ -727,11 +729,11 @@ const AnocmUI = () => {
 
       if (selectedTTL != null) {
         console.log(
-          `[SEND] Nachricht gesendet mit TTL: ${selectedTTL} Sekunden`
+          `[SEND] Nachricht gesendet mit TTL: ${selectedTTL} Sekunden`,
         );
       } else {
         console.log(
-          `[SEND] Nachricht gesendet mit Standard-TTL (Chat-Default)`
+          `[SEND] Nachricht gesendet mit Standard-TTL (Chat-Default)`,
         );
       }
     } else {
@@ -775,7 +777,7 @@ const AnocmUI = () => {
 
         await Encryption.storeKey(
           data.id as string,
-          await Encryption.generateChatKey()
+          await Encryption.generateChatKey(),
         );
 
         //lokal in  State einfügen
@@ -801,7 +803,9 @@ const AnocmUI = () => {
       } else {
         console.error("Fehler beim Erstellen des Chats:", data.error);
         setAuthError(
-          t("errorMessages.authError.chatCreationFailed", { error: data.error })
+          t("errorMessages.authError.chatCreationFailed", {
+            error: data.error,
+          }),
         );
       }
     } catch (err) {
@@ -817,7 +821,7 @@ const AnocmUI = () => {
       selectedChatId,
       newChatUserId.trim(),
       currentUser.userId,
-      currentUser.token
+      currentUser.token,
     );
 
     if (result.success) {
@@ -834,16 +838,16 @@ const AnocmUI = () => {
         const chatMessages = await getChatMessages(
           selectedChatId,
           currentUser.userId,
-          currentUser.token
+          currentUser.token,
         );
         chatMessages.sort(
-          (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+          (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
         );
         setMessages(chatMessages);
       }
     } else {
       setAuthError(
-        t("errorMessages.authError.otherError", { error: result.error })
+        t("errorMessages.authError.otherError", { error: result.error }),
       );
     }
   };
@@ -857,7 +861,7 @@ const AnocmUI = () => {
       selectedChatId,
       userIdToRemove,
       currentUser.userId,
-      currentUser.token
+      currentUser.token,
     );
     if (!success) {
       setAuthError(t("errorMessages.authError.otherError", { error: error }));
@@ -965,7 +969,7 @@ const AnocmUI = () => {
           if (chatkey) {
             decryptedText = await Encryption.decryptMessage(
               chatkey,
-              contentText
+              contentText,
             );
           }
 
@@ -993,8 +997,8 @@ const AnocmUI = () => {
                       timestamp: new Date(data.timestamp),
                     },
                   }
-                : chat
-            )
+                : chat,
+            ),
           );
         } else if (data.action === Action.CK_REQ) {
           if (isRequestingRef.current || isSendingKey) return;
@@ -1026,7 +1030,7 @@ const AnocmUI = () => {
                           console.log("[WS] Sende Chat Key");
                           Encryption.exportAndEncryptChatKey(
                             chatKey,
-                            sharedKey
+                            sharedKey,
                           ).then((encryptedKey) => {
                             const keyMsg: WsMessage = {
                               action: Action.CK_EX,
@@ -1043,9 +1047,9 @@ const AnocmUI = () => {
                             setIsSendingKey(false);
                           });
                         }, 5000);
-                      }
+                      },
                     );
-                  }
+                  },
                 );
               });
             });
@@ -1062,14 +1066,14 @@ const AnocmUI = () => {
               console.log(
                 "[WS] DH_PUBLIC_EX Inhalt:",
                 chatId,
-                dhPublicExported
+                dhPublicExported,
               );
               setActiveKeyExchange(chatId + data.senderID);
               Encryption.importPublicKey(dhPublicExported).then((dhPublic) => {
                 if (!dhPublic) return;
                 Encryption.deriveSharedKey(
                   DHKeyPairRef.current!.privateKey,
-                  dhPublic
+                  dhPublic,
                 ).then((sharedKey) => {
                   if (!sharedKey) return;
                   setSharedKey(sharedKey);
@@ -1099,7 +1103,7 @@ const AnocmUI = () => {
                   setActiveKeyExchange("");
                   console.log("[WS] Chat Key gespeichert:", data.chatID);
                 });
-              }
+              },
             );
           }
         } else {
@@ -1125,10 +1129,10 @@ const AnocmUI = () => {
         const chatMessages = await getChatMessages(
           selectedChatId,
           currentUser.userId,
-          currentUser.token
+          currentUser.token,
         );
         chatMessages.sort(
-          (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+          (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
         );
         const chatkey = await Encryption.loadKey(selectedChatId);
         if (!chatkey) {
@@ -1142,7 +1146,7 @@ const AnocmUI = () => {
             if (dhKeyPair) {
               setDHKeyPair(dhKeyPair);
               const dhPublic = await Encryption.exportPublicKey(
-                dhKeyPair.publicKey
+                dhKeyPair.publicKey,
               );
               if (dhPublic) {
                 const requestMsg: WsMessage = {
@@ -1163,7 +1167,7 @@ const AnocmUI = () => {
           const decryptPromises = chatMessages.map(async (message) => {
             const decryptedText = await Encryption.decryptMessage(
               chatkey,
-              message.content
+              message.content,
             );
             return {
               ...message,
@@ -1230,7 +1234,7 @@ const AnocmUI = () => {
               try {
                 const decrypted = await Encryption.decryptMessage(
                   chatkey,
-                  chat.lastMessage.content
+                  chat.lastMessage.content,
                 );
                 return [chat.chatId, decrypted];
               } catch {
@@ -1241,7 +1245,7 @@ const AnocmUI = () => {
             }
           }
           return [chat.chatId, t("chatList.noNewMessages")];
-        })
+        }),
       );
       setDecryptedLastMessages(Object.fromEntries(entries));
     };
@@ -1256,10 +1260,10 @@ const AnocmUI = () => {
       chat.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       chat.lastMessage?.content
         ?.toLowerCase()
-        .includes(searchTerm.toLowerCase())
+        .includes(searchTerm.toLowerCase()),
   );
   const filteredUsers = users.filter((user) =>
-    user.username?.toLowerCase().includes(searchTerm.toLowerCase())
+    user.username?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Login Screen
@@ -1599,7 +1603,7 @@ const AnocmUI = () => {
                       <div
                         className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm ${getAvatarColor(
                           chat.name,
-                          chat.isAnonymous
+                          chat.isAnonymous,
                         )}`}
                       >
                         {getInitials(chat.name)}
@@ -1659,7 +1663,7 @@ const AnocmUI = () => {
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm ${getAvatarColor(
                             user.name,
-                            user.isAnonymous
+                            user.isAnonymous,
                           )}`}
                         >
                           {getInitials(user.name)}
@@ -1729,7 +1733,7 @@ const AnocmUI = () => {
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-sm ${getAvatarColor(
                       selectedChat.name,
-                      selectedChat.isAnonymous
+                      selectedChat.isAnonymous,
                     )}`}
                   >
                     {getInitials(selectedChat.name)}
@@ -1809,7 +1813,7 @@ const AnocmUI = () => {
                                 `[TTL] TTL für Chat ${selectedChatId} gesetzt auf:`,
                                 ttlValue === null
                                   ? "Standard (Chat-Default)"
-                                  : `${ttlValue} Sekunden`
+                                  : `${ttlValue} Sekunden`,
                               );
                             }}
                             className="w-full px-2 py-1 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 dark:text-white rounded text-sm"
@@ -1823,7 +1827,7 @@ const AnocmUI = () => {
                             {getTtlOptions(
                               chatSettings.minTTL,
                               chatSettings.defaultTTL,
-                              chatSettings.maxTTL
+                              chatSettings.maxTTL,
                             )
                               .filter((ttl) => ttl !== chatSettings.defaultTTL) // Standard nicht doppelt
                               .map((ttl) => (
@@ -1875,7 +1879,7 @@ const AnocmUI = () => {
                                     <div
                                       className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium ${getAvatarColor(
                                         username,
-                                        false
+                                        false,
                                       )}`}
                                     >
                                       {getInitials(username)}
@@ -1906,7 +1910,7 @@ const AnocmUI = () => {
                                     </button>
                                   }
                                 </div>
-                              )
+                              ),
                             )
                           ) : (
                             <div className="text-gray-500 dark:text-gray-400 text-sm italic py-4 text-center">
@@ -1954,8 +1958,8 @@ const AnocmUI = () => {
                           message.senderId === "system"
                             ? "bg-gray-200 text-gray-600 text-center mx-auto"
                             : message.isOwn
-                            ? "bg-blue-500 text-white"
-                            : "bg-white text-gray-900 border"
+                              ? "bg-blue-500 text-white"
+                              : "bg-white text-gray-900 border"
                         }`}
                     >
                       <div>{message.content}</div>
@@ -2358,7 +2362,7 @@ const AnocmUI = () => {
                               selectedChatId!,
                               userId,
                               currentUser!.userId,
-                              currentUser!.token
+                              currentUser!.token,
                             )
                           }
                           className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs"
@@ -2367,7 +2371,7 @@ const AnocmUI = () => {
                         </button>
                       )}
                     </div>
-                  )
+                  ),
                 )
               ) : (
                 <div className="text-gray-500 dark:text-white italic">
