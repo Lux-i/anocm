@@ -62,7 +62,7 @@ const getDropdownTtlPresets = (t: TFunction) => [
   { value: 86400, text: t("ttlPresets.oneDay") },
   { value: 604800, text: t("ttlPresets.oneWeek") },
   { value: 2592000, text: t("ttlPresets.oneMonth") },
-  { value: -1, text: t("ttlPresets.broadcast") },
+  { value: -1, text: t("ttlPresets.permanent") },
 ];
 
 const AnocmUI = () => {
